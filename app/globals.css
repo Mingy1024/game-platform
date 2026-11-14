@@ -1,26 +1,157 @@
 @import "tailwindcss";
 
+/*
+ * 遊戲小站設計 token（車站主題）。
+ * 元件一律使用語意名稱（bg-platform、text-sign…），不直接寫色碼。
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --platform: #f5f7f6; /* 月台白：頁面底色 */
+  --card: #ffffff;
+  --sign: #1d3a8f; /* 站牌藍：品牌、標題、連結 */
+  --sign-deep: #152b6b;
+  --sign-tint: #e8edf9;
+  --express: #cc4409; /* 快車橘：唯一主要行動色（白字對比 4.7:1） */
+  --express-deep: #a83606;
+  --edge: #ffc83d; /* 月台黃：警戒線、選取狀態 */
+  --edge-tint: #fff4d1;
+  --signal: #16794f; /* 號誌綠：狀態 */
+  --signal-tint: #e3f4ec;
+  --ink: #14171f;
+  --muted: #4a5263;
+  --line: #d5dbe3;
+  --canvas: #10131a; /* 遊戲畫布預留區底色 */
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-platform: var(--platform);
+  --color-card: var(--card);
+  --color-sign: var(--sign);
+  --color-sign-deep: var(--sign-deep);
+  --color-sign-tint: var(--sign-tint);
+  --color-express: var(--express);
+  --color-express-deep: var(--express-deep);
+  --color-edge: var(--edge);
+  --color-edge-tint: var(--edge-tint);
+  --color-signal: var(--signal);
+  --color-signal-tint: var(--signal-tint);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-canvas: var(--canvas);
+
+  --font-sans:
+    var(--font-round), "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
+    system-ui, sans-serif;
+
+  --text-xs: 0.875rem; /* 14：最小字級 */
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.5rem;
+  --text-4xl: 3.5rem;
+
+  --radius-sign: 1.25rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: light;
+  scroll-padding-top: 5rem;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--platform);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+:focus-visible {
+  outline: 3px solid var(--sign);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* 深色底上的焦點改用月台黃，確保看得見 */
+.on-dark :focus-visible,
+.on-dark:focus-visible {
+  outline-color: var(--edge);
+}
+
+/* 月台警戒線：頁首下緣的黃色導盲磚帶 */
+.platform-edge {
+  height: 6px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 10px,
+      rgb(20 23 31 / 0.16) 10px 12px
+    ),
+    var(--edge);
+}
+
+/* 車票卡：在封面與內容的交界上下各剪一個半圓缺口 */
+.ticket {
+  --notch: 9px;
+  --split: 7rem;
+  background: var(--card);
+  border-radius: 14px;
+  -webkit-mask:
+    radial-gradient(circle var(--notch) at var(--split) 0, #0000 97%, #000)
+      top / 100% 51% no-repeat,
+    radial-gradient(circle var(--notch) at var(--split) 100%, #0000 97%, #000)
+      bottom / 100% 51% no-repeat;
+  mask:
+    radial-gradient(circle var(--notch) at var(--split) 0, #0000 97%, #000)
+      top / 100% 51% no-repeat,
+    radial-gradient(circle var(--notch) at var(--split) 100%, #0000 97%, #000)
+      bottom / 100% 51% no-repeat;
+}
+
+.ticket-wrap {
+  filter: drop-shadow(0 1px 0 var(--line)) drop-shadow(0 0 1px var(--line));
+  transition: transform 160ms ease-out;
+}
+
+.ticket-wrap:hover {
+  transform: translateY(-2px);
+}
+
+.ticket-wrap:active {
+  transform: translateY(0);
+}
+
+/* 主要按鈕的按壓回饋 */
+.press {
+  transition:
+    transform 120ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.press:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .ticket-wrap:hover,
+  .press:active {
+    transform: none;
+  }
 }
