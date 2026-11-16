@@ -1,0 +1,6 @@
+#!/bin/sh
+# 結束佔用指定連接埠的 Windows 行程：killport 3000
+for pid in $(cmd.exe /c "netstat -ano | findstr LISTENING | findstr :$1" 2>/dev/null | awk '{print $5}' | tr -d '\r' | sort -u); do
+  cmd.exe /c "taskkill /F /T /PID $pid" >/dev/null 2>&1
+done
+if cmd.exe /c "netstat -ano | findstr LISTENING | findstr :$1" >/dev/null 2>&1; then echo "port $1 still in use"; else echo "port $1 free"; fi

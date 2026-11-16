@@ -1,0 +1,4 @@
+#!/bin/sh
+# 從 WSL 用 Windows 的 Node 執行：wn <script.js> [args...]
+# 必須在專案根目錄執行（路徑以專案根目錄為準）。
+exec cmd.exe /c ".claude\\skills\\new-mini-game\\scripts\\run.cmd" "$@"
