@@ -15,7 +15,18 @@ const slots = {
 
 export type AdSlotId = keyof typeof slots;
 
-export function AdSlot({ slot, className = "" }: { slot: AdSlotId; className?: string }) {
+export function AdSlot({
+  slot,
+  className = "",
+  label = t.ads.label,
+  mockText = t.ads.mock,
+}: {
+  slot: AdSlotId;
+  className?: string;
+  /** 其他語言的頁面傳入翻譯後的文字 */
+  label?: string;
+  mockText?: string;
+}) {
   const mode = process.env.ADS_MODE ?? "mock";
   const config = slots[slot];
 
@@ -23,15 +34,15 @@ export function AdSlot({ slot, className = "" }: { slot: AdSlotId; className?: s
 
   return (
     <aside
-      aria-label={t.ads.label}
+      aria-label={label}
       data-ad-slot={slot}
       className={`${config.mobile ? "" : "hidden lg:block"} ${className}`}
     >
-      <p className="mb-1 text-sm text-muted">{t.ads.label}</p>
+      <p className="mb-1 text-sm text-muted">{label}</p>
       <div
         className={`flex items-center justify-center rounded-xl border-2 border-dashed border-line bg-card text-sm text-muted ${config.size}`}
       >
-        模擬廣告版位（{slot}）
+        {mockText}（{slot}）
       </div>
     </aside>
   );

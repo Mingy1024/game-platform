@@ -5,19 +5,18 @@ import { gameManifestSchema, type GameManifest } from "./schema";
  * 遊戲目錄。新增遊戲時在這裡加一筆 manifest；
  * 模組載入時會以 schema 驗證，格式錯誤會直接讓 build 失敗。
  *
- * 目前三款遊戲的玩法程式尚未實作（version 0.1.0），
- * 這份資料先用來建立各頁面的畫面外框。
+ * title、summary、tags 是繁體中文的預設文字；有翻譯的遊戲在 lib/catalog/localize.ts 取各語言的版本。
  */
 const manifests: GameManifest[] = [
   {
-    id: "game-tap-targets",
-    slug: "tap-targets",
-    title: "反應點點",
-    summary: "30 秒內，圓點出現就點下去。",
+    id: "game-precise-stop",
+    slug: "precise-stop",
+    title: "精準停車",
+    summary: "按住煞車、放開滑行，讓列車停進目標區。",
     categories: ["reflex", "casual"],
-    tags: ["30 秒一局", "單指可玩"],
-    cover: "/games/tap-targets/0.1.0/cover.svg",
-    contentPath: "content/games/tap-targets.md",
+    tags: ["一局 5 站", "單指可玩"],
+    cover: "/games/precise-stop/0.1.0/cover.webp",
+    contentPath: "lib/i18n/dictionaries",
     status: "published",
     publishedAt: "2026-11-15T00:00:00+08:00",
     updatedAt: "2026-11-15T00:00:00+08:00",
@@ -30,50 +29,6 @@ const manifests: GameManifest[] = [
     featured: true,
     scoreOrder: "desc",
     scoreUnit: "分",
-  },
-  {
-    id: "game-lane-dodge",
-    slug: "lane-dodge",
-    title: "三線閃避",
-    summary: "三條車道，左右切換閃過障礙，撐滿 60 秒。",
-    categories: ["racing", "reflex"],
-    tags: ["60 秒一局", "左右兩鍵"],
-    cover: "/games/lane-dodge/0.1.0/cover.svg",
-    contentPath: "content/games/lane-dodge.md",
-    status: "published",
-    publishedAt: "2026-11-15T00:00:00+08:00",
-    updatedAt: "2026-11-15T00:00:00+08:00",
-    version: "0.1.0",
-    scoringVersion: "1",
-    engine: "phaser",
-    orientation: "portrait",
-    inputs: ["touch", "keyboard"],
-    aspectRatio: 3 / 4,
-    featured: false,
-    scoreOrder: "desc",
-    scoreUnit: "分",
-  },
-  {
-    id: "game-memory-pairs",
-    slug: "memory-pairs",
-    title: "記憶配對",
-    summary: "16 張牌、8 組圖案，翻出所有配對，越快越好。",
-    categories: ["puzzle", "casual"],
-    tags: ["4×4", "比時間"],
-    cover: "/games/memory-pairs/0.1.0/cover.svg",
-    contentPath: "content/games/memory-pairs.md",
-    status: "published",
-    publishedAt: "2026-11-15T00:00:00+08:00",
-    updatedAt: "2026-11-15T00:00:00+08:00",
-    version: "0.1.0",
-    scoringVersion: "1",
-    engine: "dom",
-    orientation: "any",
-    inputs: ["touch", "mouse", "keyboard"],
-    aspectRatio: 1,
-    featured: false,
-    scoreOrder: "asc",
-    scoreUnit: "秒",
   },
 ];
 

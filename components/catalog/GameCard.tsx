@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { categories } from "@/lib/catalog/categories";
 import type { GameManifest } from "@/lib/catalog/schema";
+import { localePath, type Locale } from "@/lib/i18n/locales";
 import { GameCover } from "./GameCover";
 
 /**
@@ -10,19 +11,24 @@ import { GameCover } from "./GameCover";
 export function GameCard({
   game,
   headingLevel = "h3",
+  locale = "zh-TW",
+  categoryLabels,
 }: {
   game: GameManifest;
   headingLevel?: "h2" | "h3";
+  locale?: Locale;
+  /** 分類 slug → 該語言的名稱；不給就用繁體中文 */
+  categoryLabels?: Record<string, string>;
 }) {
   const Heading = headingLevel;
   const categoryNames = categories
     .filter((category) => game.categories.includes(category.slug))
-    .map((category) => category.name);
+    .map((category) => categoryLabels?.[category.slug] ?? category.name);
 
   return (
-    <Link href={`/games/${game.slug}`} className="ticket-wrap block h-full rounded-[14px]">
+    <Link href={localePath(locale, `/games/${game.slug}`)} className="ticket-wrap block h-full rounded-[14px]">
       <article className="ticket flex h-full min-h-32">
-        <GameCover game={game} className="h-auto w-28 shrink-0 self-stretch" />
+        <GameCover game={game} className="w-28 shrink-0 self-stretch" />
         <div className="flex min-w-0 flex-1 flex-col border-l-2 border-dashed border-line px-4 py-3">
           <Heading className="text-lg font-extrabold text-ink">{game.title}</Heading>
           <p className="mt-0.5 text-sm text-muted">{game.summary}</p>

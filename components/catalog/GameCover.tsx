@@ -2,29 +2,20 @@ import Image from "next/image";
 import type { GameManifest } from "@/lib/catalog/schema";
 
 /**
- * 遊戲封面。目前是原創的幾何 SVG，放在有版本的路徑下；
+ * 遊戲封面，放在有版本的路徑下。圖片填滿外框（外框決定大小），
  * 標題一定會出現在旁邊，所以封面當作裝飾圖（alt 留空）。
+ * 封面很小、通常就在第一屏，所以不延遲載入。
  */
 export function GameCover({
   game,
-  size = 112,
-  priority = false,
   className = "",
 }: {
   game: Pick<GameManifest, "cover">;
-  size?: number;
-  priority?: boolean;
   className?: string;
 }) {
   return (
-    <Image
-      src={game.cover}
-      alt=""
-      width={size}
-      height={size}
-      unoptimized
-      priority={priority}
-      className={`object-cover ${className}`}
-    />
+    <div className={`relative overflow-hidden ${className}`}>
+      <Image src={game.cover} alt="" fill sizes="112px" unoptimized loading="eager" className="object-cover" />
+    </div>
   );
 }

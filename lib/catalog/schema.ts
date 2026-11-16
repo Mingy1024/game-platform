@@ -30,34 +30,3 @@ export const gameManifestSchema = z.object({
 });
 
 export type GameManifest = z.infer<typeof gameManifestSchema>;
-
-export type GameResult = {
-  score: number;
-  durationMs: number;
-  mode: string;
-  outcome: "completed" | "failed";
-};
-
-export type GameContext = {
-  container: HTMLElement;
-  locale: "zh-TW";
-  muted: boolean;
-  onReady(): void;
-  /** 真正開始一局才觸發 */
-  onRunStart(): void;
-  onFinish(result: GameResult): void;
-  onError(error: Error): void;
-};
-
-export type GameInstance = {
-  pause(): void;
-  resume(): void;
-  restart(): void;
-  resize(width: number, height: number): void;
-  setMuted(value: boolean): void;
-  destroy(): void;
-};
-
-export type GameModule = {
-  mount(context: GameContext): Promise<GameInstance>;
-};

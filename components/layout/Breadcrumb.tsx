@@ -3,9 +3,9 @@ import Link from "next/link";
 export type Crumb = { label: string; href?: string };
 
 /** 最後一項是目前頁面，不加連結。 */
-export function Breadcrumb({ items }: { items: Crumb[] }) {
+export function Breadcrumb({ items, label = "麵包屑" }: { items: Crumb[]; label?: string }) {
   return (
-    <nav aria-label="麵包屑" className="text-sm text-muted">
+    <nav aria-label={label} className="text-sm text-muted">
       <ol className="flex flex-wrap items-center gap-x-1">
         {items.map((item, index) => {
           const last = index === items.length - 1;
@@ -14,7 +14,7 @@ export function Breadcrumb({ items }: { items: Crumb[] }) {
               {item.href && !last ? (
                 <Link
                   href={item.href}
-                  className="-mx-1 flex min-h-11 items-center px-1 font-semibold text-sign underline-offset-4 hover:underline"
+                  className="-mx-1 flex min-h-11 min-w-11 items-center justify-center px-1 font-semibold text-sign underline-offset-4 hover:underline"
                 >
                   {item.label}
                 </Link>

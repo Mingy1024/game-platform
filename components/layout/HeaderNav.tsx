@@ -4,13 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { t } from "@/lib/i18n/zh-TW";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import type { Locale } from "@/lib/i18n/locales";
+import { LanguageMenu } from "./LanguageMenu";
+import { LoginSlot } from "./LoginSlot";
 
+type Labels = Dictionary["nav"];
+
+/** 這三頁目前只有繁體中文，所有語言都連到同一個網址 */
 const links = [
-  { href: "/games", label: t.nav.games },
-  { href: "/hot", label: t.nav.hot },
-  { href: "/me", label: t.nav.me },
-];
+  { href: "/games", key: "games" },
+  { href: "/hot", key: "hot" },
+  { href: "/me", key: "me" },
+] as const;
 
 function isActive(pathname: string | null, href: string) {
   if (!pathname) return false;
@@ -19,9 +25,17 @@ function isActive(pathname: string | null, href: string) {
 
 /**
  * 導覽連結。桌面橫排；手機收進頁首下方的選單，不使用固定底部列，
- * 以免占用遊戲的觸控區。
+ * 以免占用遊戲的觸控區。語言選單和登入預留位在兩種寬度都直接顯示。
  */
-export function HeaderNavView({ pathname }: { pathname: string | null }) {
+export function HeaderNavView({
+  pathname,
+  locale,
+  labels,
+}: {
+  pathname: string | null;
+  locale: Locale;
+  labels: Labels;
+}) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
 
@@ -35,7 +49,7 @@ export function HeaderNavView({ pathname }: { pathname: string | null }) {
   }, [open]);
 
   return (
-    <nav aria-label={t.nav.label} className="flex items-center">
+    <nav aria-label={labels.label} className="flex shrink-0 items-center gap-1">
       <ul className="hidden items-center gap-1 md:flex">
         {links.map((link) => {
           const active = isActive(pathname, link.href);
@@ -44,25 +58,26 @@ export function HeaderNavView({ pathname }: { pathname: string | null }) {
               <Link
                 href={link.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-11 items-center rounded-full px-4 font-semibold transition-colors ${
-                  active
-                    ? "bg-edge text-ink"
-                    : "text-sign hover:bg-sign-tint"
+                className={`flex min-h-11 items-center whitespace-nowrap rounded-full px-4 font-semibold transition-colors ${
+                  active ? "bg-edge text-ink" : "text-sign hover:bg-sign-tint"
                 }`}
               >
-                {link.label}
+                {labels[link.key]}
               </Link>
             </li>
           );
         })}
       </ul>
 
+      <LanguageMenu locale={locale} pathname={pathname} labels={labels} />
+      <LoginSlot labels={labels} />
+
       <button
         type="button"
         className="flex size-11 cursor-pointer items-center justify-center rounded-full text-sign hover:bg-sign-tint md:hidden"
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label={open ? t.nav.closeMenu : t.nav.openMenu}
+        aria-label={open ? labels.closeMenu : labels.openMenu}
         onClick={() => setOpen((value) => !value)}
       >
         <Icon name={open ? "close" : "menu"} size={24} />
@@ -86,7 +101,7 @@ export function HeaderNavView({ pathname }: { pathname: string | null }) {
                     active ? "bg-edge-tint text-ink" : "text-sign"
                   }`}
                 >
-                  {link.label}
+                  {labels[link.key]}
                 </Link>
               </li>
             );
@@ -97,7 +112,7 @@ export function HeaderNavView({ pathname }: { pathname: string | null }) {
   );
 }
 
-export function HeaderNav() {
+export function HeaderNav({ locale, labels }: { locale: Locale; labels: Labels }) {
   const pathname = usePathname();
-  return <HeaderNavView pathname={pathname} />;
+  return <HeaderNavView pathname={pathname} locale={locale} labels={labels} />;
 }
