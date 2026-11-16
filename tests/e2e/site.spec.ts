@@ -34,12 +34,31 @@ test("A3 首頁、全部遊戲、分類頁、熱門榜都連得到精準停車�
   expect(problems).toEqual([]);
 });
 
-test("I1 首頁點遊戲卡先進介紹頁，不會直接開始", async ({ page }) => {
+test("A3 首頁主推區有遊戲預覽圖", async ({ page }) => {
   await page.goto("/");
-  await page.locator(`main a[href="${GAME}"]`).first().click();
-  await expect(page).toHaveURL(GAME);
-  await expect(page.getByTestId("departure-board")).toBeVisible();
-  await expect(page.getByTestId("game-stage")).toHaveCount(0);
+  const preview = page.locator('section[aria-labelledby="featured-title"] img');
+  await expect(preview).toBeVisible();
+  const box = await preview.boundingBox();
+  expect(box!.width).toBeGreaterThan(200);
+  expect(box!.height).toBeGreaterThan(200);
+  expect(await preview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+});
+
+test("I1 首頁的預覽圖、開始鈕、遊戲卡都先進介紹頁，不會直接開始", async ({ page }) => {
+  const featured = 'section[aria-labelledby="featured-title"]';
+  const entries = [
+    `${featured} a[aria-hidden="true"]`,
+    `${featured} a[href="${GAME}"]:not([aria-hidden])`,
+    `main a[href="${GAME}"]:not(${featured} a)`,
+  ];
+  for (const entry of entries) {
+    await page.goto("/");
+    await page.locator(entry).first().click();
+    // 開發伺服器在完整套件同時跑遊戲時，第一次編譯介紹頁可能超過預設的 5 秒
+    await expect(page, entry).toHaveURL(GAME, { timeout: 15_000 });
+    await expect(page.getByTestId("departure-board")).toBeVisible();
+    await expect(page.getByTestId("game-stage")).toHaveCount(0);
+  }
 });
 
 test("K1 K4 七種語言都有網址，lang、標題、描述、hreflang 正確", async ({ page }) => {
@@ -72,6 +91,8 @@ test("K1 K4 七種語言都有網址，lang、標題、描述、hreflang 正確"
 test("K2 語言選單只用各語言自己的寫法，切換後留在同一頁", async ({ page }) => {
   for (const start of ["/", GAME]) {
     await page.goto(start);
+    // 換語言會換掉根版面，開發版的新舊頁首可能短暫同時存在，等只剩一個再點
+    await expect(page.getByTestId("language-button")).toHaveCount(1);
     await page.getByTestId("language-button").click();
     const menu = page.getByRole("dialog");
     await expect(menu).toBeVisible();

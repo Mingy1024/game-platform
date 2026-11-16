@@ -3,6 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
+  // 所有測試共用一台開發伺服器，平行太多時編譯和遊戲畫面會搶 CPU、造成偶發逾時；2 個實測最穩也最快
+  workers: 2,
   timeout: 90_000,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

@@ -16,10 +16,12 @@ describe("A2 目錄只有精準停車", () => {
     for (const slug of ["tap-targets", "lane-dodge", "memory-pairs"]) expect(getGameBySlug(slug)).toBeUndefined();
   });
 
-  it("封面檔案存在且是 WebP", () => {
-    const cover = getGameBySlug("precise-stop")!.cover;
-    expect(cover).toMatch(/\.webp$/);
-    expect(existsSync(join(process.cwd(), "public", cover))).toBe(true);
+  it("封面與主視覺檔案存在且是 WebP", () => {
+    const { cover, hero } = getGameBySlug("precise-stop")!;
+    for (const file of [cover, hero]) {
+      expect(file).toMatch(/\.webp$/);
+      expect(existsSync(join(process.cwd(), "public", file))).toBe(true);
+    }
   });
 
   it("有玩法說明和常見問題", () => {

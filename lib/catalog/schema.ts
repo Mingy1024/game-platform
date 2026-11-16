@@ -11,6 +11,8 @@ export const gameManifestSchema = z.object({
   categories: z.array(z.string()).min(1),
   tags: z.array(z.string()),
   cover: z.string().startsWith("/"),
+  /** 大張主視覺（直式），首頁主推區與介紹頁使用 */
+  hero: z.string().startsWith("/"),
   contentPath: z.string().min(1),
   status: z.enum(["draft", "published", "archived"]),
   /** ISO 8601 */

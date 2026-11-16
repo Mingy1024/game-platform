@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Icon } from "@/components/ui/Icon";
@@ -27,21 +28,40 @@ export function StationSign({
       aria-labelledby="featured-title"
       className="overflow-hidden rounded-sign border-4 border-sign bg-card"
     >
-      <div className="px-5 pb-8 pt-8 text-center sm:pb-10 sm:pt-12">
-        <p className="font-semibold text-muted">{dict.home.featured}</p>
-        <h2
-          id="featured-title"
-          className={`mt-1 text-3xl font-black text-ink sm:text-4xl ${
-            // 漢字站名拉開字距，其他文字維持正常字距
-            /^[\u3400-\u9fff]+$/.test(game.title) ? "pl-[0.25em] tracking-[0.25em]" : ""
-          }`}
+      <div className="md:grid md:grid-cols-[2fr_3fr]">
+        {/* 預覽圖：手機在上方、電腦在左側。旁邊就有標題與開始鈕，所以圖片連結不進鍵盤順序、alt 留空 */}
+        <Link
+          href={localePath(locale, `/games/${game.slug}`)}
+          tabIndex={-1}
+          aria-hidden="true"
+          className="relative block aspect-[4/3] overflow-hidden border-b-4 border-sign md:aspect-auto md:min-h-80 md:border-b-0 md:border-r-4"
         >
-          {game.title}
-        </h2>
-        <p className="mx-auto mt-3 max-w-md text-lg text-muted">{game.summary}</p>
-        <ButtonLink href={localePath(locale, `/games/${game.slug}`)} size="lg" className="mt-6">
-          {dict.actions.play}
-        </ButtonLink>
+          <Image
+            src={game.hero}
+            alt=""
+            fill
+            priority
+            unoptimized
+            sizes="(min-width: 768px) 40vw, 100vw"
+            className="object-cover object-[50%_58%] transition-transform duration-500 hover:scale-105 motion-reduce:transition-none motion-reduce:hover:scale-100"
+          />
+        </Link>
+        <div className="flex flex-col items-center justify-center px-5 pb-8 pt-8 text-center sm:pb-10 sm:pt-12">
+          <p className="font-semibold text-muted">{dict.home.featured}</p>
+          <h2
+            id="featured-title"
+            className={`mt-1 text-3xl font-black text-ink sm:text-4xl ${
+              // 漢字站名拉開字距，其他文字維持正常字距
+              /^[\u3400-\u9fff]+$/.test(game.title) ? "pl-[0.25em] tracking-[0.25em]" : ""
+            }`}
+          >
+            {game.title}
+          </h2>
+          <p className="mx-auto mt-3 max-w-md text-lg text-muted">{game.summary}</p>
+          <ButtonLink href={localePath(locale, `/games/${game.slug}`)} size="lg" className="mt-6">
+            {dict.actions.play}
+          </ButtonLink>
+        </div>
       </div>
 
       <div className="on-dark flex items-stretch bg-sign text-white">

@@ -16,6 +16,7 @@ const manifests: GameManifest[] = [
     categories: ["reflex", "casual"],
     tags: ["一局 5 站", "單指可玩"],
     cover: "/games/precise-stop/0.1.0/cover.webp",
+    hero: "/games/precise-stop/0.1.0/hero.webp",
     contentPath: "lib/i18n/dictionaries",
     status: "published",
     publishedAt: "2026-11-15T00:00:00+08:00",
