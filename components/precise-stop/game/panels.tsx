@@ -10,6 +10,7 @@ import type { Snapshot } from "@/lib/games/precise-stop/session";
 import { stationBackground, stationName } from "@/lib/games/precise-stop/stations";
 import { fmt, formatDecimal, formatError, formatNumber } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
+import { setMuted, useMuted } from "@/lib/sound-pref";
 import { judgementColor, u, type GameText } from "./shared";
 
 type Common = { text: GameText; locale: Locale };
@@ -39,6 +40,35 @@ export function gradeLabel(stop: RouteStop, text: GameText): string {
   if (kind === "flat") return text.grade.flat;
   const value = Math.round(Math.abs(stop.grade) * 1000) / 10;
   return fmt(kind === "up" ? text.grade.upValue : text.grade.downValue, { value });
+}
+
+/** 靜音鈕：只用喇叭圖示表示開／關（R6），狀態全站共用 */
+export function MuteButton({ text, onToggle }: { text: GameText; onToggle?(): void }) {
+  const muted = useMuted();
+  return (
+    <button
+      type="button"
+      data-no-brake
+      data-testid="mute-button"
+      aria-label={muted ? text.stage.unmute : text.stage.mute}
+      aria-pressed={muted}
+      onClick={() => {
+        setMuted(!muted);
+        onToggle?.();
+      }}
+      className="flex shrink-0 cursor-pointer items-center justify-center text-white"
+      style={{
+        width: u(44),
+        height: u(44),
+        minWidth: 44,
+        minHeight: 44,
+        borderRadius: u(12),
+        background: "rgba(16,19,26,0.75)",
+      }}
+    >
+      <Icon name={muted ? "volumeOff" : "volume"} size={22} />
+    </button>
+  );
 }
 
 /** 場景上方的站別、連擊、天氣標籤 */
@@ -80,25 +110,29 @@ export function SceneTags({
           )}
         </div>
       </div>
-      {phase === "running" && (
-        <button
-          type="button"
-          data-no-brake
-          aria-label={text.stage.pause}
-          onClick={onPause}
-          className="flex shrink-0 cursor-pointer items-center justify-center text-white"
-          style={{
-            width: u(44),
-            height: u(44),
-            minWidth: 44,
-            minHeight: 44,
-            borderRadius: u(12),
-            background: "rgba(16,19,26,0.75)",
-          }}
-        >
-          <Icon name="pause" size={22} />
-        </button>
-      )}
+      <div className="flex shrink-0" style={{ gap: u(6) }}>
+        {/* 站點介紹和結算有自己的靜音鈕（蓋在場景上面），這裡只在行駛與判定時出現 */}
+        {(phase === "running" || phase === "judged") && <MuteButton text={text} />}
+        {phase === "running" && (
+          <button
+            type="button"
+            data-no-brake
+            aria-label={text.stage.pause}
+            onClick={onPause}
+            className="flex shrink-0 cursor-pointer items-center justify-center text-white"
+            style={{
+              width: u(44),
+              height: u(44),
+              minWidth: 44,
+              minHeight: 44,
+              borderRadius: u(12),
+              background: "rgba(16,19,26,0.75)",
+            }}
+          >
+            <Icon name="pause" size={22} />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -288,6 +322,9 @@ export function Briefing({
       />
       {stop.rain && <div className="ps-rain absolute inset-0" />}
       <div className="absolute inset-0" style={{ background: "rgba(16,19,26,0.3)" }} />
+      <div className="absolute z-10" style={{ right: u(14), top: u(12) }}>
+        <MuteButton text={text} />
+      </div>
 
       <div
         className="absolute flex flex-col items-center"
@@ -552,11 +589,14 @@ export function FinalPanel({
     >
       <div className="flex items-center justify-between" style={{ gap: u(8) }}>
         <span style={pill("#cc4409")}>{modeName}</span>
-        {lastStop && (
-          <span className="truncate" style={{ fontSize: u(14), fontWeight: 700, color: "#aab3c5" }}>
-            {fmt(text.final.terminal, { name: stationName(lastStop.station, locale).name })}
-          </span>
-        )}
+        <div className="flex min-w-0 items-center" style={{ gap: u(10) }}>
+          {lastStop && (
+            <span className="truncate" style={{ fontSize: u(14), fontWeight: 700, color: "#aab3c5" }}>
+              {fmt(text.final.terminal, { name: stationName(lastStop.station, locale).name })}
+            </span>
+          )}
+          <MuteButton text={text} />
+        </div>
       </div>
       <div className="flex flex-col items-center" style={{ gap: u(2) }}>
         <span style={{ fontSize: u(15), fontWeight: 700, color: "#aab3c5" }}>{text.final.total}</span>
@@ -740,6 +780,7 @@ export function PauseDialog({
             distance: formatDecimal(Math.max(0, snapshot.train.distance), locale),
           })}
         </p>
+        <SoundSwitch text={text} />
         <button
           type="button"
           autoFocus
@@ -787,6 +828,37 @@ export function PauseDialog({
         {text.pause.note}
       </p>
     </div>
+  );
+}
+
+/** 暫停選單裡的音效開關，和右上的靜音鈕同步（R6） */
+function SoundSwitch({ text }: { text: GameText }) {
+  const muted = useMuted();
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={!muted}
+      data-testid="sound-switch"
+      onClick={() => setMuted(!muted)}
+      className="flex cursor-pointer items-center justify-between bg-sign-tint text-sign"
+      style={{ minHeight: u(48), borderRadius: u(14), padding: `0 ${u(14)}`, fontSize: u(16), fontWeight: 800 }}
+    >
+      <span className="flex items-center" style={{ gap: u(8) }}>
+        <Icon name={muted ? "volumeOff" : "volume"} size={20} />
+        {text.pause.sound}
+      </span>
+      <span
+        aria-hidden="true"
+        className="relative block shrink-0 rounded-full transition-colors"
+        style={{ width: u(46), height: u(26), background: muted ? "#aab3c5" : "#1f9a66" }}
+      >
+        <span
+          className="absolute rounded-full bg-white transition-[left]"
+          style={{ top: u(3), left: muted ? u(3) : u(23), width: u(20), height: u(20) }}
+        />
+      </span>
+    </button>
   );
 }
 

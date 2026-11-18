@@ -245,6 +245,7 @@ export const en: Dictionary = {
       stationsLabel: "Score by station",
     },
     pause: {
+      sound: "Sound",
       title: "Paused",
       status: "Station {n} · {name}　{distance} m to the mark",
       resume: "Resume",
@@ -253,6 +254,8 @@ export const en: Dictionary = {
       note: "The game pauses when you switch tabs or apps. The brake resets when you resume.",
     },
     stage: {
+      mute: "Mute sound",
+      unmute: "Turn sound on",
       back: "Back to game info",
       pause: "Pause",
       restart: "Restart",

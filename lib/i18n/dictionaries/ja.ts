@@ -245,6 +245,7 @@ export const ja: Dictionary = {
       stationsLabel: "駅ごとの成績",
     },
     pause: {
+      sound: "サウンド",
       title: "一時停止中",
       status: "{n} 駅目 · {name}　停止位置まで {distance} m",
       resume: "再開",
@@ -253,6 +254,8 @@ export const ja: Dictionary = {
       note: "タブやアプリを切り替えると自動で一時停止します。再開時はブレーキが 0 に戻ります。",
     },
     stage: {
+      mute: "サウンドをオフ",
+      unmute: "サウンドをオン",
       back: "ゲーム紹介に戻る",
       pause: "一時停止",
       restart: "やり直す",

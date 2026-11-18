@@ -19,11 +19,32 @@ type Hook = {
   fx: Record<string, number>;
 };
 
+export type SoundState = {
+  supported: boolean;
+  context: string;
+  muted: boolean;
+  active: boolean;
+  loaded: number;
+  failed: number;
+  runGain: number;
+  runRate: number;
+  brakeGain: number;
+};
+
+type SoundHook = { state: SoundState; log: { name: string; at: number }[] };
+
 declare global {
   interface Window {
     __preciseStop: Hook;
+    __preciseStopSound?: SoundHook;
   }
 }
+
+export const soundState = (page: Page) => page.evaluate(() => window.__preciseStopSound!.state);
+
+/** 播放過的音效名稱（依時間順序） */
+export const soundLog = (page: Page) =>
+  page.evaluate(() => window.__preciseStopSound!.log.map((entry) => entry.name));
 
 /** 收集主控台的錯誤和警告（驗收 Q3） */
 export function watchConsole(page: Page): string[] {

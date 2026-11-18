@@ -24,6 +24,9 @@ import {
   TargetHint,
 } from "./panels";
 import type { SceneHandle } from "./scene";
+import { GameSound } from "./sound";
+import { judgementSound } from "@/lib/games/precise-stop/sound-mix";
+import { readMuted, useMuted } from "@/lib/sound-pref";
 import { SharePanel } from "./SharePanel";
 import { useClientValue, useHydrated, useMediaQuery } from "@/lib/use-client";
 import { judgementColor, Plate, u, useSnapshot, type GameText } from "./shared";
@@ -73,6 +76,42 @@ export default function GameStage({ mode, locale, text, onExit }: Props) {
   const exitScroll = useRef(false);
   const pointers = useRef(new Set<number>());
   const keysHeld = useRef(new Set<string>());
+  const soundRef = useRef<GameSound | null>(null);
+  const muted = useMuted();
+
+  // ---- 音效：遊戲畫面掛上（按了出發）才建立並載入音檔，離開時關掉 ----
+  useEffect(() => {
+    const sound = new GameSound(readMuted());
+    soundRef.current = sound;
+    void sound.load();
+    if (process.env.NODE_ENV !== "production") {
+      (window as unknown as Record<string, unknown>).__preciseStopSound = sound;
+    }
+    return () => {
+      sound.dispose();
+      soundRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    soundRef.current?.setMuted(muted);
+  }, [muted]);
+
+  // 行駛聲、煞車聲跟著每次狀態更新；暫停或分頁在背景時全部停止
+  useEffect(() => {
+    const sync = () => {
+      const state = session.getSnapshot();
+      soundRef.current?.setActive(!state.paused && !document.hidden);
+      soundRef.current?.update(state);
+    };
+    sync();
+    return session.subscribe(sync);
+  }, [session]);
+
+  /** 按鈕點擊音：在動作之後呼叫（例如從暫停恢復後聲音才出得來） */
+  const click = useCallback(() => {
+    soundRef.current?.play("ui-click.mp3");
+  }, []);
 
   // ---- 進出遊戲畫面：隱藏網站其他部分、接管返回鍵 ----
   useEffect(() => {
@@ -156,8 +195,15 @@ export default function GameStage({ mode, locale, text, onExit }: Props) {
   useEffect(() => {
     let counter = 0;
     return session.onEvent((event) => {
-      if (event.type === "zoom") setEffect({ id: ++counter, kind: "zoom" });
+      const sound = soundRef.current;
+      if (event.type === "depart") sound?.play("ui-click.mp3");
+      if (event.type === "stopped") sound?.play("stop.mp3");
+      if (event.type === "zoom") {
+        setEffect({ id: ++counter, kind: "zoom" });
+        sound?.play("final-5m.mp3");
+      }
       if (event.type === "judged") {
+        sound?.play(judgementSound(event.result.judgement));
         setEffect({ id: ++counter, kind: "judged", event });
         if (event.result.judgement === "miss" && event.result.error > 0 && !reduced) {
           setShake((value) => value + 1);
@@ -166,14 +212,14 @@ export default function GameStage({ mode, locale, text, onExit }: Props) {
       if (event.type === "depart" || event.type === "restart") setEffect(null);
       if (event.type === "final") {
         const results = session.getSnapshot().results;
-        setOutcome(
-          recordRun({
-            mode: route.mode,
-            dateKey: route.dateKey,
-            total: event.total,
-            perfectStops: results.filter((result) => result.judgement === "perfect").length,
-          }),
-        );
+        const saved = recordRun({
+          mode: route.mode,
+          dateKey: route.dateKey,
+          total: event.total,
+          perfectStops: results.filter((result) => result.judgement === "perfect").length,
+        });
+        setOutcome(saved);
+        sound?.finale(saved.isNewRecord, reduced);
       }
     });
   }, [session, route, reduced]);
@@ -183,6 +229,7 @@ export default function GameStage({ mode, locale, text, onExit }: Props) {
     setOutcome(null);
     setSharing(false);
     setEffect(null);
+    soundRef.current?.cancelScheduled();
     pointers.current.clear();
     keysHeld.current.clear();
     if (route.mode === "free") setSession(createSession("free"));
@@ -267,6 +314,8 @@ export default function GameStage({ mode, locale, text, onExit }: Props) {
         releaseAll();
         session.pause();
       }
+      // 結算畫面不能暫停，分頁切走時一樣要停聲音
+      soundRef.current?.setActive(!document.hidden && !session.getSnapshot().paused);
     }
     function onFullscreenChange() {
       setFullscreen(document.fullscreenElement !== null);
@@ -298,6 +347,7 @@ export default function GameStage({ mode, locale, text, onExit }: Props) {
   // 按住遊戲框任一處煞車。用 pointer capture，手指滑出畫面也收得到放開事件。
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 && event.pointerType === "mouse") return;
+    soundRef.current?.unlock();
     if ((event.target as HTMLElement).closest("[data-no-brake]")) return;
     const state = session.getSnapshot();
     if (state.phase !== "running" || state.paused) return;
@@ -505,9 +555,18 @@ export default function GameStage({ mode, locale, text, onExit }: Props) {
               outcome={outcome}
               text={text}
               locale={locale}
-              onShare={() => setSharing(true)}
-              onAgain={restart}
-              onChangeMode={() => exit(true)}
+              onShare={() => {
+                setSharing(true);
+                click();
+              }}
+              onAgain={() => {
+                restart();
+                click();
+              }}
+              onChangeMode={() => {
+                click();
+                exit(true);
+              }}
             />
           )}
           {snapshot.paused && status === "ready" && (
@@ -515,9 +574,18 @@ export default function GameStage({ mode, locale, text, onExit }: Props) {
               snapshot={snapshot}
               text={text}
               locale={locale}
-              onResume={() => session.resume()}
-              onRestart={restart}
-              onBack={() => exit(false)}
+              onResume={() => {
+                session.resume();
+                click();
+              }}
+              onRestart={() => {
+                restart();
+                click();
+              }}
+              onBack={() => {
+                click();
+                exit(false);
+              }}
             />
           )}
 

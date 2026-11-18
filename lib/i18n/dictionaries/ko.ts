@@ -245,6 +245,7 @@ export const ko: Dictionary = {
       stationsLabel: "역별 성적",
     },
     pause: {
+      sound: "소리",
       title: "일시정지",
       status: "{n}번째 역 · {name}　정지선까지 {distance} m",
       resume: "계속",
@@ -253,6 +254,8 @@ export const ko: Dictionary = {
       note: "탭이나 앱을 전환하면 자동으로 일시정지됩니다. 계속하면 브레이크가 0으로 돌아갑니다.",
     },
     stage: {
+      mute: "소리 끄기",
+      unmute: "소리 켜기",
       back: "게임 소개로 돌아가기",
       pause: "일시정지",
       restart: "다시 시작",

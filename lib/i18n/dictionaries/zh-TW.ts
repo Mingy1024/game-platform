@@ -247,6 +247,7 @@ export const zhTW = {
       stationsLabel: "各站成績",
     },
     pause: {
+      sound: "音效",
       title: "已暫停",
       status: "第 {n} 站 · {name}　離標線 {distance} m",
       resume: "繼續",
@@ -255,6 +256,8 @@ export const zhTW = {
       note: "切換分頁或切到別的 App 時會自動暫停。繼續時煞車力歸零。",
     },
     stage: {
+      mute: "關閉音效",
+      unmute: "開啟音效",
       back: "回到遊戲介紹",
       pause: "暫停",
       restart: "重新開始",

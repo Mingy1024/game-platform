@@ -246,6 +246,7 @@ export const pt: Dictionary = {
       stationsLabel: "Pontos por estação",
     },
     pause: {
+      sound: "Som",
       title: "Pausado",
       status: "Estação {n} · {name}　{distance} m até a marca",
       resume: "Continuar",
@@ -254,6 +255,8 @@ export const pt: Dictionary = {
       note: "O jogo pausa quando você troca de aba ou de aplicativo. Ao continuar, o freio volta a zero.",
     },
     stage: {
+      mute: "Desativar som",
+      unmute: "Ativar som",
       back: "Voltar à página do jogo",
       pause: "Pausar",
       restart: "Reiniciar",

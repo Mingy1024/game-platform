@@ -245,6 +245,7 @@ export const vi: Dictionary = {
       stationsLabel: "Điểm từng ga",
     },
     pause: {
+      sound: "Âm thanh",
       title: "Đã tạm dừng",
       status: "Ga {n} · {name}　còn {distance} m tới vạch",
       resume: "Tiếp tục",
@@ -253,6 +254,8 @@ export const vi: Dictionary = {
       note: "Game tự tạm dừng khi bạn chuyển tab hoặc ứng dụng. Khi tiếp tục, lực phanh trở về 0.",
     },
     stage: {
+      mute: "Tắt âm thanh",
+      unmute: "Bật âm thanh",
       back: "Về trang giới thiệu game",
       pause: "Tạm dừng",
       restart: "Chơi lại",

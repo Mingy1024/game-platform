@@ -65,5 +65,5 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // 靜態檔案、Next.js 內部路徑不經過這裡
-  matcher: ["/((?!_next/|favicon\\.ico|games/[^/]+/[^/]+/[^/]+\\.[a-z0-9]+$|.*\\.(?:svg|png|jpg|webp|ico|txt|xml)$).*)"],
+  matcher: ["/((?!_next/|favicon\\.ico|games/[^/]+/[^/]+/[^/]+\\.[a-z0-9]+$|.*\\.(?:svg|png|jpg|webp|ico|txt|xml|mp3|wav)$).*)"],
 };

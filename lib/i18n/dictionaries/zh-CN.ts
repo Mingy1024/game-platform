@@ -245,6 +245,7 @@ export const zhCN: Dictionary = {
       stationsLabel: "各站成绩",
     },
     pause: {
+      sound: "音效",
       title: "已暂停",
       status: "第 {n} 站 · {name}　离标线 {distance} m",
       resume: "继续",
@@ -253,6 +254,8 @@ export const zhCN: Dictionary = {
       note: "切换标签页或切到别的 App 时会自动暂停。继续时刹车力归零。",
     },
     stage: {
+      mute: "关闭音效",
+      unmute: "开启音效",
       back: "回到游戏介绍",
       pause: "暂停",
       restart: "重新开始",

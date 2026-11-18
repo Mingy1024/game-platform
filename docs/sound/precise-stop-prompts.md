@@ -31,3 +31,32 @@
 ## 音量
 
 不用自己調音量平衡，我會在程式裡統一。只要每個檔案本身沒有破音、峰值不要頂到 0 dB 就好。
+
+## 實際生成紀錄（2026-11-19）
+
+用本機的 Stable Audio 3 Small-SFX 生成（steps 8、cfg 1.0），每種 3 版，在選片頁試聽後挑選。提示詞以上表為底，改成模型建議的寫法：開頭加 `TrackType: SFX`，並加負面提示詞 `music, singing, speech, voices, distortion, clipping, low quality, noisy, hum`。
+
+生成後的處理：裁掉開頭空白、尾音淡出、峰值 −1 dB；循環音取中段 3 秒，頭尾 0.5 秒交叉淡化。單次音用 libsndfile 轉成 MP3（約 118 kbps）。生成長度短於 1.5 秒時模型常出白噪音，所以短音效一律生 3 秒再裁。
+
+| 檔名 | 選用 | 備註 |
+|---|---|---|
+| run-loop.wav | 第 2 版（seed 22） | |
+| brake-loop.wav | 第 1 版（seed 11） | |
+| stop.mp3 | 第 1 版（seed 11） | |
+| final-5m.mp3 | 第 3 版（seed 33） | |
+| judge-perfect.mp3 | 第 1 版（seed 11） | |
+| judge-great.mp3 | 第 6 版（seed 66） | 第 2 輪：改成和完美同系列但只有兩個音 |
+| judge-good.mp3 | 第 3 版（seed 33） | |
+| judge-fair.mp3 | 第 1 版（seed 11） | |
+| judge-miss.mp3 | 第 7 版（seed 77） | 第 3 輪：三個往下的小調音，最後一個拉長 |
+| score-tick.mp3 | 第 1 版（seed 11） | |
+| new-record.mp3 | 第 1 版（seed 11） | |
+| ui-click.mp3 | 第 3 版（seed 33） | |
+
+最後採用的提示詞：
+
+- judge-great：`TrackType: SFX, casual game success jingle, two quick ascending bell and marimba notes landing on a bright major chord with a small short sparkle, cheerful, smaller and shorter than a perfect score fanfare, clean`
+- judge-miss：`TrackType: SFX, short disappointing casual game failure sound, exactly three descending minor notes on a soft muted synth, the first two notes short, the third and last note held longer and slowly fading out, deflating oh-no feeling of a near miss, sad but gentle, not harsh, clean`
+- 其他 10 個：上表提示詞前面加 `TrackType: SFX, `，內容大致相同。
+
+12 個檔案合計 529 KB。生成與匯出腳本在本機的 StableAudio3 資料夾（`gen_precise_stop.py`、`export_precise_stop.py`），不在這個 repo 裡。

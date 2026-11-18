@@ -12,8 +12,10 @@ test("I2 介紹頁的內容齊全，今日路線預覽和實際路線一致", as
   }
   await expect(page.getByTestId("records-card")).toBeVisible();
   for (const id of ["howto-title", "scoring-title", "faq-title"]) await expect(page.locator(`#${id}`)).toBeVisible();
-  const preview = await page.getByTestId("departure-board").locator("[data-testid=route-strip]:visible > li").allInnerTexts();
-  expect(preview).toHaveLength(5);
+  // 路線預覽在瀏覽器端接手後才排好；allInnerTexts 不會自動等待，先等 5 站出現
+  const stations = page.getByTestId("departure-board").locator("[data-testid=route-strip]:visible > li");
+  await expect(stations).toHaveCount(5);
+  const preview = await stations.allInnerTexts();
 
   await page.getByTestId("depart-daily").click();
   await expect(page.getByTestId("briefing")).toBeVisible({ timeout: 30_000 });
