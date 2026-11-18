@@ -84,3 +84,19 @@ export function tickTimes(count = 14, durationMs = COUNT_UP_MS): number[] {
   }
   return times;
 }
+
+/** 背景音樂（R13–R16）：和音效分開載入、分開計算大小 */
+export const MUSIC_URL = "/games/precise-stop/0.1.0/music/bgm.mp3";
+
+/** 背景音樂的音量：壓在音效底下 */
+export const MUSIC_GAIN = 0.32;
+
+/** 判定音、結算音出現時背景音樂暫時調小到的比例，以及持續秒數 */
+export const DUCK_LEVEL = 0.35;
+
+export function duckSeconds(name: OneShot): number {
+  if (name === "new-record.mp3") return 2.4;
+  if (name.startsWith("judge-")) return 1.6;
+  if (name === "score-tick.mp3") return 0.25;
+  return 0;
+}

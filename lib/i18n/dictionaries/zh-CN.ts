@@ -245,6 +245,7 @@ export const zhCN: Dictionary = {
       stationsLabel: "各站成绩",
     },
     pause: {
+      music: "音乐",
       sound: "音效",
       title: "已暂停",
       status: "第 {n} 站 · {name}　离标线 {distance} m",

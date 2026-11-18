@@ -29,6 +29,12 @@ export type SoundState = {
   runGain: number;
   runRate: number;
   brakeGain: number;
+  musicOn: boolean;
+  musicLoaded: boolean;
+  musicFailed: boolean;
+  musicGain: number;
+  musicDuck: number;
+  musicTime: number;
 };
 
 type SoundHook = { state: SoundState; log: { name: string; at: number }[] };

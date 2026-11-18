@@ -247,6 +247,7 @@ export const zhTW = {
       stationsLabel: "各站成績",
     },
     pause: {
+      music: "音樂",
       sound: "音效",
       title: "已暫停",
       status: "第 {n} 站 · {name}　離標線 {distance} m",

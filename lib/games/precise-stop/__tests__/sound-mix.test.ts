@@ -6,7 +6,10 @@ import { GameSession } from "../session";
 import {
   brakeLevel,
   COUNT_UP_MS,
+  duckSeconds,
   judgementSound,
+  MUSIC_GAIN,
+  MUSIC_URL,
   runLevel,
   SOUND_FILES,
   SOUND_GAIN,
@@ -106,5 +109,28 @@ describe("R11 音檔與判定", () => {
       plain.next();
     }
     expect(play()).toEqual(plain.getSnapshot().results);
+  });
+});
+
+describe("R13 背景音樂調小", () => {
+  it("判定音、跑分音、破紀錄音會暫時調小背景音樂，點擊音與行駛類不會", () => {
+    for (const name of ["judge-perfect.mp3", "judge-miss.mp3", "score-tick.mp3", "new-record.mp3"] as const) {
+      expect(duckSeconds(name)).toBeGreaterThan(0);
+    }
+    for (const name of ["ui-click.mp3", "stop.mp3", "final-5m.mp3"] as const) expect(duckSeconds(name)).toBe(0);
+  });
+
+  it("背景音樂音量壓在音效底下", () => {
+    const quietestCue = Math.min(...Object.values(SOUND_GAIN).filter((gain) => gain >= 0.45));
+    expect(MUSIC_GAIN).toBeLessThan(quietestCue);
+  });
+});
+
+describe("R15 背景音樂檔", () => {
+  it("放在專案內、不超過 1 MB，不算進音效的 600 KB", () => {
+    const file = join(process.cwd(), "public", MUSIC_URL);
+    expect(MUSIC_URL.endsWith(".mp3")).toBe(true);
+    expect(statSync(file).size).toBeLessThanOrEqual(1024 * 1024);
+    expect(MUSIC_URL).not.toContain("/sfx/");
   });
 });

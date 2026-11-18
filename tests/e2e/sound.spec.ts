@@ -260,3 +260,96 @@ test("R10 瀏覽器不支援 Web Audio 時照常可玩", async ({ page }) => {
   await page.getByTestId("mute-button").click();
   expect(problems).toEqual([]);
 });
+
+const MUSIC = "/games/precise-stop/0.1.0/music/bgm.mp3";
+
+async function waitMusic(page: Page) {
+  await expect.poll(async () => (await soundState(page)).musicLoaded, { timeout: 30_000 }).toBe(true);
+}
+
+test("R13 R15 背景音樂在介紹頁不載入；遊戲畫面出現後載入並循環，判定時暫時調小", async ({ page }) => {
+  const requests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes(MUSIC)) requests.push(request.url());
+  });
+  await page.goto(GAME);
+  await page.waitForLoadState("networkidle");
+  expect(requests).toEqual([]);
+  await page.getByTestId("depart-daily").click();
+  await expect(page.getByTestId("briefing")).toBeVisible({ timeout: 30_000 });
+  await waitMusic(page);
+  // 站點介紹時就在播
+  await expect.poll(async () => (await soundState(page)).musicDuck).toBeGreaterThan(0.9);
+  const state = await soundState(page);
+  expect(state.musicOn).toBe(true);
+  expect(state.musicGain).toBeGreaterThan(0.2);
+
+  await depart(page);
+  await setAutopilot(page, 10);
+  await expect(page.getByTestId("judged-panel")).toBeVisible({ timeout: 60_000 });
+  // 判定音出現時調小，之後恢復
+  await expect.poll(async () => (await soundState(page)).musicDuck, { timeout: 1_000 }).toBeLessThan(0.6);
+  await expect.poll(async () => (await soundState(page)).musicDuck, { timeout: 5_000 }).toBeGreaterThan(0.9);
+});
+
+test("R14 暫停選單的音樂開關只關音樂；記在本機；靜音鈕仍關全部", async ({ page }) => {
+  await enterGame(page);
+  await waitMusic(page);
+  await depart(page);
+  await page.getByTestId("scene").getByRole("button", { name: "暫停" }).click();
+  const music = page.getByTestId("music-switch");
+  await expect(music).toHaveAttribute("aria-checked", "true");
+  await expect(music).toHaveText(/音樂/);
+  await music.click();
+  await expect(music).toHaveAttribute("aria-checked", "false");
+  await expect(page.getByTestId("sound-switch")).toHaveAttribute("aria-checked", "true");
+  await page.getByTestId("resume-button").click();
+  await expect.poll(async () => (await soundState(page)).musicGain).toBeLessThan(0.01);
+  const state = await soundState(page);
+  expect(state.musicOn).toBe(false);
+  expect(state.muted).toBe(false);
+
+  await page.reload();
+  await enterGame(page, "free");
+  expect((await soundState(page)).musicOn).toBe(false);
+  await page.getByTestId("mute-button").click();
+  expect((await soundState(page)).muted).toBe(true);
+});
+
+test("R14 瀏覽器不允許儲存時音樂照常播放", async ({ page }) => {
+  await page.addInitScript(() => {
+    const deny = () => {
+      throw new DOMException("denied", "SecurityError");
+    };
+    Storage.prototype.setItem = deny;
+    Storage.prototype.getItem = deny;
+  });
+  await enterGame(page);
+  await waitMusic(page);
+  expect((await soundState(page)).musicOn).toBe(true);
+});
+
+test("R15 背景音樂載入失敗時照常可玩，音效不受影響", async ({ page }) => {
+  await page.route(`**${MUSIC}`, (route) => route.abort());
+  await enterGame(page);
+  await expect.poll(async () => (await soundState(page)).musicFailed, { timeout: 30_000 }).toBe(true);
+  expect((await soundState(page)).loaded).toBe(12);
+  await depart(page);
+  await setAutopilot(page, 10);
+  await expect(page.getByTestId("judged-panel")).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId("game-error")).toHaveCount(0);
+});
+
+test("R16 暫停時背景音樂停住，繼續後從原處接著播", async ({ page }) => {
+  await enterGame(page);
+  await waitMusic(page);
+  await depart(page);
+  await page.getByTestId("scene").getByRole("button", { name: "暫停" }).click();
+  await expect.poll(async () => (await soundState(page)).context).toBe("suspended");
+  const paused = (await soundState(page)).musicTime;
+  await page.waitForTimeout(800);
+  expect((await soundState(page)).musicTime).toBeCloseTo(paused, 1);
+  await page.getByTestId("resume-button").click();
+  await expect.poll(async () => (await soundState(page)).musicTime).toBeGreaterThan(paused + 0.2);
+  expect((await soundState(page)).musicTime).toBeLessThan(paused + 3);
+});

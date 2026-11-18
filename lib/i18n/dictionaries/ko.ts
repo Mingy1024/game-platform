@@ -245,6 +245,7 @@ export const ko: Dictionary = {
       stationsLabel: "역별 성적",
     },
     pause: {
+      music: "음악",
       sound: "소리",
       title: "일시정지",
       status: "{n}번째 역 · {name}　정지선까지 {distance} m",

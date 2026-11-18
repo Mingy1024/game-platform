@@ -245,6 +245,7 @@ export const en: Dictionary = {
       stationsLabel: "Score by station",
     },
     pause: {
+      music: "Music",
       sound: "Sound",
       title: "Paused",
       status: "Station {n} · {name}　{distance} m to the mark",

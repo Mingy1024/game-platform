@@ -2,6 +2,10 @@ import type { Snapshot } from "@/lib/games/precise-stop/session";
 import {
   brakeLevel,
   COUNT_UP_MS,
+  DUCK_LEVEL,
+  duckSeconds,
+  MUSIC_GAIN,
+  MUSIC_URL,
   runLevel,
   SOUND_BASE,
   SOUND_FILES,
@@ -35,12 +39,18 @@ export class GameSound {
   private run: Loop | null = null;
   private brake: Loop | null = null;
   private muted: boolean;
+  private musicOn: boolean;
+  private music: Loop | null = null;
+  private musicBus: GainNode | null = null;
+  musicLoaded = false;
+  musicFailed = false;
   private active = true;
   private disposed = false;
   private scheduled: AudioBufferSourceNode[] = [];
 
-  constructor(muted: boolean) {
+  constructor(muted: boolean, musicOn = true) {
     this.muted = muted;
+    this.musicOn = musicOn;
     const Context =
       typeof window === "undefined"
         ? undefined
@@ -52,6 +62,9 @@ export class GameSound {
       this.master = this.ctx.createGain();
       this.master.gain.value = muted ? 0 : 1;
       this.master.connect(this.ctx.destination);
+      this.musicBus = this.ctx.createGain();
+      this.musicBus.gain.value = musicOn ? MUSIC_GAIN : 0;
+      this.musicBus.connect(this.master);
     } catch {
       this.ctx = null;
     }
@@ -68,6 +81,12 @@ export class GameSound {
       runGain: this.run?.gain.gain.value ?? 0,
       runRate: this.run?.source.playbackRate.value ?? 0,
       brakeGain: this.brake?.gain.gain.value ?? 0,
+      musicOn: this.musicOn,
+      musicLoaded: this.musicLoaded,
+      musicFailed: this.musicFailed,
+      musicGain: this.musicBus?.gain.value ?? 0,
+      musicDuck: this.music?.gain.gain.value ?? 0,
+      musicTime: this.musicPosition(),
     };
   }
 
@@ -92,6 +111,61 @@ export class GameSound {
     if (this.disposed) return;
     this.run = this.startLoop("run-loop.wav");
     this.brake = this.startLoop("brake-loop.wav");
+    // 背景音樂比較大，等音效好了再載入；失敗只是沒有音樂（R15）
+    await this.loadMusic();
+  }
+
+  private musicStartedAt = 0;
+
+  private async loadMusic(): Promise<void> {
+    const ctx = this.ctx;
+    if (!ctx || !this.musicBus) return;
+    try {
+      const response = await fetch(MUSIC_URL);
+      if (!response.ok) throw new Error(String(response.status));
+      const buffer = await ctx.decodeAudioData(await response.arrayBuffer());
+      if (this.disposed) return;
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      const gain = ctx.createGain();
+      // 淡入，避免一載入好就突然出聲
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(1, ctx.currentTime + 1.5);
+      source.connect(gain).connect(this.musicBus);
+      source.start();
+      this.musicStartedAt = ctx.currentTime;
+      this.music = { source, gain };
+      this.musicLoaded = true;
+    } catch {
+      this.musicFailed = true;
+    }
+  }
+
+  /** 目前播到背景音樂的第幾秒（測試用：確認暫停後從原處接著播） */
+  private musicPosition(): number {
+    const ctx = this.ctx;
+    const buffer = this.music?.source.buffer;
+    if (!ctx || !buffer) return 0;
+    return (ctx.currentTime - this.musicStartedAt) % buffer.duration;
+  }
+
+  /** 暫停選單的「音樂」開關 */
+  setMusicOn(on: boolean): void {
+    this.musicOn = on;
+    const ctx = this.ctx;
+    if (!ctx || !this.musicBus) return;
+    this.musicBus.gain.setTargetAtTime(on ? MUSIC_GAIN : 0, ctx.currentTime, 0.08);
+  }
+
+  /** 判定音、結算音出現時背景音樂暫時調小 */
+  private duck(seconds: number, delay = 0): void {
+    const ctx = this.ctx;
+    const gain = this.music?.gain.gain;
+    if (!ctx || !gain || seconds <= 0) return;
+    const start = ctx.currentTime + delay;
+    gain.setTargetAtTime(DUCK_LEVEL, start, 0.04);
+    gain.setTargetAtTime(1, start + seconds, 0.3);
   }
 
   setMuted(muted: boolean): void {
@@ -147,6 +221,7 @@ export class GameSound {
     gain.gain.value = SOUND_GAIN[name];
     source.connect(gain).connect(this.master);
     source.start(ctx.currentTime + delay);
+    this.duck(duckSeconds(name), delay);
     if (delay > 0) {
       this.scheduled.push(source);
       source.onended = () => {
@@ -178,7 +253,7 @@ export class GameSound {
     if (this.disposed) return;
     this.disposed = true;
     this.cancelScheduled();
-    for (const loop of [this.run, this.brake]) {
+    for (const loop of [this.run, this.brake, this.music]) {
       try {
         loop?.source.stop();
       } catch {

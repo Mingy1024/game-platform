@@ -246,6 +246,7 @@ export const pt: Dictionary = {
       stationsLabel: "Pontos por estação",
     },
     pause: {
+      music: "Música",
       sound: "Som",
       title: "Pausado",
       status: "Estação {n} · {name}　{distance} m até a marca",

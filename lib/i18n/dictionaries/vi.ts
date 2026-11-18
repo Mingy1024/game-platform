@@ -245,6 +245,7 @@ export const vi: Dictionary = {
       stationsLabel: "Điểm từng ga",
     },
     pause: {
+      music: "Âm nhạc",
       sound: "Âm thanh",
       title: "Đã tạm dừng",
       status: "Ga {n} · {name}　còn {distance} m tới vạch",

@@ -245,6 +245,7 @@ export const ja: Dictionary = {
       stationsLabel: "駅ごとの成績",
     },
     pause: {
+      music: "音楽",
       sound: "サウンド",
       title: "一時停止中",
       status: "{n} 駅目 · {name}　停止位置まで {distance} m",

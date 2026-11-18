@@ -26,7 +26,7 @@ import {
 import type { SceneHandle } from "./scene";
 import { GameSound } from "./sound";
 import { judgementSound } from "@/lib/games/precise-stop/sound-mix";
-import { readMuted, useMuted } from "@/lib/sound-pref";
+import { readMuted, readMusicOff, useMusicOff, useMuted } from "@/lib/sound-pref";
 import { SharePanel } from "./SharePanel";
 import { useClientValue, useHydrated, useMediaQuery } from "@/lib/use-client";
 import { judgementColor, Plate, u, useSnapshot, type GameText } from "./shared";
@@ -78,10 +78,11 @@ export default function GameStage({ mode, locale, text, onExit }: Props) {
   const keysHeld = useRef(new Set<string>());
   const soundRef = useRef<GameSound | null>(null);
   const muted = useMuted();
+  const musicOff = useMusicOff();
 
   // ---- 音效：遊戲畫面掛上（按了出發）才建立並載入音檔，離開時關掉 ----
   useEffect(() => {
-    const sound = new GameSound(readMuted());
+    const sound = new GameSound(readMuted(), !readMusicOff());
     soundRef.current = sound;
     void sound.load();
     if (process.env.NODE_ENV !== "production") {
@@ -96,6 +97,10 @@ export default function GameStage({ mode, locale, text, onExit }: Props) {
   useEffect(() => {
     soundRef.current?.setMuted(muted);
   }, [muted]);
+
+  useEffect(() => {
+    soundRef.current?.setMusicOn(!musicOff);
+  }, [musicOff]);
 
   // 行駛聲、煞車聲跟著每次狀態更新；暫停或分頁在背景時全部停止
   useEffect(() => {

@@ -10,7 +10,7 @@ import type { Snapshot } from "@/lib/games/precise-stop/session";
 import { stationBackground, stationName } from "@/lib/games/precise-stop/stations";
 import { fmt, formatDecimal, formatError, formatNumber } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
-import { setMuted, useMuted } from "@/lib/sound-pref";
+import { setMusicOff, setMuted, useMusicOff, useMuted } from "@/lib/sound-pref";
 import { judgementColor, u, type GameText } from "./shared";
 
 type Common = { text: GameText; locale: Locale };
@@ -768,7 +768,7 @@ export function PauseDialog({
         aria-modal="true"
         aria-label={text.pause.title}
         className="absolute flex flex-col bg-white text-ink"
-        style={{ left: u(40), right: u(40), top: u(100), padding: `${u(22)} ${u(22)}`, borderRadius: u(22), gap: u(12) }}
+        style={{ left: u(40), right: u(40), top: u(46), padding: `${u(18)} ${u(22)}`, borderRadius: u(22), gap: u(10) }}
       >
         <p className="text-center text-sign" style={{ fontSize: u(28), fontWeight: 900 }}>
           {text.pause.title}
@@ -780,7 +780,10 @@ export function PauseDialog({
             distance: formatDecimal(Math.max(0, snapshot.train.distance), locale),
           })}
         </p>
-        <SoundSwitch text={text} />
+        <div className="flex flex-col" style={{ gap: u(6) }}>
+          <SoundSwitch text={text} />
+          <MusicSwitch text={text} />
+        </div>
         <button
           type="button"
           autoFocus
@@ -835,18 +838,49 @@ export function PauseDialog({
 function SoundSwitch({ text }: { text: GameText }) {
   const muted = useMuted();
   return (
+    <Switch on={!muted} onToggle={() => setMuted(!muted)} testId="sound-switch" icon={muted ? "volumeOff" : "volume"}>
+      {text.pause.sound}
+    </Switch>
+  );
+}
+
+/** 暫停選單裡的音樂開關：只關背景音樂（R14） */
+function MusicSwitch({ text }: { text: GameText }) {
+  const off = useMusicOff();
+  return (
+    <Switch on={!off} onToggle={() => setMusicOff(!off)} testId="music-switch" icon="music">
+      {text.pause.music}
+    </Switch>
+  );
+}
+
+function Switch({
+  on,
+  onToggle,
+  testId,
+  icon,
+  children,
+}: {
+  on: boolean;
+  onToggle(): void;
+  testId: string;
+  icon: "volume" | "volumeOff" | "music";
+  children: React.ReactNode;
+}) {
+  const muted = !on;
+  return (
     <button
       type="button"
       role="switch"
-      aria-checked={!muted}
-      data-testid="sound-switch"
-      onClick={() => setMuted(!muted)}
+      aria-checked={on}
+      data-testid={testId}
+      onClick={onToggle}
       className="flex cursor-pointer items-center justify-between bg-sign-tint text-sign"
       style={{ minHeight: u(48), borderRadius: u(14), padding: `0 ${u(14)}`, fontSize: u(16), fontWeight: 800 }}
     >
       <span className="flex items-center" style={{ gap: u(8) }}>
-        <Icon name={muted ? "volumeOff" : "volume"} size={20} />
-        {text.pause.sound}
+        <Icon name={icon} size={20} />
+        {children}
       </span>
       <span
         aria-hidden="true"
