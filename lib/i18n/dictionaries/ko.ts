@@ -16,8 +16,6 @@ export const ko: Dictionary = {
     language: "언어",
     languageSwitch: "언어 변경. 현재: {name}",
     close: "닫기",
-    login: "Google로 로그인",
-    loginShort: "로그인",
     reserved: "준비 중",
   },
   footer: {
@@ -27,6 +25,8 @@ export const ko: Dictionary = {
     terms: "이용약관",
     contact: "문의 및 제보",
     deviceNote: "플레이 기록은 이 기기에만 저장되며, 브라우저 데이터를 지우면 사라집니다.",
+    /** 登入功能打開時改用這句 */
+    deviceNoteLoggedOut: "로그인하지 않으면 플레이 기록은 이 기기에만 저장돼요.",
   },
   actions: {
     play: "플레이",
@@ -308,5 +308,28 @@ export const ko: Dictionary = {
     shared: {
       banner: "친구의 점수는 {score}점. 이제 당신 차례!",
     },
+  },
+  /** 帳號與登入（紀錄卡、登入提示條、App 內建瀏覽器提示） */
+  account: {
+    login: "Google로 로그인",
+    privacyNote: "Google 계정 ID만 저장하고, 이름과 이메일은 저장하지 않아요.",
+    privacyLink: "개인정보처리방침",
+    loggedIn: "Google로 로그인됨",
+    nickLabel: "랭킹에 표시되는 이름",
+    changeNick: "닉네임 변경",
+    loginOk: "로그인했어요",
+    sep: " · ",
+    loginError: "로그인이 완료되지 않았어요",
+    loginErrorRest: ". 다시 시도해 주세요.",
+    retry: "다시 시도",
+    close: "닫기",
+    inAppTitle: "앱 안에서는 Google로 로그인할 수 없어요.",
+    inAppHint: "휴대폰 브라우저로 이 페이지를 열면 로그인할 수 있어요.",
+    inAppStep1: "오른쪽 위 {menu} 메뉴를 누르세요",
+    inAppStep2: "'브라우저로 열기' 또는 'Safari로 열기'를 선택하세요",
+    inAppStep3: "브라우저에서 'Google로 로그인'을 누르세요",
+    copyLink: "링크 복사",
+    copied: "복사했어요",
+    openBrowser: "브라우저로 열기",
   },
 };

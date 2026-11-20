@@ -36,6 +36,8 @@ function isKnownPath(segments: string[], translatedOnly: boolean): boolean {
     return rest.length === 2 || (rest.length === 3 && rest[2] === "card");
   }
   if (translatedOnly) return false;
+  // 我的紀錄底下的帳號設定
+  if (section === "me" && slug === "settings") return rest.length === 0;
   if (section === "categories") return rest.length === 0 && !!slug && categorySlugs.has(slug);
   return zhOnlySections.has(section) && !slug;
 }
@@ -64,6 +66,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // 靜態檔案、Next.js 內部路徑不經過這裡
-  matcher: ["/((?!_next/|favicon\\.ico|games/[^/]+/[^/]+/[^/]+\\.[a-z0-9]+$|.*\\.(?:svg|png|jpg|webp|ico|txt|xml|mp3|wav)$).*)"],
+  // 靜態檔案、Next.js 內部路徑、API 不經過這裡
+  matcher: ["/((?!_next/|api/|favicon\\.ico|games/[^/]+/[^/]+/[^/]+\\.[a-z0-9]+$|.*\\.(?:svg|png|jpg|webp|ico|txt|xml|mp3|wav)$).*)"],
 };

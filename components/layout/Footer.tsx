@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/locales";
 import { Container } from "./Container";
+import { FLAGS } from "@/lib/flags";
 
 /** 這幾頁目前只有繁體中文 */
 const links = [
@@ -19,7 +20,7 @@ export function Footer({ locale }: { locale: Locale }) {
         <div className="max-w-md">
           <p className="text-lg font-extrabold tracking-wide">{dict.brand}</p>
           <p className="mt-1 text-white/85">{dict.tagline}</p>
-          <p className="mt-4 text-sm text-white/75">{dict.footer.deviceNote}</p>
+          <p className="mt-4 text-sm text-white/75">{FLAGS.login ? dict.footer.deviceNoteLoggedOut : dict.footer.deviceNote}</p>
         </div>
         <nav aria-label={dict.footer.label}>
           <ul className="flex flex-wrap gap-x-2 gap-y-1">

@@ -5,7 +5,7 @@
 // （需要 Node 24 以上，會連到 Google Fonts）
 import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 
-const OUT = new URL("../assets/share/fonts/", import.meta.url);
+const OUT = new URL("../public/share-card/fonts/", import.meta.url);
 const dict = async (file, name) => (await import(`../lib/i18n/dictionaries/${file}.ts`))[name];
 const { STATION_IDS, stationName } = await import("../lib/games/precise-stop/stations.ts");
 

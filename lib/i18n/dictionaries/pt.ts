@@ -17,8 +17,6 @@ export const pt: Dictionary = {
     language: "Idioma",
     languageSwitch: "Mudar idioma. Atual: {name}",
     close: "Fechar",
-    login: "Entrar com o Google",
-    loginShort: "Entrar",
     reserved: "Em breve",
   },
   footer: {
@@ -28,6 +26,8 @@ export const pt: Dictionary = {
     terms: "Termos de uso",
     contact: "Contato e sugestões",
     deviceNote: "Seus recordes ficam salvos só neste aparelho e somem se você limpar os dados do navegador.",
+    /** 登入功能打開時改用這句 */
+    deviceNoteLoggedOut: "Sem login, seus recordes ficam salvos só neste aparelho.",
   },
   actions: {
     play: "Jogar",
@@ -309,5 +309,28 @@ export const pt: Dictionary = {
     shared: {
       banner: "Seu amigo fez {score} pontos. Agora é a sua vez!",
     },
+  },
+  /** 帳號與登入（紀錄卡、登入提示條、App 內建瀏覽器提示） */
+  account: {
+    login: "Entrar com Google",
+    privacyNote: "Guardamos só o ID da sua conta Google, nunca seu nome ou e-mail.",
+    privacyLink: "Política de privacidade",
+    loggedIn: "Conectado com Google",
+    nickLabel: "Seu nome no ranking:",
+    changeNick: "Mudar apelido",
+    loginOk: "Login feito",
+    sep: " · ",
+    loginError: "O login não foi concluído",
+    loginErrorRest: ". Tente de novo.",
+    retry: "Tentar de novo",
+    close: "Fechar",
+    inAppTitle: "Não dá para entrar com Google dentro de apps.",
+    inAppHint: "Abra esta página no navegador do celular para entrar.",
+    inAppStep1: "Toque no menu {menu} no canto superior direito",
+    inAppStep2: "Escolha “Abrir no navegador” ou “Abrir no Safari”",
+    inAppStep3: "No navegador, toque em “Entrar com Google”",
+    copyLink: "Copiar link",
+    copied: "Copiado",
+    openBrowser: "Abrir no navegador",
   },
 };

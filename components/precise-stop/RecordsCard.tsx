@@ -7,6 +7,7 @@ import { taiwanDateKey } from "@/lib/games/precise-stop/route";
 import { fmt, formatNumber, formatShortDate } from "@/lib/i18n/format";
 import { useClientValue } from "@/lib/use-client";
 import { useFlag } from "@/lib/use-flag";
+import { RecordsAccount } from "@/components/account/RecordsAccount";
 import { useExperience } from "./Experience";
 
 const SAMPLE_PLAYERS = [
@@ -24,11 +25,11 @@ const SAMPLE_PLAYERS = [
 
 /**
  * 我的紀錄，以及預留的「全站排行」分頁。
- * 排行榜和登入還沒有後端，預設不顯示（lib/flags.ts）；
- * 開關打開時顯示的是版面示意，資料是固定的樣本。
+ * 排行榜還沒有後端，預設不顯示（lib/flags.ts），開關打開時顯示的是版面示意，資料是固定的樣本。
+ * 登入開關打開時，卡片下方換成帳號區塊（components/account/RecordsAccount.tsx）。
  */
 export function RecordsCard() {
-  const { text, locale, nav } = useExperience();
+  const { text, locale, nav, account } = useExperience();
   const records = useRecords();
   const showRank = useFlag("leaderboard");
   const showLogin = useFlag("login");
@@ -104,26 +105,7 @@ export function RecordsCard() {
             ))}
           </dl>
           {showLogin ? (
-            <div
-              data-testid="login-hint"
-              className="mx-4 mb-4 flex items-center gap-2.5 rounded-xl border-2 border-dashed border-[#a3adbd] bg-platform px-3 py-2.5"
-            >
-              <p className="min-w-0 flex-1 text-sm leading-snug">
-                <strong>{text.records.deviceOnly}</strong>
-                <br />
-                <span className="text-muted">{text.records.loginHint}</span>
-              </p>
-              <button
-                type="button"
-                disabled
-                className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-line bg-card py-1 pl-1.5 pr-3 text-sm font-bold"
-              >
-                <span className="flex size-7 items-center justify-center rounded-full border border-line font-black text-sign">
-                  G
-                </span>
-                {nav.loginShort}
-              </button>
-            </div>
+            <RecordsAccount locale={locale} labels={account} records={text.records} />
           ) : (
             <p className="px-4 pb-4 text-sm text-muted">{text.records.deviceNote}</p>
           )}

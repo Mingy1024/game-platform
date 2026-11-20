@@ -16,8 +16,6 @@ export const ja: Dictionary = {
     language: "言語",
     languageSwitch: "言語を切り替える（現在：{name}）",
     close: "閉じる",
-    login: "Google でログイン",
-    loginShort: "ログイン",
     reserved: "準備中",
   },
   footer: {
@@ -27,6 +25,8 @@ export const ja: Dictionary = {
     terms: "利用規約",
     contact: "お問い合わせ・報告",
     deviceNote: "プレイ記録はこの端末にだけ保存されます。ブラウザのデータを消すと記録も消えます。",
+    /** 登入功能打開時改用這句 */
+    deviceNoteLoggedOut: "ログインしていない間、プレイ記録はこの端末にだけ保存されます。",
   },
   actions: {
     play: "遊ぶ",
@@ -308,5 +308,28 @@ export const ja: Dictionary = {
     shared: {
       banner: "友だちのスコアは {score} 点。次はあなたの番！",
     },
+  },
+  /** 帳號與登入（紀錄卡、登入提示條、App 內建瀏覽器提示） */
+  account: {
+    login: "Google でログイン",
+    privacyNote: "保存するのは Google アカウントの ID だけで、名前やメールアドレスは保存しません。",
+    privacyLink: "プライバシーポリシー",
+    loggedIn: "Google でログイン中",
+    nickLabel: "ランキングでの名前は",
+    changeNick: "ニックネームを変更",
+    loginOk: "ログインしました",
+    sep: "・",
+    loginError: "ログインが完了しませんでした",
+    loginErrorRest: "。もう一度お試しください。",
+    retry: "もう一度",
+    close: "閉じる",
+    inAppTitle: "アプリ内では Google でログインできません。",
+    inAppHint: "スマートフォンのブラウザでこのページを開くとログインできます。",
+    inAppStep1: "右上の {menu} メニューをタップ",
+    inAppStep2: "「ブラウザで開く」または「Safari で開く」を選ぶ",
+    inAppStep3: "ブラウザで「Google でログイン」をタップ",
+    copyLink: "リンクをコピー",
+    copied: "コピーしました",
+    openBrowser: "ブラウザで開く",
   },
 };

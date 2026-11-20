@@ -8,9 +8,6 @@ import { PageHeading, SectionHeading } from "@/components/layout/PageHeading";
 import { getActiveCategories, getGamesByCategory } from "@/lib/catalog/catalog";
 import { getCategoryBySlug } from "@/lib/catalog/categories";
 
-// 內容依網址上的分類決定，所有分類都已預先產生；不做「立即導覽」的外殼驗證
-export const instant = false;
-
 export function generateStaticParams() {
   return getActiveCategories().map((category) => ({ slug: category.slug }));
 }

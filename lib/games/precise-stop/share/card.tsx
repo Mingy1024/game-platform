@@ -1,9 +1,8 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { fmt, formatNumber } from "@/lib/i18n/format";
 import { localeInfo, type Locale } from "@/lib/i18n/locales";
+import { readStaticAsset } from "@/lib/static-asset";
 import type { Judgement } from "../scoring";
 import type { DecodedRun } from "../share-code";
 import { stationName } from "../stations";
@@ -12,7 +11,7 @@ import { stationName } from "../stations";
  * 成績圖（1080×1350）。分享面板、下載和社群預覽用的都是這一張，
  * 所以玩家看到的和貼到社群上的完全一樣。
  *
- * 字型是只含成績圖用字的子集（assets/share/fonts），
+ * 字型是只含成績圖用字的子集（public/share-card/fonts），
  * 文字表或站名有變動時要重新執行 scripts/fetch-share-fonts.mjs。
  */
 /** 讓文字塞進指定寬度的字級：全形字算 1 個字寬，拉丁字母約 0.58 */
@@ -23,7 +22,7 @@ function fitSize(label: string, width: number, max: number): number {
 
 export const CARD_SIZE = { width: 1080, height: 1350 };
 
-const ASSETS = join(process.cwd(), "assets", "share");
+const ASSETS = "/share-card";
 const FONT_FILES = ["round", "sc", "kr", "latin"] as const;
 type FontName = (typeof FONT_FILES)[number];
 
@@ -39,23 +38,27 @@ const primaryFont: Record<Locale, FontName> = {
 
 let assets: Promise<{
   hero: string;
-  fonts: { name: FontName; data: Buffer; weight: 700 | 900; style: "normal" }[];
+  fonts: { name: FontName; data: ArrayBuffer; weight: 700 | 900; style: "normal" }[];
 }> | null = null;
+
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+}
 
 function loadAssets() {
   assets ??= (async () => {
-    const hero = await readFile(join(ASSETS, "hero.jpg"));
+    const hero = await readStaticAsset(`${ASSETS}/hero.jpg`);
     const fonts = await Promise.all(
       FONT_FILES.flatMap((name) =>
         ([700, 900] as const).map(async (weight) => ({
           name,
           weight,
           style: "normal" as const,
-          data: await readFile(join(ASSETS, "fonts", `${name}-${weight}.ttf`)),
+          data: toArrayBuffer(await readStaticAsset(`${ASSETS}/fonts/${name}-${weight}.ttf`)),
         })),
       ),
     );
-    return { hero: `data:image/jpeg;base64,${hero.toString("base64")}`, fonts };
+    return { hero: `data:image/jpeg;base64,${Buffer.from(hero).toString("base64")}`, fonts };
   })();
   return assets;
 }

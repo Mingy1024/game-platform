@@ -1,13 +1,57 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// 資料庫：Cloudflare D1（SQLite）。設計見帳號與登入設計稿第 2 節。
+//
+// 改了這個檔案之後：
+//   1. npm run db:migration -- <名稱>   產生 migrations/ 底下的 SQL
+//   2. npm run db:migrate:local         套用到本機 D1
+//   3. npm run db:generate              重新產生 Prisma Client
 
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
+  runtime  = "workerd"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
+}
+
+/// 玩家。之後每款遊戲的紀錄表都用 player_id 對到 id（不用 google_sub）。
+model Player {
+  /// 隨機 ID（21 字元），對外 API、紀錄、排行榜都用它
+  id            String    @id
+  /// google 或 guest。這次只會建立 google；guest 留給排行榜
+  kind          String
+  /// Google 帳號代碼（ID token 的 sub）。不存名字、信箱、大頭貼
+  googleSub     String?   @unique @map("google_sub")
+  /// 隨機暱稱：形容詞編號、名詞編號、四位數（存編號，每種語言顯示自己的翻譯）
+  nickAdj       Int       @map("nick_adj")
+  nickNoun      Int       @map("nick_noun")
+  nickNum       Int       @map("nick_num")
+  /// 自訂暱稱；有值就顯示它
+  nickCustom    String?   @map("nick_custom")
+  /// 自訂暱稱正規化後的值，用來擋重複
+  nickKey       String?   @unique @map("nick_key")
+  /// 最後一次自訂暱稱的時間，算 7 天冷卻
+  nickChangedAt DateTime? @map("nick_changed_at")
+  /// 建立時間、最後使用時間（訪客 90 天清除會用到）
+  createdAt     DateTime  @map("created_at")
+  lastSeenAt    DateTime  @map("last_seen_at")
+  sessions      Session[]
+
+  @@map("players")
+}
+
+/// 登入狀態。cookie 存隨機 token，資料庫只存它的 SHA-256。
+model Session {
+  /// token 的 SHA-256（hex）
+  id        String   @id
+  playerId  String   @map("player_id")
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  /// 到期時間：400 天，剩不到 200 天時使用就延長
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @map("created_at")
+
+  @@index([playerId])
+  @@index([expiresAt])
+  @@map("sessions")
 }

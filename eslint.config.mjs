@@ -16,6 +16,10 @@ const eslintConfig = defineConfig([
     ".claude/**",
     "test-results/**",
     "playwright-report/**",
+    ".open-next/**",
+    ".wrangler/**",
+    // wrangler types 產生的檔案
+    "cloudflare-env.d.ts",
   ]),
 ]);
 

@@ -20,6 +20,7 @@ type ExperienceValue = {
   locale: Locale;
   text: GameText;
   nav: Dictionary["nav"];
+  account: Dictionary["account"];
   start(mode: Mode): void;
 };
 
@@ -104,11 +105,13 @@ export function Experience({
   locale,
   text,
   nav,
+  account,
   children,
 }: {
   locale: Locale;
   text: GameText;
   nav: Dictionary["nav"];
+  account: Dictionary["account"];
   children: ReactNode;
 }) {
   const [playing, setPlaying] = useState<{ mode: Mode; key: number } | null>(null);
@@ -126,7 +129,7 @@ export function Experience({
     });
   }, []);
 
-  const value = useMemo(() => ({ locale, text, nav, start }), [locale, text, nav, start]);
+  const value = useMemo(() => ({ locale, text, nav, account, start }), [locale, text, nav, account, start]);
 
   return (
     <ExperienceContext.Provider value={value}>

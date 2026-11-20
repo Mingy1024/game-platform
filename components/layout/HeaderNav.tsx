@@ -7,7 +7,6 @@ import { Icon } from "@/components/ui/Icon";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/locales";
 import { LanguageMenu } from "./LanguageMenu";
-import { LoginSlot } from "./LoginSlot";
 
 type Labels = Dictionary["nav"];
 
@@ -70,7 +69,6 @@ export function HeaderNavView({
       </ul>
 
       <LanguageMenu locale={locale} pathname={pathname} labels={labels} />
-      <LoginSlot labels={labels} />
 
       <button
         type="button"

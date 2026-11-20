@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
+import { LoginResultBanner } from "@/components/account/LoginResultBanner";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { FLAGS } from "@/lib/flags";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { localeInfo, type Locale } from "@/lib/i18n/locales";
 
@@ -36,6 +38,7 @@ export function SiteShell({
         </a>
         <Header locale={locale} />
         <main id="main" className="flex-1">
+          {FLAGS.login ? <LoginResultBanner locale={locale} labels={dict.account} /> : null}
           {children}
         </main>
         <Footer locale={locale} />

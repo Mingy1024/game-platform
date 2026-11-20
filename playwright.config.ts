@@ -17,9 +17,25 @@ export default defineConfig({
     { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } } },
     { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: [
+    {
+      // 假的 Google 登入端點（tests/e2e/fake-google.mjs）
+      command: "node tests/e2e/fake-google.mjs",
+      url: "http://localhost:3999/health",
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      // 先把 migrations 套到本機 D1，再開開發伺服器；登入改連假的 Google
+      command: "npm run db:migrate:local && npm run dev",
+      url: "http://localhost:3000",
+      // 自己已經開著 npm run dev 時會直接沿用；那台沒設下面的環境變數的話，登入測試（account.spec.ts）會失敗
+      reuseExistingServer: !process.env.CI,
+      env: {
+        NEXT_PUBLIC_FEATURE_LOGIN: "1",
+        GOOGLE_OAUTH_TEST_BASE_URL: "http://localhost:3999",
+        GOOGLE_CLIENT_ID: "e2e-client.apps.googleusercontent.com",
+        GOOGLE_CLIENT_SECRET: "e2e-secret",
+      },
+    },
+  ],
 });

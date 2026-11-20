@@ -21,7 +21,7 @@
 | 純邏輯 | `lib/games/<slug>/*.ts` | 物理（固定步進）、計分、關卡產生（帶種子亂數）、遊戲流程 session（事件：depart／judged／final／restart…）、鏡頭計算、紀錄、分享代碼。**不得 import Phaser**（驗收 Q2） |
 | 單元測試 | `lib/games/<slug>/__tests__/` | describe 名稱用驗收編號開頭（「B1 煞車力」），驗收時直接對照 |
 | 頁面組裝 | `lib/games/<slug>/game-page.tsx` | gameMetadata、GamePage、sharedMetadata、SharedPage |
-| 成績圖 | `lib/games/<slug>/share/` | next/og 的 ImageResponse，1080×1350；字型子集在 `assets/share/fonts/`，用 `scripts/fetch-share-fonts.mjs` 產生 |
+| 成績圖 | `lib/games/<slug>/share/` | next/og 的 ImageResponse，1080×1350；字型子集在 `public/share-card/fonts/`（用 `lib/static-asset.ts` 讀，Workers 上沒有檔案系統），用 `scripts/fetch-share-fonts.mjs` 產生 |
 | 介紹頁 | `components/<slug>/` | 頁面、開始區、紀錄卡、Experience（介紹頁與遊戲畫面的切換，用 dynamic import 延遲載入遊戲） |
 | 遊戲畫面 | `components/<slug>/game/` | GameStage（portal 到 body、pushState 接管返回鍵、pointer capture、鍵盤、切分頁自動暫停、全螢幕）、scene.ts（Phaser）、panels.tsx（HUD 與各階段面板）、SharePanel |
 | 文字 | `lib/i18n/dictionaries/*.ts` | 每種語言檔新增一個遊戲 key（精準停車是 `preciseStop`）；zh-TW 是基準，型別會檢查其他語言對齊 |

@@ -55,7 +55,7 @@ export function PreciseStopPage({ locale, banner }: { locale: Locale; banner?: R
   ];
 
   return (
-    <Experience locale={locale} text={text} nav={dict.nav}>
+    <Experience locale={locale} text={text} nav={dict.nav} account={dict.account}>
       <Container className="py-5 sm:py-8">
         <Breadcrumb
           label={dict.breadcrumb.label}

@@ -16,8 +16,6 @@ export const zhCN: Dictionary = {
     language: "语言",
     languageSwitch: "切换语言，当前是{name}",
     close: "关闭",
-    login: "用 Google 登录",
-    loginShort: "登录",
     reserved: "预留",
   },
   footer: {
@@ -27,6 +25,8 @@ export const zhCN: Dictionary = {
     terms: "使用条款",
     contact: "联系与反馈",
     deviceNote: "游玩记录只保存在这台设备，清除浏览器数据后会消失。",
+    /** 登入功能打開時改用這句 */
+    deviceNoteLoggedOut: "未登录时，游戏记录只保存在这台设备上。",
   },
   actions: {
     play: "开始玩",
@@ -308,5 +308,28 @@ export const zhCN: Dictionary = {
     shared: {
       banner: "朋友拿到 {score} 分。换你挑战！",
     },
+  },
+  /** 帳號與登入（紀錄卡、登入提示條、App 內建瀏覽器提示） */
+  account: {
+    login: "用 Google 登录",
+    privacyNote: "只保存 Google 账号代码，不保存名字和邮箱。",
+    privacyLink: "隐私政策",
+    loggedIn: "已用 Google 登录",
+    nickLabel: "你在榜上叫",
+    changeNick: "改昵称",
+    loginOk: "登录成功",
+    sep: "・",
+    loginError: "登录没有完成",
+    loginErrorRest: "，可以再试一次。",
+    retry: "再试一次",
+    close: "关闭",
+    inAppTitle: "在 App 里不能用 Google 登录。",
+    inAppHint: "用手机浏览器打开这一页，就可以登录。",
+    inAppStep1: "点右上角的 {menu} 菜单",
+    inAppStep2: "选择“在浏览器中打开”或“在 Safari 中打开”",
+    inAppStep3: "在浏览器里点“用 Google 登录”",
+    copyLink: "复制链接",
+    copied: "已复制",
+    openBrowser: "用浏览器打开",
   },
 };

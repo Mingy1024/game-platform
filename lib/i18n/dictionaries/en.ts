@@ -16,8 +16,6 @@ export const en: Dictionary = {
     language: "Language",
     languageSwitch: "Change language. Current: {name}",
     close: "Close",
-    login: "Sign in with Google",
-    loginShort: "Sign in",
     reserved: "Soon",
   },
   footer: {
@@ -27,6 +25,8 @@ export const en: Dictionary = {
     terms: "Terms of use",
     contact: "Contact and feedback",
     deviceNote: "Your records are stored on this device only and are lost if you clear your browser data.",
+    /** 登入功能打開時改用這句 */
+    deviceNoteLoggedOut: "When you're not signed in, your records are stored on this device only.",
   },
   actions: {
     play: "Play",
@@ -308,5 +308,28 @@ export const en: Dictionary = {
     shared: {
       banner: "A friend scored {score}. Your turn!",
     },
+  },
+  /** 帳號與登入（紀錄卡、登入提示條、App 內建瀏覽器提示） */
+  account: {
+    login: "Sign in with Google",
+    privacyNote: "We only store your Google account ID, never your name or email.",
+    privacyLink: "Privacy policy",
+    loggedIn: "Signed in with Google",
+    nickLabel: "You're on the board as",
+    changeNick: "Change nickname",
+    loginOk: "Signed in",
+    sep: " · ",
+    loginError: "Sign-in didn't finish",
+    loginErrorRest: ". You can try again.",
+    retry: "Try again",
+    close: "Close",
+    inAppTitle: "Google sign-in doesn't work inside apps.",
+    inAppHint: "Open this page in your phone's browser to sign in.",
+    inAppStep1: "Tap the {menu} menu in the top-right corner",
+    inAppStep2: "Choose “Open in browser” or “Open in Safari”",
+    inAppStep3: "In the browser, tap “Sign in with Google”",
+    copyLink: "Copy link",
+    copied: "Copied",
+    openBrowser: "Open in browser",
   },
 };
