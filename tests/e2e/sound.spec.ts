@@ -118,26 +118,33 @@ test("R5 出發有點擊音；結算有跑分音，第一次就是新紀錄；�
   expect((await soundLog(page)).at(-1)).toBe("ui-click.mp3");
 });
 
-test("R6 靜音鈕在暫停鈕左邊，44 px 以上；暫停選單的開關同步", async ({ page }) => {
+test("R6 R14 右上依序是音樂鈕、音效鈕、暫停鈕，44 px 以上；暫停選單的開關同步", async ({ page }) => {
   await enterGame(page);
   await waitLoaded(page);
   await depart(page);
+  const music = page.getByTestId("music-button");
   const mute = page.getByTestId("mute-button");
   await expect(mute).toHaveAttribute("aria-label", "關閉音效");
   await expect(mute).toHaveAttribute("aria-pressed", "false");
+  await expect(music).toHaveAttribute("aria-label", "關閉音樂");
+  await expect(music).toHaveAttribute("aria-pressed", "false");
   const pause = page.getByTestId("scene").getByRole("button", { name: "暫停" });
-  const [muteBox, pauseBox, frame] = await Promise.all([
+  const [musicBox, muteBox, pauseBox, frame] = await Promise.all([
+    music.boundingBox(),
     mute.boundingBox(),
     pause.boundingBox(),
     page.getByTestId("game-frame").boundingBox(),
   ]);
-  expect(muteBox!.width).toBeGreaterThanOrEqual(44);
-  expect(muteBox!.height).toBeGreaterThanOrEqual(44);
-  // 右上：暫停鈕左邊、同一列
+  for (const box of [musicBox!, muteBox!]) {
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    expect(Math.abs(box.y - pauseBox!.y)).toBeLessThan(2);
+  }
+  // 右上同一列：音樂 → 音效 → 暫停
+  expect(musicBox!.x + musicBox!.width).toBeLessThanOrEqual(muteBox!.x);
   expect(muteBox!.x + muteBox!.width).toBeLessThanOrEqual(pauseBox!.x);
-  expect(Math.abs(muteBox!.y - pauseBox!.y)).toBeLessThan(2);
   expect(muteBox!.y - frame!.y).toBeLessThan(frame!.height / 4);
-  expect(muteBox!.x).toBeGreaterThan(frame!.x + frame!.width / 2);
+  expect(musicBox!.x).toBeGreaterThan(frame!.x + frame!.width / 2);
 
   await mute.click();
   await expect(mute).toHaveAttribute("aria-pressed", "true");
@@ -147,6 +154,7 @@ test("R6 靜音鈕在暫停鈕左邊，44 px 以上；暫停選單的開關同�
   await pause.click();
   const toggle = page.getByTestId("sound-switch");
   await expect(toggle).toHaveAttribute("aria-checked", "false");
+  await expect(page.getByTestId("music-switch")).toHaveAttribute("aria-checked", "true");
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-checked", "true");
   await page.getByTestId("resume-button").click();
@@ -154,23 +162,28 @@ test("R6 靜音鈕在暫停鈕左邊，44 px 以上；暫停選單的開關同�
   expect((await soundState(page)).muted).toBe(false);
 });
 
-test("R6 七種語言的靜音鈕都有無障礙名稱", async ({ page }) => {
-  const names: Record<string, [string, string]> = {
-    "": ["關閉音效", "開啟音效"],
-    "/zh-cn": ["关闭音效", "开启音效"],
-    "/en": ["Mute sound", "Turn sound on"],
-    "/ja": ["サウンドをオフ", "サウンドをオン"],
-    "/ko": ["소리 끄기", "소리 켜기"],
-    "/vi": ["Tắt âm thanh", "Bật âm thanh"],
-    "/pt": ["Desativar som", "Ativar som"],
+test("R6 R14 七種語言的音效鈕、音樂鈕都有無障礙名稱", async ({ page }) => {
+  const names: Record<string, [string, string, string, string]> = {
+    "": ["關閉音效", "開啟音效", "關閉音樂", "開啟音樂"],
+    "/zh-cn": ["关闭音效", "开启音效", "关闭音乐", "开启音乐"],
+    "/en": ["Mute sound effects", "Turn sound effects on", "Mute music", "Turn music on"],
+    "/ja": ["効果音をオフ", "効果音をオン", "音楽をオフ", "音楽をオン"],
+    "/ko": ["효과음 끄기", "효과음 켜기", "음악 끄기", "음악 켜기"],
+    "/vi": ["Tắt hiệu ứng âm thanh", "Bật hiệu ứng âm thanh", "Tắt nhạc", "Bật nhạc"],
+    "/pt": ["Desativar efeitos sonoros", "Ativar efeitos sonoros", "Desativar música", "Ativar música"],
   };
-  for (const [prefix, [on, off]] of Object.entries(names)) {
+  for (const [prefix, [on, off, musicOn, musicOff]] of Object.entries(names)) {
     await enterGame(page, "daily", `${prefix}${GAME}`);
-    const mute = page.getByTestId("mute-button");
-    await expect(mute).toHaveAttribute("aria-label", on);
-    await mute.click();
-    await expect(mute).toHaveAttribute("aria-label", off);
-    await mute.click();
+    for (const [id, a, b] of [
+      ["mute-button", on, off],
+      ["music-button", musicOn, musicOff],
+    ] as const) {
+      const button = page.getByTestId(id);
+      await expect(button).toHaveAttribute("aria-label", a);
+      await button.click();
+      await expect(button).toHaveAttribute("aria-label", b);
+      await button.click();
+    }
   }
 });
 
@@ -292,28 +305,46 @@ test("R13 R15 背景音樂在介紹頁不載入；遊戲畫面出現後載入並
   await expect.poll(async () => (await soundState(page)).musicDuck, { timeout: 5_000 }).toBeGreaterThan(0.9);
 });
 
-test("R14 暫停選單的音樂開關只關音樂；記在本機；靜音鈕仍關全部", async ({ page }) => {
+test("R14 音效、音樂各自獨立：右上鈕和暫停選單同步；記在本機", async ({ page }) => {
   await enterGame(page);
   await waitMusic(page);
   await depart(page);
-  await page.getByTestId("scene").getByRole("button", { name: "暫停" }).click();
-  const music = page.getByTestId("music-switch");
-  await expect(music).toHaveAttribute("aria-checked", "true");
-  await expect(music).toHaveText(/音樂/);
-  await music.click();
-  await expect(music).toHaveAttribute("aria-checked", "false");
-  await expect(page.getByTestId("sound-switch")).toHaveAttribute("aria-checked", "true");
-  await page.getByTestId("resume-button").click();
+
+  // 右上音效鈕只關音效，音樂照播
+  await page.getByTestId("mute-button").click();
+  await expect.poll(async () => (await soundState(page)).sfxGain).toBeLessThan(0.01);
+  let state = await soundState(page);
+  expect(state.musicOn).toBe(true);
+  expect(state.musicGain).toBeGreaterThan(0.2);
+  await page.getByTestId("mute-button").click();
+
+  // 右上音樂鈕只關音樂，音效照常
+  const corner = page.getByTestId("music-button");
+  await corner.click();
+  await expect(corner).toHaveAttribute("aria-pressed", "true");
   await expect.poll(async () => (await soundState(page)).musicGain).toBeLessThan(0.01);
-  const state = await soundState(page);
+  await expect.poll(async () => (await soundState(page)).sfxGain).toBeGreaterThan(0.99);
+  state = await soundState(page);
   expect(state.musicOn).toBe(false);
   expect(state.muted).toBe(false);
+
+  // 暫停選單的音樂開關和右上同步
+  await page.getByTestId("scene").getByRole("button", { name: "暫停" }).click();
+  const music = page.getByTestId("music-switch");
+  await expect(music).toHaveText(/音樂/);
+  await expect(music).toHaveAttribute("aria-checked", "false");
+  await expect(page.getByTestId("sound-switch")).toHaveAttribute("aria-checked", "true");
+  await music.click();
+  await expect(music).toHaveAttribute("aria-checked", "true");
+  await music.click();
+  await page.getByTestId("resume-button").click();
+  await expect(corner).toHaveAttribute("aria-pressed", "true");
 
   await page.reload();
   await enterGame(page, "free");
   expect((await soundState(page)).musicOn).toBe(false);
-  await page.getByTestId("mute-button").click();
-  expect((await soundState(page)).muted).toBe(true);
+  await expect(page.getByTestId("music-button")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("mute-button")).toHaveAttribute("aria-pressed", "false");
 });
 
 test("R14 瀏覽器不允許儲存時音樂照常播放", async ({ page }) => {

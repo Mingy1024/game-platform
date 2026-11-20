@@ -257,6 +257,8 @@ export const zhCN: Dictionary = {
     stage: {
       mute: "关闭音效",
       unmute: "开启音效",
+      muteMusic: "关闭音乐",
+      unmuteMusic: "开启音乐",
       back: "回到游戏介绍",
       pause: "暂停",
       restart: "重新开始",

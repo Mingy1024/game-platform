@@ -259,6 +259,8 @@ export const zhTW = {
     stage: {
       mute: "關閉音效",
       unmute: "開啟音效",
+      muteMusic: "關閉音樂",
+      unmuteMusic: "開啟音樂",
       back: "回到遊戲介紹",
       pause: "暫停",
       restart: "重新開始",

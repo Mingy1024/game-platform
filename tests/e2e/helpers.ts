@@ -23,6 +23,7 @@ export type SoundState = {
   supported: boolean;
   context: string;
   muted: boolean;
+  sfxGain: number;
   active: boolean;
   loaded: number;
   failed: number;

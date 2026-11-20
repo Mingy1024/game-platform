@@ -35,6 +35,8 @@ export class GameSound {
 
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
+  /** 音效匯流排：右上喇叭鈕只關這一條（背景音樂另走 musicBus） */
+  private sfxBus: GainNode | null = null;
   private buffers = new Map<SoundFile, AudioBuffer>();
   private run: Loop | null = null;
   private brake: Loop | null = null;
@@ -60,8 +62,10 @@ export class GameSound {
     try {
       this.ctx = new Context();
       this.master = this.ctx.createGain();
-      this.master.gain.value = muted ? 0 : 1;
       this.master.connect(this.ctx.destination);
+      this.sfxBus = this.ctx.createGain();
+      this.sfxBus.gain.value = muted ? 0 : 1;
+      this.sfxBus.connect(this.master);
       this.musicBus = this.ctx.createGain();
       this.musicBus.gain.value = musicOn ? MUSIC_GAIN : 0;
       this.musicBus.connect(this.master);
@@ -75,6 +79,7 @@ export class GameSound {
       supported: this.ctx !== null,
       context: this.ctx?.state ?? "none",
       muted: this.muted,
+      sfxGain: this.sfxBus?.gain.value ?? 0,
       active: this.active,
       loaded: this.loaded,
       failed: this.failed,
@@ -150,7 +155,7 @@ export class GameSound {
     return (ctx.currentTime - this.musicStartedAt) % buffer.duration;
   }
 
-  /** 暫停選單的「音樂」開關 */
+  /** 右上音符鈕與暫停選單的「音樂」開關 */
   setMusicOn(on: boolean): void {
     this.musicOn = on;
     const ctx = this.ctx;
@@ -168,11 +173,12 @@ export class GameSound {
     gain.setTargetAtTime(1, start + seconds, 0.3);
   }
 
+  /** 右上喇叭鈕與暫停選單的「音效」開關：只關音效，不影響背景音樂 */
   setMuted(muted: boolean): void {
     this.muted = muted;
     const ctx = this.ctx;
-    if (!ctx || !this.master) return;
-    this.master.gain.setTargetAtTime(muted ? 0 : 1, ctx.currentTime, 0.02);
+    if (!ctx || !this.sfxBus) return;
+    this.sfxBus.gain.setTargetAtTime(muted ? 0 : 1, ctx.currentTime, 0.02);
   }
 
   /** false：暫停、切分頁，所有聲音立即停止；true：恢復 */
@@ -214,12 +220,12 @@ export class GameSound {
     const buffer = this.buffers.get(name);
     this.log.push({ name, at: Math.round(performance.now()) });
     if (this.log.length > 100) this.log.shift();
-    if (!ctx || !buffer || !this.master || this.disposed) return;
+    if (!ctx || !buffer || !this.sfxBus || this.disposed) return;
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     const gain = ctx.createGain();
     gain.gain.value = SOUND_GAIN[name];
-    source.connect(gain).connect(this.master);
+    source.connect(gain).connect(this.sfxBus);
     source.start(ctx.currentTime + delay);
     this.duck(duckSeconds(name), delay);
     if (delay > 0) {
@@ -268,13 +274,13 @@ export class GameSound {
   private startLoop(name: "run-loop.wav" | "brake-loop.wav"): Loop | null {
     const ctx = this.ctx;
     const buffer = this.buffers.get(name);
-    if (!ctx || !buffer || !this.master) return null;
+    if (!ctx || !buffer || !this.sfxBus) return null;
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     source.loop = true;
     const gain = ctx.createGain();
     gain.gain.value = 0;
-    source.connect(gain).connect(this.master);
+    source.connect(gain).connect(this.sfxBus);
     source.start();
     return { source, gain };
   }

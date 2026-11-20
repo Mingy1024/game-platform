@@ -255,8 +255,10 @@ export const ko: Dictionary = {
       note: "탭이나 앱을 전환하면 자동으로 일시정지됩니다. 계속하면 브레이크가 0으로 돌아갑니다.",
     },
     stage: {
-      mute: "소리 끄기",
-      unmute: "소리 켜기",
+      mute: "효과음 끄기",
+      unmute: "효과음 켜기",
+      muteMusic: "음악 끄기",
+      unmuteMusic: "음악 켜기",
       back: "게임 소개로 돌아가기",
       pause: "일시정지",
       restart: "다시 시작",

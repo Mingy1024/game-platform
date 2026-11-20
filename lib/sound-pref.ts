@@ -4,8 +4,8 @@ import { useSyncExternalStore } from "react";
 
 /**
  * 全站共用的聲音設定，記在本機；瀏覽器不允許儲存時只記在這次瀏覽。
- * - muted：右上的靜音鈕，關掉全部聲音（預設有聲）
- * - musicOff：暫停選單的「音樂」開關，只關背景音樂（預設開）
+ * - muted：右上的喇叭鈕＋暫停選單「音效」，只關音效（預設有聲）
+ * - musicOff：右上的音符鈕＋暫停選單「音樂」，只關背景音樂（預設開）
  */
 function createPref(key: string) {
   const listeners = new Set<() => void>();

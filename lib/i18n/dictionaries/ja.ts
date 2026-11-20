@@ -255,8 +255,10 @@ export const ja: Dictionary = {
       note: "タブやアプリを切り替えると自動で一時停止します。再開時はブレーキが 0 に戻ります。",
     },
     stage: {
-      mute: "サウンドをオフ",
-      unmute: "サウンドをオン",
+      mute: "効果音をオフ",
+      unmute: "効果音をオン",
+      muteMusic: "音楽をオフ",
+      unmuteMusic: "音楽をオン",
       back: "ゲーム紹介に戻る",
       pause: "一時停止",
       restart: "やり直す",

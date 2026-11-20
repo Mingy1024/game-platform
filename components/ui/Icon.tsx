@@ -7,6 +7,7 @@ const paths = {
   volume: "M4 10v4h3l5 4V6L7 10H4zm12-1a4 4 0 0 1 0 6m2.5-9a8 8 0 0 1 0 12",
   volumeOff: "M4 10v4h3l5 4V6L7 10H4zm12 0l5 5m0-5l-5 5",
   music: "M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm11-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z",
+  musicOff: "M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm11-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM3 3l18 18",
   pause: "M9 5v14M15 5v14",
   restart: "M5 12a7 7 0 1 0 2.2-5.1M5 4v4h4",
   expand: "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5",

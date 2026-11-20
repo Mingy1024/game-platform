@@ -42,7 +42,16 @@ export function gradeLabel(stop: RouteStop, text: GameText): string {
   return fmt(kind === "up" ? text.grade.upValue : text.grade.downValue, { value });
 }
 
-/** 靜音鈕：只用喇叭圖示表示開／關（R6），狀態全站共用 */
+const cornerButton = {
+  width: u(44),
+  height: u(44),
+  minWidth: 44,
+  minHeight: 44,
+  borderRadius: u(12),
+  background: "rgba(16,19,26,0.75)",
+};
+
+/** 音效鈕：喇叭圖示，只開關音效（R6），狀態全站共用 */
 export function MuteButton({ text, onToggle }: { text: GameText; onToggle?(): void }) {
   const muted = useMuted();
   return (
@@ -57,17 +66,39 @@ export function MuteButton({ text, onToggle }: { text: GameText; onToggle?(): vo
         onToggle?.();
       }}
       className="flex shrink-0 cursor-pointer items-center justify-center text-white"
-      style={{
-        width: u(44),
-        height: u(44),
-        minWidth: 44,
-        minHeight: 44,
-        borderRadius: u(12),
-        background: "rgba(16,19,26,0.75)",
-      }}
+      style={cornerButton}
     >
       <Icon name={muted ? "volumeOff" : "volume"} size={22} />
     </button>
+  );
+}
+
+/** 音樂鈕：音符圖示，只開關背景音樂（R14），狀態全站共用 */
+export function MusicButton({ text }: { text: GameText }) {
+  const off = useMusicOff();
+  return (
+    <button
+      type="button"
+      data-no-brake
+      data-testid="music-button"
+      aria-label={off ? text.stage.unmuteMusic : text.stage.muteMusic}
+      aria-pressed={off}
+      onClick={() => setMusicOff(!off)}
+      className="flex shrink-0 cursor-pointer items-center justify-center text-white"
+      style={cornerButton}
+    >
+      <Icon name={off ? "musicOff" : "music"} size={22} />
+    </button>
+  );
+}
+
+/** 右上的聲音鈕組：音樂、音效各一顆 */
+export function SoundButtons({ text }: { text: GameText }) {
+  return (
+    <>
+      <MusicButton text={text} />
+      <MuteButton text={text} />
+    </>
   );
 }
 
@@ -111,8 +142,8 @@ export function SceneTags({
         </div>
       </div>
       <div className="flex shrink-0" style={{ gap: u(6) }}>
-        {/* 站點介紹和結算有自己的靜音鈕（蓋在場景上面），這裡只在行駛與判定時出現 */}
-        {(phase === "running" || phase === "judged") && <MuteButton text={text} />}
+        {/* 站點介紹和結算有自己的聲音鈕（蓋在場景上面），這裡只在行駛與判定時出現 */}
+        {(phase === "running" || phase === "judged") && <SoundButtons text={text} />}
         {phase === "running" && (
           <button
             type="button"
@@ -120,14 +151,7 @@ export function SceneTags({
             aria-label={text.stage.pause}
             onClick={onPause}
             className="flex shrink-0 cursor-pointer items-center justify-center text-white"
-            style={{
-              width: u(44),
-              height: u(44),
-              minWidth: 44,
-              minHeight: 44,
-              borderRadius: u(12),
-              background: "rgba(16,19,26,0.75)",
-            }}
+            style={cornerButton}
           >
             <Icon name="pause" size={22} />
           </button>
@@ -322,8 +346,8 @@ export function Briefing({
       />
       {stop.rain && <div className="ps-rain absolute inset-0" />}
       <div className="absolute inset-0" style={{ background: "rgba(16,19,26,0.3)" }} />
-      <div className="absolute z-10" style={{ right: u(14), top: u(12) }}>
-        <MuteButton text={text} />
+      <div className="absolute z-10 flex" style={{ right: u(14), top: u(12), gap: u(6) }}>
+        <SoundButtons text={text} />
       </div>
 
       <div
@@ -595,7 +619,9 @@ export function FinalPanel({
               {fmt(text.final.terminal, { name: stationName(lastStop.station, locale).name })}
             </span>
           )}
-          <MuteButton text={text} />
+          <div className="flex shrink-0" style={{ gap: u(6) }}>
+            <SoundButtons text={text} />
+          </div>
         </div>
       </div>
       <div className="flex flex-col items-center" style={{ gap: u(2) }}>
@@ -834,7 +860,7 @@ export function PauseDialog({
   );
 }
 
-/** 暫停選單裡的音效開關，和右上的靜音鈕同步（R6） */
+/** 暫停選單裡的音效開關，和右上的喇叭鈕同步（R6） */
 function SoundSwitch({ text }: { text: GameText }) {
   const muted = useMuted();
   return (
@@ -844,11 +870,11 @@ function SoundSwitch({ text }: { text: GameText }) {
   );
 }
 
-/** 暫停選單裡的音樂開關：只關背景音樂（R14） */
+/** 暫停選單裡的音樂開關，和右上的音符鈕同步（R14） */
 function MusicSwitch({ text }: { text: GameText }) {
   const off = useMusicOff();
   return (
-    <Switch on={!off} onToggle={() => setMusicOff(!off)} testId="music-switch" icon="music">
+    <Switch on={!off} onToggle={() => setMusicOff(!off)} testId="music-switch" icon={off ? "musicOff" : "music"}>
       {text.pause.music}
     </Switch>
   );
@@ -864,7 +890,7 @@ function Switch({
   on: boolean;
   onToggle(): void;
   testId: string;
-  icon: "volume" | "volumeOff" | "music";
+  icon: "volume" | "volumeOff" | "music" | "musicOff";
   children: React.ReactNode;
 }) {
   const muted = !on;

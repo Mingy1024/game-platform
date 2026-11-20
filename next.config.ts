@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  // 開發模式允許區網裝置（手機測試）載入 /_next 資源
+  allowedDevOrigins: ["192.168.0.16"],
   cacheComponents: true,
   partialPrefetching: true,
   experimental: {

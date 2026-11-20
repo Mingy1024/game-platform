@@ -255,8 +255,10 @@ export const en: Dictionary = {
       note: "The game pauses when you switch tabs or apps. The brake resets when you resume.",
     },
     stage: {
-      mute: "Mute sound",
-      unmute: "Turn sound on",
+      mute: "Mute sound effects",
+      unmute: "Turn sound effects on",
+      muteMusic: "Mute music",
+      unmuteMusic: "Turn music on",
       back: "Back to game info",
       pause: "Pause",
       restart: "Restart",

@@ -256,8 +256,10 @@ export const pt: Dictionary = {
       note: "O jogo pausa quando você troca de aba ou de aplicativo. Ao continuar, o freio volta a zero.",
     },
     stage: {
-      mute: "Desativar som",
-      unmute: "Ativar som",
+      mute: "Desativar efeitos sonoros",
+      unmute: "Ativar efeitos sonoros",
+      muteMusic: "Desativar música",
+      unmuteMusic: "Ativar música",
       back: "Voltar à página do jogo",
       pause: "Pausar",
       restart: "Reiniciar",

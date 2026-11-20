@@ -255,8 +255,10 @@ export const vi: Dictionary = {
       note: "Game tự tạm dừng khi bạn chuyển tab hoặc ứng dụng. Khi tiếp tục, lực phanh trở về 0.",
     },
     stage: {
-      mute: "Tắt âm thanh",
-      unmute: "Bật âm thanh",
+      mute: "Tắt hiệu ứng âm thanh",
+      unmute: "Bật hiệu ứng âm thanh",
+      muteMusic: "Tắt nhạc",
+      unmuteMusic: "Bật nhạc",
       back: "Về trang giới thiệu game",
       pause: "Tạm dừng",
       restart: "Chơi lại",
