@@ -17,8 +17,14 @@ export type MeState =
 let state: MeState = { status: "loading" };
 let started = false;
 const listeners = new Set<() => void>();
+/**
+ * 狀態每換一次就加一。重新讀取（refreshMe）回來時如果這段期間狀態已經換過
+ * （例如登出、刪除帳號、改名成功），就丟掉讀到的結果，不讓晚到的舊資料蓋掉比較新的狀態。
+ */
+let version = 0;
 
 function set(next: MeState) {
+  version += 1;
   state = next;
   for (const listener of listeners) listener();
 }
@@ -30,7 +36,8 @@ function fromResponse(body: MeResponse): MeState {
 }
 
 /**
- * 向伺服器重新讀取登入狀態，成功時回傳 true。
+ * 向伺服器重新讀取登入狀態。回傳 true 表示目前的狀態已經是最新的
+ * （讀取成功，或讀取期間狀態已經被更新的結果取代）；false 表示讀取失敗。
  * keepOnError：讀取失敗時保留目前的狀態（已經登入、只是想更新暱稱時，不要因為一次網路錯誤把整個帳號畫面換成錯誤）
  */
 export async function refreshMe({ keepOnError = false } = {}): Promise<boolean> {
@@ -38,12 +45,15 @@ export async function refreshMe({ keepOnError = false } = {}): Promise<boolean> 
     set({ status: "loggedOut" });
     return true;
   }
+  const startedAt = version;
   try {
     const response = await fetch("/api/me", { cache: "no-store", credentials: "same-origin" });
     if (!response.ok) throw new Error(String(response.status));
-    set(fromResponse((await response.json()) as MeResponse));
+    const body = (await response.json()) as MeResponse;
+    if (version === startedAt) set(fromResponse(body));
     return true;
   } catch {
+    if (version !== startedAt) return true;
     if (!keepOnError) set({ status: "error" });
     return false;
   }
@@ -84,8 +94,14 @@ export async function deleteAccount(): Promise<boolean> {
   return true;
 }
 
-/** stale：暱稱在別的地方改過了，但重新讀取最新狀態失敗 */
-export type NickResult = { ok: true } | { ok: false; error: NickError | "network" | "stale"; nickNextAt?: Date };
+/**
+ * stale：伺服器回了 conflict 或 too_soon（暱稱可能在別的地方改過了），但重新讀取最新狀態失敗；
+ * cause 是原本的錯誤，重新讀取成功後畫面改顯示它
+ */
+export type NickResult =
+  | { ok: true }
+  | { ok: false; error: NickError | "network"; nickNextAt?: Date }
+  | { ok: false; error: "stale"; cause: "conflict" | "too_soon"; nickNextAt?: Date };
 
 /** 自訂暱稱；custom 是 null 時改回隨機名字 */
 export async function saveNick(custom: string | null): Promise<NickResult> {
@@ -106,10 +122,11 @@ export async function saveNick(custom: string | null): Promise<NickResult> {
   // 帳號剛在別的分頁改過（conflict），或冷卻中（too_soon，可能也是別的分頁剛改名）：
   // 等重新讀取完成，畫面才換成最新的暱稱和下次可以改的時間
   if (body.error === "conflict" || body.error === "too_soon") {
-    const refreshed = await refreshMe({ keepOnError: true });
-    if (!refreshed && body.error === "conflict") return { ok: false, error: "stale" };
-    // 讀取失敗時至少同步冷卻時間，表單跟著停用
-    if (!refreshed && nickNextAt && state.status === "loggedIn") set({ ...state, nickNextAt });
+    if (!(await refreshMe({ keepOnError: true }))) {
+      // 讀取失敗時至少同步冷卻時間，表單跟著停用；畫面提供重新讀取
+      if (nickNextAt && state.status === "loggedIn") set({ ...state, nickNextAt });
+      return { ok: false, error: "stale", cause: body.error, nickNextAt };
+    }
   }
   return {
     ok: false,

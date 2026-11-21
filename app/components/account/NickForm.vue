@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { refreshMe, saveNick, type NickResult } from "@/lib/account/me-store";
+import { readMe, refreshMe, saveNick, type NickResult } from "@/lib/account/me-store";
 import { nickText, type Nick } from "@/lib/account/nick/nick";
 import { checkNickFormat, cleanNick, nickLength, NICK_COOLDOWN_MS, NICK_MAX } from "@/lib/account/nick/rules";
 
@@ -28,7 +28,7 @@ const { current, nextAt } = defineProps<{ current: Nick; nextAt: Date | null }>(
 
 const id = useId();
 const value = ref(current.custom ?? "");
-const serverError = ref<{ error: FormError; next?: Date } | null>(null);
+const serverError = ref<{ error: FormError; next?: Date; cause?: "conflict" | "too_soon" } | null>(null);
 const saved = ref(false);
 const busy = ref(false);
 const afterSave = taiwanDay(new Date(Date.now() + NICK_COOLDOWN_MS));
@@ -44,13 +44,14 @@ const coolingDown = computed(() => nextAt !== null);
 const unchanged = computed(() => cleaned.value === (current.custom ?? ""));
 const randomName = computed(() => nickText({ ...current, custom: null }, "zh-TW"));
 
-// 帳號狀態更新時（儲存成功、別的分頁改過名字後重新讀取），輸入框跟著換成最新的暱稱
-watch(
-  () => current.custom,
-  (latest) => {
-    value.value = latest ?? "";
-  },
-);
+/**
+ * 輸入框換成帳號目前的暱稱（儲存成功、別的地方改過名字後重新讀取完成時）。
+ * 直接讀共用的狀態，不等 props 更新；即使暱稱和原本一樣也要換，才會清掉沒存成的草稿。
+ */
+function syncInput() {
+  const latest = readMe();
+  if (latest.status === "loggedIn") value.value = latest.nick.custom ?? "";
+}
 
 function onInput(event: Event) {
   value.value = (event.target as HTMLInputElement).value;
@@ -64,8 +65,14 @@ async function submit() {
   serverError.value = null;
   const result = await saveNick(cleaned.value);
   busy.value = false;
-  if (result.ok) saved.value = true;
-  else serverError.value = { error: result.error, next: result.nickNextAt };
+  if (result.ok) {
+    syncInput();
+    saved.value = true;
+    return;
+  }
+  // conflict／too_soon 時 saveNick 已經重新讀取過，輸入框換成最新的暱稱
+  if (result.error === "conflict" || result.error === "too_soon") syncInput();
+  serverError.value = { error: result.error, next: result.nickNextAt, cause: result.error === "stale" ? result.cause : undefined };
 }
 
 async function reset() {
@@ -73,16 +80,23 @@ async function reset() {
   serverError.value = null;
   const result = await saveNick(null);
   busy.value = false;
-  if (result.ok) saved.value = true;
-  else serverError.value = { error: result.error };
+  if (result.ok) {
+    syncInput();
+    saved.value = true;
+  } else serverError.value = { error: result.error, cause: result.error === "stale" ? result.cause : undefined };
 }
 
-/** 讀不到最新暱稱時重試；成功後輸入框會由上面的 watch 換成最新的 */
+/** 讀不到最新暱稱時重試；成功後輸入框換成最新的暱稱，提示改回原本的錯誤（conflict 或 too_soon） */
 async function retryRefresh() {
+  const cause = serverError.value?.cause ?? "conflict";
+  const next = serverError.value?.next;
   busy.value = true;
   const refreshed = await refreshMe({ keepOnError: true });
   busy.value = false;
-  if (refreshed) serverError.value = { error: "conflict" };
+  if (!refreshed) return;
+  syncInput();
+  const latest = readMe();
+  serverError.value = { error: cause, next: latest.status === "loggedIn" ? (latest.nickNextAt ?? undefined) : next };
 }
 </script>
 
