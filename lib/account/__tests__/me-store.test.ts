@@ -142,6 +142,33 @@ describe("前端登入狀態：回應順序和送出順序不同時", () => {
     expect(customOf(store)).toBeNull();
   });
 
+  it("排隊中的改名，排隊期間登出就不送出", async () => {
+    const first = store.saveNick("名字甲");
+    const second = store.saveNick("名字乙");
+    await vi.waitFor(() => expect(pending).toHaveLength(1));
+    const logout = store.logout();
+    pending[1].resolve(json({ ok: true }));
+    await logout;
+    pending[0].resolve(json(me("名字甲", daysLater(7))));
+    await first;
+    expect(await second).toEqual({ ok: false, error: "network" });
+    expect(pending).toHaveLength(2);
+    expect(customOf(store)).toBe("loggedOut");
+  });
+
+  it("沒有 AbortSignal.timeout 的瀏覽器：照常送出請求", async () => {
+    const original = AbortSignal.timeout;
+    Object.defineProperty(AbortSignal, "timeout", { value: undefined, configurable: true });
+    try {
+      const refresh = store.refreshMe();
+      expect(pending).toHaveLength(1);
+      pending[0].resolve(json(me("新名字")));
+      expect(await refresh).toBe("applied");
+    } finally {
+      Object.defineProperty(AbortSignal, "timeout", { value: original, configurable: true });
+    }
+  });
+
   it("讀取到未登入（別的分頁登出）後，晚到的改名成功不會改回登入", async () => {
     const save = store.saveNick("新名字");
     await vi.waitFor(() => expect(pending).toHaveLength(1));

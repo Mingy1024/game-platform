@@ -38,7 +38,18 @@ let refreshTicket = 0;
 
 /** 每個請求的等待上限：網路卡住時不會讓畫面或等待中的讀取一直等下去 */
 const REQUEST_TIMEOUT_MS = 15_000;
-const withTimeout = (init: RequestInit = {}): RequestInit => ({ ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+/** 舊版瀏覽器（例如 Safari 16 以前）沒有 AbortSignal.timeout，改用 AbortController 加計時器；建立失敗也不能讓請求丟例外 */
+function timeoutSignal(): AbortSignal | undefined {
+  try {
+    if (typeof AbortSignal.timeout === "function") return AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    return controller.signal;
+  } catch {
+    return undefined;
+  }
+}
+const withTimeout = (init: RequestInit = {}): RequestInit => ({ ...init, signal: timeoutSignal() });
 
 /**
  * applied：讀到的資料已經寫入，狀態是最新的
@@ -159,10 +170,16 @@ export type NickResult =
   | { ok: true; quiet?: true }
   | { ok: false; error: NickError | "network" | "stale"; nickNextAt?: Date; synced?: true };
 
-/** 改名排隊：前一件做完（不論成功失敗）才開始下一件 */
+/**
+ * 改名排隊：前一件做完（不論成功失敗）才開始下一件。
+ * 排隊期間登出的話，輪到時不送出：同一個瀏覽器可能已經在別的分頁登入別的帳號，舊表單的操作不能送到新帳號。
+ */
 let nickQueue: Promise<unknown> = Promise.resolve();
 function enqueue(task: () => Promise<NickResult>): Promise<NickResult> {
-  const result = nickQueue.then(task, task);
+  const sessionAt = session;
+  const guarded = (): Promise<NickResult> =>
+    session === sessionAt ? task().catch((): NickResult => ({ ok: false, error: "network" })) : Promise.resolve({ ok: false, error: "network" });
+  const result = nickQueue.then(guarded, guarded);
   nickQueue = result.catch(() => undefined);
   return result;
 }

@@ -74,8 +74,14 @@ async function run(action: () => Promise<NickResult>) {
   busy.value = true;
   serverError.value = null;
   saved.value = false;
-  const result = await action();
-  busy.value = false;
+  let result: NickResult;
+  try {
+    result = await action();
+  } catch {
+    result = { ok: false, error: "network" };
+  } finally {
+    busy.value = false;
+  }
   show(result);
 }
 
