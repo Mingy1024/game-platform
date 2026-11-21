@@ -65,7 +65,7 @@ function onInput(event: Event) {
  */
 function show(result: NickResult) {
   if (result.ok || result.synced) syncInput();
-  if (result.ok) saved.value = true;
+  if (result.ok) saved.value = !result.quiet;
   else serverError.value = { error: result.error, next: result.nickNextAt };
 }
 
