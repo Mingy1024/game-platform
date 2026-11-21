@@ -89,6 +89,7 @@ export function applyRun(
     else if (run.dateKey) next.daily[run.dateKey] = run.total;
   }
   const keys = Object.keys(next.daily).sort();
+  // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- 只保留最近 KEEP_DAYS 天的每日紀錄
   for (const key of keys.slice(0, Math.max(0, keys.length - KEEP_DAYS))) delete next.daily[key];
   return { records: next, previousBest, isNewRecord };
 }

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { GAME, depart, enterGame, playToFinal, setAutopilot, snapshot, watchConsole } from "./helpers";
 
 test("I2 介紹頁的內容齊全，今日路線預覽和實際路線一致", async ({ page, isMobile }) => {

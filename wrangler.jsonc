@@ -1,0 +1,37 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Nuxt（Nitro 的 cloudflare_module preset）建置出來的 Worker，先跑 npm run build
+  "main": ".output/server/index.mjs",
+  "name": "game-platform",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    // 靜態檔案與預先產生的頁面。/games/precise-stop 直接對到 games/precise-stop/index.html，
+    // 不會被轉址成結尾加斜線的網址；找不到檔案的請求才交給 Worker（伺服器端渲染、API、404）
+    "directory": ".output/public",
+    "binding": "ASSETS",
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "none"
+  },
+  "triggers": {
+    // 每天 UTC 19:00（台灣時間凌晨 3 點）清掉過期的 session，見 server/plugins/session-cleanup.ts
+    "crons": ["0 19 * * *"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "game-platform",
+      // 正式的 ID 在第一次部署前用 wrangler d1 create 建立後填入；本機開發用不到
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "ratelimits": [
+    {
+      // 改暱稱：同一個人 1 分鐘內最多送出 5 次
+      "name": "NICK_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 5, "period": 60 }
+    }
+  ]
+}

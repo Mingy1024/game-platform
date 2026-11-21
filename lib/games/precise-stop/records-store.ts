@@ -1,23 +1,21 @@
-"use client";
-
-import { useSyncExternalStore } from "react";
 import { emptyRecords, loadRecords, saveRun, type Records, type SaveOutcome } from "./records";
 import type { Mode } from "./route";
 
 /**
  * 讓介紹頁和遊戲畫面共用同一份本機紀錄：
  * 一局結束寫入後，介紹頁的看板會立刻顯示新的最佳成績。
+ * 純邏輯，只在瀏覽器端呼叫；伺服器端與第一次畫面一律用 EMPTY_RECORDS。
  */
 const listeners = new Set<() => void>();
-const EMPTY = emptyRecords();
+export const EMPTY_RECORDS = emptyRecords();
 let cache: Records | null = null;
 
-function read(): Records {
+export function readRecords(): Records {
   if (!cache) cache = loadRecords();
   return cache;
 }
 
-function subscribe(listener: () => void) {
+export function subscribeRecords(listener: () => void) {
   listeners.add(listener);
   // 其他分頁寫入時也跟著更新
   const onStorage = () => {
@@ -29,10 +27,6 @@ function subscribe(listener: () => void) {
     listeners.delete(listener);
     window.removeEventListener("storage", onStorage);
   };
-}
-
-export function useRecords(): Records {
-  return useSyncExternalStore(subscribe, read, () => EMPTY);
 }
 
 export function recordRun(run: {

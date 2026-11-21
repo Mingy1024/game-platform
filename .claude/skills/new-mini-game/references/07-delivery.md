@@ -4,7 +4,7 @@
 
 只在使用者要求時做，直接在 main。
 
-1. `git add -A` 之後先檢查暫存內容：不能有 `.env`、`.scratch/`、本機的 `.nvmrc`、`test-results/`、`playwright-report/`、`.next/`。
+1. `git add -A` 之後先檢查暫存內容：不能有 `.env`、`.scratch/`、本機的 `.nvmrc`、`test-results/`、`playwright-report/`、`.nuxt/`、`.output/`、`.wrangler/`。
 2. 回報新增的圖檔與字型大小（`du -sh public assets`），讓使用者知道 repo 變大多少。
 3. 訊息用繁體中文，第一行 `feat: <做了什麼>`，下面條列重點，結尾用系統提供的 attribution。
 4. push 前確認使用者有說 push；push 後回報 `舊 commit..新 commit` 和是否與遠端同步。
@@ -27,10 +27,10 @@
 
 使用者會說「實際 run server 讓我確認」。
 
-1. 確認工作目錄乾淨、用最新程式碼重新 `next build`。
-2. 用 `run_in_background` 執行 `next start -p 3000`，等到 Ready。
+1. 確認工作目錄乾淨、用最新程式碼重新 `nuxt build`。
+2. 用 `run_in_background` 執行 `wrangler dev --port 3000 --ip 0.0.0.0`（workerd 跑正式版，用本機 D1），等到 Ready。
 3. 用 Windows 的 curl 測幾個主要網址回 200。
-4. 給使用者兩個網址：電腦 `http://localhost:3000/games/<slug>`，手機用 Next 印出的 Network 位址（同一個 Wi-Fi；第一次可能要允許 Windows 防火牆）。
+4. 給使用者兩個網址：電腦 `http://localhost:3000/games/<slug>`，手機用電腦的區網位址加 :3000（同一個 Wi-Fi；第一次可能要允許 Windows 防火牆）。
 5. 提醒正式版不會出現預設關閉的預留版位。
 6. 使用者說關掉時用 `killport 3000`，並確認連接埠已釋放。
 

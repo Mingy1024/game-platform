@@ -42,7 +42,7 @@
 
 全部要過（驗收 Q1），指令見 05 的「執行環境」。另外量：
 
-- **fps**：正式版 build 後用 rAF 間隔量，電腦一般速度、手機用 CDP `Emulation.setCPUThrottlingRate` 4 倍降速。開發版 React 比較慢，要用正式版量才準。
+- **fps**：正式版 build 後用 rAF 間隔量，電腦一般速度、手機用 CDP `Emulation.setCPUThrottlingRate` 4 倍降速。開發版比較慢，要用正式版量才準。
 - **首次載入**：遊戲進場的圖片總量、介紹頁不載入遊戲引擎（N5）。
 - **Lighthouse**：需要下載工具，請使用者自己跑：`npx lighthouse http://localhost:3000/games/<slug> --form-factor=mobile`。
 

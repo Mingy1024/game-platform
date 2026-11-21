@@ -18,8 +18,6 @@ export const zhTW = {
     language: "語言",
     languageSwitch: "切換語言，目前是{name}",
     close: "關閉",
-    login: "用 Google 登入",
-    loginShort: "登入",
     reserved: "預留",
   },
   footer: {
@@ -29,6 +27,8 @@ export const zhTW = {
     terms: "使用條款",
     contact: "聯絡與回報",
     deviceNote: "遊玩紀錄只存在這台裝置，清除瀏覽器資料後會消失。",
+    /** 登入功能打開時改用這句 */
+    deviceNoteLoggedOut: "沒登入時，遊玩紀錄只存在這台裝置。",
   },
   actions: {
     play: "開始玩",
@@ -310,5 +310,28 @@ export const zhTW = {
     shared: {
       banner: "朋友拿到 {score} 分。換你挑戰！",
     },
+  },
+  /** 帳號與登入（紀錄卡、登入提示條、App 內建瀏覽器提示） */
+  account: {
+    login: "用 Google 登入",
+    privacyNote: "只存 Google 帳號代碼，不存名字和信箱。",
+    privacyLink: "隱私權政策",
+    loggedIn: "已用 Google 登入",
+    nickLabel: "你在榜上叫",
+    changeNick: "改暱稱",
+    loginOk: "登入成功",
+    sep: "・",
+    loginError: "登入沒有完成",
+    loginErrorRest: "，可以再試一次。",
+    retry: "再試一次",
+    close: "關閉",
+    inAppTitle: "在 App 裡不能用 Google 登入。",
+    inAppHint: "用手機的瀏覽器打開這一頁，就可以登入。",
+    inAppStep1: "按右上角的 {menu} 選單",
+    inAppStep2: "選「用瀏覽器開啟」或「在 Safari 中開啟」",
+    inAppStep3: "在瀏覽器按「用 Google 登入」",
+    copyLink: "複製連結",
+    copied: "已複製",
+    openBrowser: "用瀏覽器開啟",
   },
 } as const;

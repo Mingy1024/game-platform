@@ -16,8 +16,6 @@ export const vi: Dictionary = {
     language: "Ngôn ngữ",
     languageSwitch: "Đổi ngôn ngữ. Hiện tại: {name}",
     close: "Đóng",
-    login: "Đăng nhập bằng Google",
-    loginShort: "Đăng nhập",
     reserved: "Sắp có",
   },
   footer: {
@@ -27,6 +25,8 @@ export const vi: Dictionary = {
     terms: "Điều khoản sử dụng",
     contact: "Liên hệ và phản hồi",
     deviceNote: "Kỷ lục chỉ được lưu trên thiết bị này và sẽ mất nếu bạn xóa dữ liệu trình duyệt.",
+    /** 登入功能打開時改用這句 */
+    deviceNoteLoggedOut: "Khi chưa đăng nhập, kỷ lục chỉ được lưu trên thiết bị này.",
   },
   actions: {
     play: "Chơi ngay",
@@ -308,5 +308,28 @@ export const vi: Dictionary = {
     shared: {
       banner: "Bạn của bạn được {score} điểm. Đến lượt bạn!",
     },
+  },
+  /** 帳號與登入（紀錄卡、登入提示條、App 內建瀏覽器提示） */
+  account: {
+    login: "Đăng nhập bằng Google",
+    privacyNote: "Chỉ lưu mã tài khoản Google, không lưu tên và email.",
+    privacyLink: "Chính sách quyền riêng tư",
+    loggedIn: "Đã đăng nhập bằng Google",
+    nickLabel: "Tên của bạn trên bảng xếp hạng:",
+    changeNick: "Đổi biệt danh",
+    loginOk: "Đăng nhập thành công",
+    sep: " · ",
+    loginError: "Chưa đăng nhập xong",
+    loginErrorRest: ". Bạn có thể thử lại.",
+    retry: "Thử lại",
+    close: "Đóng",
+    inAppTitle: "Không thể đăng nhập Google trong ứng dụng.",
+    inAppHint: "Hãy mở trang này bằng trình duyệt trên điện thoại để đăng nhập.",
+    inAppStep1: "Nhấn menu {menu} ở góc trên bên phải",
+    inAppStep2: "Chọn “Mở bằng trình duyệt” hoặc “Mở trong Safari”",
+    inAppStep3: "Trong trình duyệt, nhấn “Đăng nhập bằng Google”",
+    copyLink: "Sao chép liên kết",
+    copied: "Đã sao chép",
+    openBrowser: "Mở bằng trình duyệt",
   },
 };
