@@ -25,13 +25,14 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      // 先把 migrations 套到本機 D1，再開開發伺服器；登入改連假的 Google
+      // 先把 migrations 套到本機 D1，再開開發伺服器（nuxt dev）；登入改連假的 Google
       command: "npm run db:migrate:local && npm run dev",
       url: "http://localhost:3000",
       // 自己已經開著 npm run dev 時會直接沿用；那台沒設下面的環境變數的話，登入測試（account.spec.ts）會失敗
+      timeout: 180_000,
       reuseExistingServer: !process.env.CI,
       env: {
-        NEXT_PUBLIC_FEATURE_LOGIN: "1",
+        FEATURE_LOGIN: "1",
         GOOGLE_OAUTH_TEST_BASE_URL: "http://localhost:3999",
         GOOGLE_CLIENT_ID: "e2e-client.apps.googleusercontent.com",
         GOOGLE_CLIENT_SECRET: "e2e-secret",

@@ -1,18 +1,15 @@
-import { cookies } from "next/headers";
-import type { Player } from "@/generated/prisma/client";
-import { getDb } from "@/lib/db";
+import type { Player, PrismaClient } from "@/generated/prisma/client";
 import { randomId, randomInt } from "./crypto";
 import { randomNick, type Nick } from "./nick/nick";
 import { nickNextAt } from "./nick/rules";
-import { SESSION_COOKIE, validateSession } from "./session";
+import { validateSession } from "./session";
 
 export type { Player };
 
-/** 伺服器端（route handler、server action）讀 cookie，回傳目前玩家；沒登入回傳 null */
-export async function getCurrentPlayer(): Promise<Player | null> {
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+/** 用 session cookie 的 token 找目前玩家；沒登入回傳 null */
+export async function getCurrentPlayer(db: PrismaClient, token: string | undefined): Promise<Player | null> {
   if (!token) return null;
-  const result = await validateSession(getDb(), token);
+  const result = await validateSession(db, token);
   return result?.player ?? null;
 }
 
@@ -21,8 +18,8 @@ export class UnauthorizedError extends Error {
 }
 
 /** 同上，但沒登入就丟 UnauthorizedError（route handler 用 jsonError 轉成 401）。遊戲寫紀錄的 API 用它。 */
-export async function requirePlayer(): Promise<Player> {
-  const player = await getCurrentPlayer();
+export async function requirePlayer(db: PrismaClient, token: string | undefined): Promise<Player> {
+  const player = await getCurrentPlayer(db, token);
   if (!player) throw new UnauthorizedError("需要登入");
   return player;
 }
@@ -46,8 +43,7 @@ export function meResponse(player: Player | null, now = new Date()): MeResponse 
 }
 
 /** 用 Google 帳號代碼找玩家；第一次登入就建立新玩家並配一個隨機暱稱 */
-export async function findOrCreateGooglePlayer(googleSub: string, now = new Date()): Promise<Player> {
-  const db = getDb();
+export async function findOrCreateGooglePlayer(db: PrismaClient, googleSub: string, now = new Date()): Promise<Player> {
   const existing = await db.player.findUnique({ where: { googleSub } });
   if (existing) return existing;
   const nick = randomNick(randomInt);

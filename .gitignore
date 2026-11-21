@@ -13,9 +13,10 @@
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
+# nuxt
+/.nuxt/
+/.output/
+/.data/
 
 # production
 /build
@@ -44,7 +45,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 /generated/prisma
 
@@ -52,6 +52,5 @@ next-env.d.ts
 .dev.vars*
 !.dev.vars.example
 
-# OpenNext／wrangler 輸出
-/.open-next/
+# wrangler 輸出與本機 D1
 /.wrangler/

@@ -1,13 +1,17 @@
-"use client";
-
-import { useSyncExternalStore } from "react";
-
 /**
  * 全站共用的聲音設定，記在本機；瀏覽器不允許儲存時只記在這次瀏覽。
  * - muted：右上的喇叭鈕＋暫停選單「音效」，只關音效（預設有聲）
  * - musicOff：右上的音符鈕＋暫停選單「音樂」，只關背景音樂（預設開）
+ *
+ * 純邏輯，只在瀏覽器端呼叫；畫面層用 app/composables/store.ts 的 useStore 訂閱。
  */
-function createPref(key: string) {
+export type Pref = {
+  read(): boolean;
+  write(value: boolean): void;
+  subscribe(listener: () => void): () => void;
+};
+
+function createPref(key: string): Pref {
   const listeners = new Set<() => void>();
   let memory: boolean | null = null;
 
@@ -46,20 +50,14 @@ function createPref(key: string) {
     };
   }
 
-  function use(): boolean {
-    return useSyncExternalStore(subscribe, read, () => false);
-  }
-
-  return { read, write, use };
+  return { read, write, subscribe };
 }
 
-const muted = createPref("gp:muted");
-const musicOff = createPref("gp:music-off");
+export const mutedPref = createPref("gp:muted");
+export const musicOffPref = createPref("gp:music-off");
 
-export const readMuted = muted.read;
-export const setMuted = muted.write;
-export const useMuted = muted.use;
+export const readMuted = mutedPref.read;
+export const setMuted = mutedPref.write;
 
-export const readMusicOff = musicOff.read;
-export const setMusicOff = musicOff.write;
-export const useMusicOff = musicOff.use;
+export const readMusicOff = musicOffPref.read;
+export const setMusicOff = musicOffPref.write;

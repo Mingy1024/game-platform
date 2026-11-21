@@ -7,6 +7,7 @@ export function safeReturnPath(value: string | null | undefined): string {
   // 一定要是 / 開頭；// 和 /\ 會被瀏覽器當成別的網域
   if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) return "/";
   // 控制字元（含換行、tab）一律不收
+  // eslint-disable-next-line no-control-regex -- 就是要比對控制字元
   if (/[\u0000-\u001f\u007f]/.test(value)) return "/";
   try {
     const url = new URL(value, "https://site.invalid");

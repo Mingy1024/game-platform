@@ -1,22 +1,20 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "main": "worker.ts",
+  // Nuxt（Nitro 的 cloudflare_module preset）建置出來的 Worker，先跑 npm run build
+  "main": ".output/server/index.mjs",
   "name": "game-platform",
   "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
-    "directory": ".open-next/assets",
-    "binding": "ASSETS"
+    // 靜態檔案與預先產生的頁面。/games/precise-stop 直接對到 games/precise-stop/index.html，
+    // 不會被轉址成結尾加斜線的網址；找不到檔案的請求才交給 Worker（伺服器端渲染、API、404）
+    "directory": ".output/public",
+    "binding": "ASSETS",
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "none"
   },
-  "services": [
-    {
-      // 自我參照，名稱要和 Worker 名稱一樣（OpenNext 快取用）
-      "binding": "WORKER_SELF_REFERENCE",
-      "service": "game-platform"
-    }
-  ],
   "triggers": {
-    // 每天 UTC 19:00（台灣時間凌晨 3 點）清掉過期的 session，見 worker.ts
+    // 每天 UTC 19:00（台灣時間凌晨 3 點）清掉過期的 session，見 server/plugins/session-cleanup.ts
     "crons": ["0 19 * * *"]
   },
   "d1_databases": [
@@ -35,9 +33,5 @@
       "namespace_id": "1001",
       "simple": { "limit": 5, "period": 60 }
     }
-  ],
-  "images": {
-    // next/image 圖片最佳化
-    "binding": "IMAGES"
-  }
+  ]
 }

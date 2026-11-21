@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { GAME, watchConsole } from "./helpers";
 
 const LOCALES = [
