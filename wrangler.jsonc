@@ -32,6 +32,12 @@
       "name": "NICK_LIMITER",
       "namespace_id": "1001",
       "simple": { "limit": 5, "period": 60 }
+    },
+    {
+      // 精準停車紀錄同步：同一個人 1 分鐘內最多 30 次（帳號設計稿第 11.2 節）
+      "name": "RECORDS_LIMITER",
+      "namespace_id": "1002",
+      "simple": { "limit": 30, "period": 60 }
     }
   ]
 }

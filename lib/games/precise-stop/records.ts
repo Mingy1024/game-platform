@@ -17,9 +17,9 @@ export type Records = {
 
 export const emptyRecords = (): Records => ({ daily: {}, free: null, perfectStops: 0 });
 
-type Store = Pick<Storage, "getItem" | "setItem">;
+export type Store = Pick<Storage, "getItem" | "setItem">;
 
-function getStore(): Store | null {
+export function getStore(): Store | null {
   try {
     return typeof window === "undefined" ? null : window.localStorage;
   } catch {
@@ -88,10 +88,7 @@ export function applyRun(
     if (run.mode === "free") next.free = run.total;
     else if (run.dateKey) next.daily[run.dateKey] = run.total;
   }
-  const keys = Object.keys(next.daily).sort();
-  // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- 只保留最近 KEEP_DAYS 天的每日紀錄
-  for (const key of keys.slice(0, Math.max(0, keys.length - KEEP_DAYS))) delete next.daily[key];
-  return { records: next, previousBest, isNewRecord };
+  return { records: trimDaily(next), previousBest, isNewRecord };
 }
 
 export function saveRun(
@@ -109,6 +106,26 @@ export function saveRun(
     }
   }
   return { ...outcome, saved };
+}
+
+/** 只留最近 KEEP_DAYS 天的每日紀錄 */
+export function trimDaily(records: Records): Records {
+  const daily = { ...records.daily };
+  const keys = Object.keys(daily).sort();
+  // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- 只保留最近 KEEP_DAYS 天的每日紀錄
+  for (const key of keys.slice(0, Math.max(0, keys.length - KEEP_DAYS))) delete daily[key];
+  return { ...records, daily };
+}
+
+/** 整份換掉（帳號紀錄同步回來時）。回傳有沒有成功寫進瀏覽器 */
+export function writeRecords(records: Records, store: Store | null = getStore()): boolean {
+  if (!store) return false;
+  try {
+    store.setItem(KEY, JSON.stringify(trimDaily(records)));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export const RECORDS_KEY = KEY;

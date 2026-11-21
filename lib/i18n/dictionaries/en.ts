@@ -112,7 +112,6 @@ export const en: Dictionary = {
       week: "This week",
       free: "Free Play",
       updated: "Resets at midnight · {count} players ranked",
-      perfectStops: "Perfect stops",
       you: "You ({name})",
       toTop: "{points} more points to reach the top 100",
       viewTop: "See the top 100",

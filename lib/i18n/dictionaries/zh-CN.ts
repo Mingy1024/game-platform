@@ -112,7 +112,6 @@ export const zhCN: Dictionary = {
       week: "本周",
       free: "自由模式",
       updated: "今天 0 点更新 · 已有 {count} 人上榜",
-      perfectStops: "完美停车站数",
       you: "你（{name}）",
       toTop: "再 {points} 分可以进前 100 名",
       viewTop: "看前 100 名",

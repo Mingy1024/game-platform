@@ -4,8 +4,8 @@
  * Cloudflare 允許單一請求到 100 MB，128 MB 的記憶體又是同一個 isolate 的並行請求共用，
  * 不先擋的話，一個大請求在任何檢查（登入、限流）之前就能占掉大量記憶體。
  *
- * 本站沒有上傳功能，會帶內容的請求只有暱稱 API（JSON 遠小於 1 KB），16 KB 綽綽有餘。
- * 個別 API 還有自己更嚴的上限（例如 server/api/me/nick.patch.ts 的 1 KB）。
+ * 本站沒有上傳功能，會帶內容的請求只有暱稱 API（JSON 遠小於 1 KB）和精準停車的紀錄同步（上限 8 KB），16 KB 綽綽有餘。
+ * 個別 API 還有自己更嚴的上限（server/api/me/nick.patch.ts 的 1 KB、紀錄同步的 8 KB）。
  */
 export const MAX_REQUEST_BODY_BYTES = 16 * 1024;
 

@@ -13,9 +13,12 @@ const nitroDir = dirname(createRequire(import.meta.url).resolve("nitropack/packa
  *
  * 功能開關的舊名稱（NEXT_PUBLIC_FEATURE_*）仍然認得，方便既有的 .env 繼續用。
  */
-const flag = (name: string) => (process.env[`FEATURE_${name}`] ?? process.env[`NEXT_PUBLIC_FEATURE_${name}`]) === "1";
+const flagValue = (name: string) => process.env[`FEATURE_${name}`] ?? process.env[`NEXT_PUBLIC_FEATURE_${name}`];
+const flag = (name: string) => flagValue(name) === "1";
+/** 登入預設打開（帳號設計稿第 20 題）；要關掉時設 FEATURE_LOGIN=0 */
+const loginFlag = flagValue("LOGIN") !== "0";
 const buildTime = {
-  "process.env.FEATURE_LOGIN": JSON.stringify(flag("LOGIN") ? "1" : ""),
+  "process.env.FEATURE_LOGIN": JSON.stringify(loginFlag ? "1" : ""),
   "process.env.FEATURE_LEADERBOARD": JSON.stringify(flag("LEADERBOARD") ? "1" : ""),
   "process.env.FEATURE_PLAY_COUNT": JSON.stringify(flag("PLAY_COUNT") ? "1" : ""),
   "process.env.ADS_MODE": JSON.stringify(process.env.ADS_MODE ?? "mock"),

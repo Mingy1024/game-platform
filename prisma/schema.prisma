@@ -37,6 +37,9 @@ model Player {
   createdAt     DateTime  @map("created_at")
   lastSeenAt    DateTime  @map("last_seen_at")
   sessions      Session[]
+  preciseStopBests PreciseStopBest[]
+  preciseStopStats PreciseStopStats?
+  preciseStopSyncBatches PreciseStopSyncBatch[]
 
   @@map("players")
 }
@@ -54,4 +57,52 @@ model Session {
   @@index([playerId])
   @@index([expiresAt])
   @@map("sessions")
+}
+
+/// 精準停車的最佳紀錄：一個人每個模式、每一天一筆（帳號設計稿第 11 節）。
+/// 只存最佳，不存每局明細（第 14 題）。
+model PreciseStopBest {
+  playerId   String   @map("player_id")
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  /// daily（今日挑戰）或 free（自由模式）
+  mode       String
+  /// 今日挑戰的台灣日期 YYYY-MM-DD；自由模式是空字串
+  dateKey    String   @map("date_key")
+  score      Int
+  /// 創下這個最佳分的時間（之後排行榜同分時先創下的排前面）
+  achievedAt DateTime @map("achieved_at")
+
+  @@id([playerId, mode, dateKey])
+  /// 給之後的排行榜：同一天、同一模式依分數排序
+  @@index([mode, dateKey, score(sort: Desc)])
+  @@map("precise_stop_bests")
+}
+
+/// 精準停車的累計資料
+model PreciseStopStats {
+  playerId     String   @id @map("player_id")
+  player       Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  /// 累計完美停車次數（只在紀錄卡和我的紀錄頁顯示，不上排行榜）
+  perfectStops Int      @default(0) @map("perfect_stops")
+  updatedAt    DateTime @map("updated_at")
+
+  @@map("precise_stop_stats")
+}
+
+/// 已經處理過的同步批次（syncId）。同一批重送時不重複加完美次數，
+/// 中間夾著其他裝置的批次也一樣（只記最後一批的話擋不住）。
+/// 前端沒送成的批次隔多久都可能重送，所以一直保留，刪帳號時一起刪。
+///
+/// 加完美次數由資料庫觸發器 precise_stop_sync_batches_apply 做（migrations/0002 最後）：
+/// 新增這一列的同一個 SQL 動作裡就把 perfect_delta 加進 precise_stop_stats，
+/// 所以「這一批已經記過」就等於「次數已經加過」，不會只做一半。
+model PreciseStopSyncBatch {
+  playerId     String   @map("player_id")
+  player       Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  syncId       String   @map("sync_id")
+  perfectDelta Int      @map("perfect_delta")
+  createdAt    DateTime @map("created_at")
+
+  @@id([playerId, syncId])
+  @@map("precise_stop_sync_batches")
 }

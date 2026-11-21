@@ -12,7 +12,7 @@ export type MeState =
   | { status: "loading" }
   | { status: "error" }
   | { status: "loggedOut" }
-  | { status: "loggedIn"; nick: Nick; nickNextAt: Date | null };
+  | { status: "loggedIn"; playerId: string; nick: Nick; nickNextAt: Date | null };
 
 let state: MeState = { status: "loading" };
 let started = false;
@@ -49,7 +49,7 @@ function timeoutSignal(): AbortSignal | undefined {
     return undefined;
   }
 }
-const withTimeout = (init: RequestInit = {}): RequestInit => ({ ...init, signal: timeoutSignal() });
+export const withTimeout = (init: RequestInit = {}): RequestInit => ({ ...init, signal: timeoutSignal() });
 
 /**
  * applied：讀到的資料已經寫入，狀態是最新的
@@ -83,7 +83,12 @@ function commit(next: MeState) {
 
 function fromResponse(body: MeResponse): MeState {
   return body.loggedIn
-    ? { status: "loggedIn", nick: body.nick, nickNextAt: body.nickNextAt ? new Date(body.nickNextAt) : null }
+    ? {
+        status: "loggedIn",
+        playerId: body.playerId,
+        nick: body.nick,
+        nickNextAt: body.nickNextAt ? new Date(body.nickNextAt) : null,
+      }
     : { status: "loggedOut" };
 }
 
@@ -124,6 +129,26 @@ export function refreshMe({ keepOnError = false } = {}): Promise<RefreshResult> 
   return promise;
 }
 
+/**
+ * 別的 API 回了 401（例如紀錄同步時 session 已經過期）：當作已經登出。
+ * 和按登出不同，不會觸發 subscribeSignOut（本機紀錄留著，下次登入再合併，P13）。
+ */
+export function expireSession() {
+  if (state.status === "loggedIn") endSession();
+}
+
+/** 在這一頁按登出或刪除帳號成功時通知（用來清掉這台裝置上的遊戲紀錄，帳號設計稿第 16 題） */
+const signOutListeners = new Set<() => void>();
+export function subscribeSignOut(listener: () => void) {
+  signOutListeners.add(listener);
+  return () => {
+    signOutListeners.delete(listener);
+  };
+}
+function signedOut() {
+  for (const listener of signOutListeners) listener();
+}
+
 export function subscribeMe(listener: () => void) {
   listeners.add(listener);
   return () => {
@@ -149,6 +174,7 @@ export async function logout(): Promise<boolean> {
   const response = await fetch("/api/auth/logout", withTimeout({ method: "POST", credentials: "same-origin" })).catch(() => null);
   if (!response?.ok) return false;
   endSession();
+  signedOut();
   return true;
 }
 
@@ -156,6 +182,7 @@ export async function deleteAccount(): Promise<boolean> {
   const response = await fetch("/api/me", withTimeout({ method: "DELETE", credentials: "same-origin" })).catch(() => null);
   if (!response?.ok) return false;
   endSession();
+  signedOut();
   return true;
 }
 

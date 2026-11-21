@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const nick = (custom: string | null) => ({ adjective: 0, noun: 0, number: 1, custom });
-const me = (custom: string | null, nickNextAt: string | null = null) => ({ loggedIn: true, nick: nick(custom), nickNextAt });
+const me = (custom: string | null, nickNextAt: string | null = null) => ({ loggedIn: true, playerId: "player-1", nick: nick(custom), nickNextAt });
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 /** 現在之後 days 天的時間（冷卻日期要在未來才會採用） */
 const daysLater = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString();

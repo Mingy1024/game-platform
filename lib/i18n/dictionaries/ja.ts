@@ -112,7 +112,6 @@ export const ja: Dictionary = {
       week: "今週",
       free: "フリーモード",
       updated: "毎日 0 時に更新 · {count} 人がランクイン",
-      perfectStops: "パーフェクト停車の駅数",
       you: "あなた（{name}）",
       toTop: "あと {points} 点で 100 位以内",
       viewTop: "上位 100 位を見る",

@@ -5,21 +5,22 @@ import { taiwanDateKey } from "@/lib/games/precise-stop/route";
 import { fmt, formatNumber, formatShortDate } from "@/lib/i18n/format";
 
 const SAMPLE_PLAYERS = [
-  ["Riku", "#cc4409", 5912, 5, 3],
-  ["Mina", "#1d3a8f", 5874, 5, 12],
-  ["Noa", "#16794f", 5801, 4, 60],
-  ["Kai", "#a83606", 5766, 4, 70],
-  ["Sora", "#4a5263", 5702, 4, 120],
-  ["Rin", "#152b6b", 5655, 4, 130],
-  ["Yui", "#cc4409", 5590, 3, 180],
-  ["Leo", "#16794f", 5541, 3, 240],
-  ["Hana", "#1d3a8f", 5498, 3, 300],
-  ["Tomo", "#4a5263", 5460, 3, 360],
+  ["Riku", "#cc4409", 5912, 3],
+  ["Mina", "#1d3a8f", 5874, 12],
+  ["Noa", "#16794f", 5801, 60],
+  ["Kai", "#a83606", 5766, 70],
+  ["Sora", "#4a5263", 5702, 120],
+  ["Rin", "#152b6b", 5655, 130],
+  ["Yui", "#cc4409", 5590, 180],
+  ["Leo", "#16794f", 5541, 240],
+  ["Hana", "#1d3a8f", 5498, 300],
+  ["Tomo", "#4a5263", 5460, 360],
 ] as const;
 
 /**
  * 我的紀錄，以及預留的「全站排行」分頁。
  * 排行榜還沒有後端，預設不顯示（lib/flags.ts），開關打開時顯示的是版面示意，資料是固定的樣本。
+ * 每列不顯示那一局停準幾站（★），玩家看不懂（精準停車設計稿第 28 題）。
  * 登入開關打開時，卡片下方換成帳號區塊（RecordsAccount.vue）。
  */
 const { text, locale, dict } = useExperience();
@@ -117,7 +118,7 @@ const medal = (index: number) =>
       </div>
       <ol class="flex flex-col gap-0.5 px-2 pt-1">
         <li
-          v-for="([name, color, score, perfect, minutes], index) in SAMPLE_PLAYERS"
+          v-for="([name, color, score, minutes], index) in SAMPLE_PLAYERS"
           :key="name"
           :class="`flex min-h-12 items-center gap-2.5 rounded-xl px-3 ${index < 3 ? 'bg-[#fff9e6]' : ''} ${index >= 7 ? 'max-lg:hidden' : ''}`"
         >
@@ -141,7 +142,6 @@ const medal = (index: number) =>
               }}
             </span>
           </span>
-          <span class="text-sm font-bold text-signal" :title="text.rank.perfectStops">★ {{ perfect }}</span>
           <span class="w-16 text-right text-[17px] font-black tabular-nums">{{ formatNumber(score, locale) }}</span>
         </li>
       </ol>

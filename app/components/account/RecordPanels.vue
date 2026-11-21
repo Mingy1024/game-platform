@@ -1,12 +1,36 @@
 <script setup lang="ts">
 import type { IconName } from "@/lib/icons";
+import { bestOf } from "@/lib/games/precise-stop/records";
+import { taiwanDateKey } from "@/lib/games/precise-stop/route";
+import { fmt, formatNumber } from "@/lib/i18n/format";
+import { t } from "@/lib/i18n/zh-TW";
 
-/** 我的紀錄頁的三個區塊。內容之後由本機紀錄（localStorage）填入，目前顯示空狀態 */
+/**
+ * 我的紀錄頁的三個區塊。「最近玩過」「收藏」還沒做，顯示空狀態。
+ * 「最佳紀錄」列出精準停車（帳號設計稿第 19 題）：登入時是帳號的紀錄，沒登入是這台裝置的（同一份 useRecords）。
+ */
 const panels: { id: string; icon: IconName; title: string; body: string }[] = [
   { id: "recent", icon: "clock", title: "最近玩過", body: "還沒有玩過的遊戲。玩過之後，最近的 20 款會列在這裡。" },
   { id: "favorites", icon: "heart", title: "收藏", body: "還沒有收藏。在遊戲頁按下收藏，之後就能從這裡快速找到。" },
-  { id: "bests", icon: "restart", title: "最佳紀錄", body: "還沒有紀錄。完成一局之後，每款遊戲的最佳成績會留在這裡。" },
 ];
+
+const text = t.preciseStop.records;
+const records = useRecords();
+const dateKey = useClientValue(taiwanDateKey);
+const daily = computed(() => bestOf(records.value, "daily", dateKey.value));
+const hasAny = computed(
+  () => records.value.free !== null || Object.keys(records.value.daily).length > 0 || records.value.perfectStops > 0,
+);
+const number = (value: number | null) => (value === null ? "—" : formatNumber(value, "zh-TW"));
+const stats = computed(() => [
+  { label: "今日挑戰", value: number(daily.value), testId: "me-best-daily" },
+  { label: "自由模式", value: number(records.value.free), testId: "me-best-free" },
+  {
+    label: text.perfectStops,
+    value: fmt(text.perfectCount, { count: formatNumber(records.value.perfectStops, "zh-TW") }),
+    testId: "me-best-perfect",
+  },
+]);
 </script>
 
 <template>
@@ -17,6 +41,34 @@ const panels: { id: string; icon: IconName; title: string; body: string }[] = [
         {{ panel.title }}
       </h2>
       <p class="mt-3 text-muted">{{ panel.body }}</p>
+    </section>
+
+    <section aria-labelledby="bests-title" data-testid="me-bests" class="flex flex-col gap-3 rounded-2xl border border-line bg-card p-5">
+      <h2 id="bests-title" class="flex items-center gap-2 text-xl font-extrabold text-ink">
+        <Icon name="restart" :size="24" class="text-sign" />
+        最佳紀錄
+      </h2>
+      <NuxtLink
+        v-if="hasAny"
+        to="/games/precise-stop"
+        data-testid="me-bests-precise-stop"
+        class="press flex flex-col gap-2.5 rounded-[14px] bg-platform p-3.5 text-ink"
+      >
+        <span class="flex items-center gap-2.5">
+          <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sign text-white">
+            <Icon name="train" :size="22" />
+          </span>
+          <span class="min-w-0 flex-1 text-lg font-black text-sign">{{ t.preciseStop.title }}</span>
+          <Icon name="right" :size="18" class="text-muted" />
+        </span>
+        <dl class="grid grid-cols-3 gap-1.5">
+          <div v-for="stat in stats" :key="stat.testId" class="min-w-0">
+            <dt class="text-[13px] font-bold text-muted">{{ stat.label }}</dt>
+            <dd :data-testid="stat.testId" class="text-xl font-black tabular-nums">{{ stat.value }}</dd>
+          </div>
+        </dl>
+      </NuxtLink>
+      <p v-else class="text-muted">還沒有紀錄。完成一局之後，每款遊戲的最佳成績會留在這裡。</p>
     </section>
   </div>
 </template>

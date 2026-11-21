@@ -15,7 +15,10 @@ const link = "font-bold text-sign underline underline-offset-2";
       <p>玩遊戲不需要註冊或登入，網站不會要求你提供姓名、信箱或電話。</p>
     </ProseSection>
     <ProseSection title="存在你裝置上的資料">
-      <p>最近玩過的遊戲、收藏、靜音設定與最佳紀錄，會存在你瀏覽器的本機儲存空間，不會上傳。清除瀏覽器資料就會刪除這些紀錄。</p>
+      <p v-if="FLAGS.login">
+        最近玩過的遊戲、收藏、聲音設定與最佳紀錄，會存在你瀏覽器的本機儲存空間。沒登入時不會上傳；登入時最佳紀錄會存到帳號（見「帳號裡的遊戲紀錄」）。清除瀏覽器資料就會刪除這台裝置上的紀錄。
+      </p>
+      <p v-else>最近玩過的遊戲、收藏、聲音設定與最佳紀錄，會存在你瀏覽器的本機儲存空間，不會上傳。清除瀏覽器資料就會刪除這些紀錄。</p>
     </ProseSection>
     <template v-if="FLAGS.login">
       <!-- 帳號相關的段落（帳號與登入設計稿「隱私權政策」畫板） -->
@@ -23,11 +26,21 @@ const link = "font-bold text-sign underline underline-offset-2";
         <p>登入時只向 Google 要求帳號代碼（一串不會變的號碼），不取得名字、信箱和大頭貼。本站保存：</p>
         <ul class="list-disc space-y-1 pl-6">
           <li>Google 帳號代碼</li>
+          <li>遊戲的最佳紀錄（見下一段）</li>
           <li>暱稱：站內隨機產生，或你自己改的名字，以及上次修改的時間</li>
           <li>帳號建立的時間、最後使用的時間</li>
           <li>登入狀態：一組隨機代碼，資料庫只存它的雜湊值</li>
         </ul>
         <p>資料存在 Cloudflare D1 資料庫。暱稱之後會顯示在排行榜上；Google 帳號代碼不會公開。</p>
+      </ProseSection>
+      <ProseSection title="帳號裡的遊戲紀錄">
+        <p>登入時，遊戲的最佳紀錄會存到你的帳號，換裝置登入也看得到。目前保存精準停車的：</p>
+        <ul class="list-disc space-y-1 pl-6">
+          <li>每天今日挑戰的最佳分與創下的時間</li>
+          <li>自由模式的最佳分與創下的時間</li>
+          <li>累計完美停車次數</li>
+        </ul>
+        <p>登入前在這台裝置玩的紀錄，登入時會一起併進帳號。登出時會清掉這台裝置上的紀錄，帳號裡的不受影響。</p>
       </ProseSection>
       <ProseSection title="Cookie">
         <ul class="list-disc space-y-1 pl-6">

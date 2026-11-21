@@ -114,7 +114,6 @@ export const zhTW = {
       week: "本週",
       free: "自由模式",
       updated: "今天 0 點更新 · 已有 {count} 人上榜",
-      perfectStops: "完美停車站數",
       you: "你（{name}）",
       toTop: "再 {points} 分可以進前 100 名",
       viewTop: "看前 100 名",

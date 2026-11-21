@@ -34,7 +34,7 @@
 
 建置時決定（寫進程式，預先產生的頁面也依它產生，改了要重新建置）：
 
-- `FEATURE_LOGIN=1`：打開登入功能。正式站先不設（設計稿第 12 題）。舊名稱 `NEXT_PUBLIC_FEATURE_LOGIN` 也認得。
+- `FEATURE_LOGIN`：登入功能，預設打開（帳號設計稿第 20 題：精準停車紀錄同步做好後打開）。要關掉時建置前設 `FEATURE_LOGIN=0`。舊名稱 `NEXT_PUBLIC_FEATURE_LOGIN` 也認得。
 - `FEATURE_LEADERBOARD`、`FEATURE_PLAY_COUNT`：預留版位的開關（同上，舊名稱 `NEXT_PUBLIC_FEATURE_*` 也認得）。
 - `SITE_URL`：正式網址，用在 canonical、hreflang、社群預覽的絕對網址。正式建置時一定要設。
 - `ADS_MODE`：`mock`（預設，顯示版位示意）或 `off`。
@@ -48,8 +48,13 @@
 
 - `DB`：D1。本機開發和 `npm run preview` 用 `.wrangler/state` 裡的本機資料庫；正式的 `database_id` 在第一次部署前用 `wrangler d1 create` 建立後填入。
 - `NICK_LIMITER`：改暱稱的限流（同一個人 1 分鐘 5 次）。
+- `RECORDS_LIMITER`：精準停車紀錄同步的限流（同一個人 1 分鐘 30 次）。
 - `ASSETS`：靜態檔案（`.output/public`）。`html_handling: drop-trailing-slash` 讓 `/games/precise-stop` 直接對到預先產生的頁面。
 - `triggers.crons`：每天台灣時間凌晨 3 點清掉過期 session（`server/plugins/session-cleanup.ts`）。
+
+## 開發規範
+
+- `docs/dev/sync-checklist.md`：改到分頁共用的本機資料、會改資料庫的 API、先存本機再送的流程、登入登出時，寫程式前先照這份檢查表把狀況列完。
 
 ## 程式結構
 

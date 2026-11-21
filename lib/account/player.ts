@@ -20,12 +20,14 @@ export function playerNick(player: Player): Nick {
 /** GET /api/me 的回應 */
 export type MeResponse =
   | { loggedIn: false }
-  | { loggedIn: true; nick: Nick; nickNextAt: string | null };
+  | { loggedIn: true; playerId: string; nick: Nick; nickNextAt: string | null };
 
 export function meResponse(player: Player | null, now = new Date()): MeResponse {
   if (!player) return { loggedIn: false };
   return {
     loggedIn: true,
+    // 站內的隨機 ID（不是 Google 帳號代碼）。前端用它確認重送的紀錄還是送給同一個帳號
+    playerId: player.id,
     nick: playerNick(player),
     nickNextAt: nickNextAt(player.nickChangedAt, now)?.toISOString() ?? null,
   };

@@ -112,7 +112,6 @@ export const ko: Dictionary = {
       week: "이번 주",
       free: "자유 모드",
       updated: "매일 0시 갱신 · {count}명 등록",
-      perfectStops: "퍼펙트 정차 역 수",
       you: "나 ({name})",
       toTop: "{points}점 더 얻으면 100위 안",
       viewTop: "상위 100위 보기",

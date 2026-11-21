@@ -112,7 +112,6 @@ export const vi: Dictionary = {
       week: "Tuần này",
       free: "Tự do",
       updated: "Cập nhật lúc 0 giờ · {count} người đã lên bảng",
-      perfectStops: "Số ga dừng hoàn hảo",
       you: "Bạn ({name})",
       toTop: "Thêm {points} điểm để vào top 100",
       viewTop: "Xem top 100",

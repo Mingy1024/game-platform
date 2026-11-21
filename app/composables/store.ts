@@ -1,4 +1,5 @@
 import type { ShallowRef } from "vue";
+import { retryAccountSync } from "@/lib/games/precise-stop/account-sync";
 import { EMPTY_RECORDS, readRecords, subscribeRecords } from "@/lib/games/precise-stop/records-store";
 import type { Records } from "@/lib/games/precise-stop/records";
 import { FLAG_OVERRIDE_KEY, FLAGS, type FlagName } from "@/lib/flags";
@@ -57,8 +58,9 @@ export function usePref(pref: Pref) {
   return useExternalStore(pref.subscribe, pref.read, false);
 }
 
-/** 精準停車的本機紀錄 */
+/** 精準停車的本機紀錄（登入時是帳號的紀錄）。掛上時順便重送還沒存到帳號的部分 */
 export function useRecords() {
+  onMounted(retryAccountSync);
   return useExternalStore<Records>(subscribeRecords, readRecords, EMPTY_RECORDS);
 }
 
