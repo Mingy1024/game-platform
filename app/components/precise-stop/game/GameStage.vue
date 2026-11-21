@@ -111,7 +111,17 @@ const click = () => sound.play("ui-click.mp3");
 // ---- 進出遊戲畫面：隱藏網站其他部分、接管返回鍵 ----
 const pageRoute = useRoute();
 const router = useRouter();
-const onPopState = () => emit("exit", exitScroll);
+/** 已經開始離開：之後的離開動作（連點返回、等待中又按瀏覽器上一頁）都不再執行 */
+const leaving = ref(false);
+/** 已經通知外層關閉遊戲（只通知一次） */
+let closed = false;
+function close(scrollToBoard: boolean) {
+  if (closed) return;
+  closed = true;
+  leaving.value = true;
+  emit("exit", scrollToBoard);
+}
+const onPopState = () => close(exitScroll);
 const hasGameEntry = () => Boolean((window.history.state as Record<string, unknown> | null)?.[HISTORY_FLAG]);
 /** 新增遊戲瀏覽紀錄的導覽；離開遊戲前要等它完成，才知道能不能用上一頁回到介紹 */
 let historyEntry: Promise<unknown> = Promise.resolve();
@@ -134,6 +144,8 @@ onMounted(() => {
   window.addEventListener("popstate", onPopState);
 });
 onBeforeUnmount(() => {
+  // 等待中的離開動作（exit 裡的 await）醒來後看到 closed 就不再動作
+  closed = true;
   window.removeEventListener("popstate", onPopState);
   delete document.documentElement.dataset.playing;
   // Phaser 場景由上面建立場景的 watch 收掉（元件卸載時會執行它的 onCleanup）
@@ -146,11 +158,15 @@ onBeforeUnmount(() => {
  * 紀錄還沒建立成功（導覽被取消或失敗）時直接關閉，不能按上一頁，否則會離開介紹頁。
  */
 async function exit(scrollToBoard: boolean) {
+  if (leaving.value || closed) return;
+  leaving.value = true;
   exitScroll = scrollToBoard;
   if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
   await historyEntry;
+  // 等待期間按了瀏覽器上一頁（popstate 已經關閉遊戲）或元件已經卸載：不要再上一頁一次
+  if (closed) return;
   if (hasGameEntry()) window.history.back();
-  else emit("exit", scrollToBoard);
+  else close(scrollToBoard);
 }
 
 // ---- 建立 Phaser 場景（這時才載入 Phaser）；按「重試」或換新的一局時重新建立 ----
@@ -443,7 +459,7 @@ const barButton =
       class="on-dark fixed inset-0 z-50 flex flex-col overflow-hidden bg-canvas text-white"
     >
       <div class="flex h-14 shrink-0 items-center gap-2 border-b border-[#222838] bg-[#0b0e14] px-2 md:px-5">
-        <button type="button" :class="barButton" :aria-label="text.stage.back" data-testid="back-button" @click="exit(false)">
+        <button type="button" :class="barButton" :aria-label="text.stage.back" data-testid="back-button" :disabled="leaving" @click="exit(false)">
           <Icon name="left" :size="18" />
           <span class="hidden md:inline">{{ text.stage.back }}</span>
         </button>

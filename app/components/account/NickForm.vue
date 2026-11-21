@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { saveNick } from "@/lib/account/me-store";
+import { refreshMe, saveNick, type NickResult } from "@/lib/account/me-store";
 import { nickText, type Nick } from "@/lib/account/nick/nick";
-import { checkNickFormat, cleanNick, nickLength, NICK_COOLDOWN_MS, NICK_MAX, type NickError } from "@/lib/account/nick/rules";
+import { checkNickFormat, cleanNick, nickLength, NICK_COOLDOWN_MS, NICK_MAX } from "@/lib/account/nick/rules";
 
 /** 日期依台灣時間顯示到「日」，例如「11 月 27 日」 */
 function taiwanDay(date: Date): string {
@@ -10,13 +10,16 @@ function taiwanDay(date: Date): string {
   return `${value("month")} 月 ${value("day")} 日`;
 }
 
-const ERROR_TEXT: Record<NickError | "network", (next?: Date) => string> = {
+type FormError = Extract<NickResult, { ok: false }>["error"];
+
+const ERROR_TEXT: Record<FormError, (next?: Date) => string> = {
   length: () => "要 2 到 12 個字",
   chars: () => "有不能用的字：只能用中英日韓文字、數字、空格和 · - _ .",
   blocked: () => "這個名字不能用，換一個試試",
   taken: () => "這個名字有人用了",
   too_soon: (next) => (next ? `7 天只能改一次，下次可以改：${taiwanDay(next)}` : "7 天只能改一次"),
   conflict: () => "暱稱剛剛在別的地方改過了，已經換成最新的，請再確認一次",
+  stale: () => "暱稱剛剛在別的地方改過了，但讀不到最新的暱稱",
   rate: () => "改太快了，等一分鐘再試",
   network: () => "沒有成功，等一下再試一次。",
 };
@@ -25,7 +28,7 @@ const { current, nextAt } = defineProps<{ current: Nick; nextAt: Date | null }>(
 
 const id = useId();
 const value = ref(current.custom ?? "");
-const serverError = ref<{ error: NickError | "network"; next?: Date } | null>(null);
+const serverError = ref<{ error: FormError; next?: Date } | null>(null);
 const saved = ref(false);
 const busy = ref(false);
 const afterSave = taiwanDay(new Date(Date.now() + NICK_COOLDOWN_MS));
@@ -40,6 +43,14 @@ const error = computed(() => serverError.value ?? (shownLiveError.value ? { erro
 const coolingDown = computed(() => nextAt !== null);
 const unchanged = computed(() => cleaned.value === (current.custom ?? ""));
 const randomName = computed(() => nickText({ ...current, custom: null }, "zh-TW"));
+
+// 帳號狀態更新時（儲存成功、別的分頁改過名字後重新讀取），輸入框跟著換成最新的暱稱
+watch(
+  () => current.custom,
+  (latest) => {
+    value.value = latest ?? "";
+  },
+);
 
 function onInput(event: Event) {
   value.value = (event.target as HTMLInputElement).value;
@@ -62,10 +73,16 @@ async function reset() {
   serverError.value = null;
   const result = await saveNick(null);
   busy.value = false;
-  if (result.ok) {
-    value.value = "";
-    saved.value = true;
-  } else serverError.value = { error: result.error };
+  if (result.ok) saved.value = true;
+  else serverError.value = { error: result.error };
+}
+
+/** 讀不到最新暱稱時重試；成功後輸入框會由上面的 watch 換成最新的 */
+async function retryRefresh() {
+  busy.value = true;
+  const refreshed = await refreshMe({ keepOnError: true });
+  busy.value = false;
+  if (refreshed) serverError.value = { error: "conflict" };
 }
 </script>
 
@@ -99,6 +116,16 @@ async function reset() {
             <path d="M12 7.5v5.5M12 16.5v.2" />
           </svg>
           {{ ERROR_TEXT[error.error](error.next) }}
+          <button
+            v-if="error.error === 'stale'"
+            type="button"
+            :disabled="busy"
+            class="ml-1 underline disabled:opacity-60"
+            data-testid="nick-retry"
+            @click="retryRefresh"
+          >
+            重新讀取
+          </button>
         </p>
         <p v-else-if="saved" role="status" class="flex items-center gap-1.5 text-[15px] font-bold text-signal" data-testid="nick-saved">
           <Icon name="check" :size="18" />

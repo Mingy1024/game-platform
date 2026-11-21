@@ -29,14 +29,23 @@ function fromResponse(body: MeResponse): MeState {
     : { status: "loggedOut" };
 }
 
-export async function refreshMe(): Promise<void> {
-  if (!FLAGS.login) return set({ status: "loggedOut" });
+/**
+ * 向伺服器重新讀取登入狀態，成功時回傳 true。
+ * keepOnError：讀取失敗時保留目前的狀態（已經登入、只是想更新暱稱時，不要因為一次網路錯誤把整個帳號畫面換成錯誤）
+ */
+export async function refreshMe({ keepOnError = false } = {}): Promise<boolean> {
+  if (!FLAGS.login) {
+    set({ status: "loggedOut" });
+    return true;
+  }
   try {
     const response = await fetch("/api/me", { cache: "no-store", credentials: "same-origin" });
     if (!response.ok) throw new Error(String(response.status));
     set(fromResponse((await response.json()) as MeResponse));
+    return true;
   } catch {
-    set({ status: "error" });
+    if (!keepOnError) set({ status: "error" });
+    return false;
   }
 }
 
@@ -75,7 +84,8 @@ export async function deleteAccount(): Promise<boolean> {
   return true;
 }
 
-export type NickResult = { ok: true } | { ok: false; error: NickError | "network"; nickNextAt?: Date };
+/** stale：暱稱在別的地方改過了，但重新讀取最新狀態失敗 */
+export type NickResult = { ok: true } | { ok: false; error: NickError | "network" | "stale"; nickNextAt?: Date };
 
 /** 自訂暱稱；custom 是 null 時改回隨機名字 */
 export async function saveNick(custom: string | null): Promise<NickResult> {
@@ -92,13 +102,20 @@ export async function saveNick(custom: string | null): Promise<NickResult> {
     return { ok: true };
   }
   if (response.status === 401) set({ status: "loggedOut" });
-  // 帳號剛在別的分頁改過：重新讀取，畫面顯示最新的暱稱
-  if (body.error === "conflict") void refreshMe();
+  const nickNextAt = body.nickNextAt ? new Date(body.nickNextAt) : undefined;
+  // 帳號剛在別的分頁改過（conflict），或冷卻中（too_soon，可能也是別的分頁剛改名）：
+  // 等重新讀取完成，畫面才換成最新的暱稱和下次可以改的時間
+  if (body.error === "conflict" || body.error === "too_soon") {
+    const refreshed = await refreshMe({ keepOnError: true });
+    if (!refreshed && body.error === "conflict") return { ok: false, error: "stale" };
+    // 讀取失敗時至少同步冷卻時間，表單跟著停用
+    if (!refreshed && nickNextAt && state.status === "loggedIn") set({ ...state, nickNextAt });
+  }
   return {
     ok: false,
     // 伺服器暫時無法處理（503 unavailable）或不認得的錯誤，畫面上都顯示「等一下再試一次」
     error: body.error && NICK_ERRORS.has(body.error) ? body.error : "network",
-    nickNextAt: body.nickNextAt ? new Date(body.nickNextAt) : undefined,
+    nickNextAt,
   };
 }
 

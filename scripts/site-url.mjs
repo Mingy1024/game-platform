@@ -24,6 +24,9 @@ export function checkSiteUrl(raw) {
     return { error: `SITE_URL 只能是網站的根網址（例如 https://example.com），不能帶路徑或參數：${raw}` };
   }
   const host = url.hostname.toLowerCase();
+  // 結尾帶點的完整網域（https://localhost.）和不帶點的是同一個主機，但會讓下面的保留網域比對失效；
+  // 正式站的網址也不該這樣寫，直接拒絕
+  if (host.endsWith(".")) return { error: `SITE_URL 的網域不能以「.」結尾：${raw}` };
   // IPv6（[::1] 等）和 IPv4 都不接受：正式站要用網域，也擋掉本機與私有網段
   if (host.startsWith("[") || /^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return { error: `SITE_URL 要用網域，不能是 IP 位址：${raw}` };
   if (!host.includes(".") || RESERVED_SUFFIXES.some((suffix) => host === suffix || host.endsWith(`.${suffix}`))) {

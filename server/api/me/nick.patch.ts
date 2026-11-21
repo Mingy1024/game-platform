@@ -77,13 +77,17 @@ export default defineEventHandler((event) =>
     if (typeof body === "number") return jsonError(event, body, "bad_request");
 
     const now = new Date();
+    // 更新後重新讀取；這中間帳號被別的分頁刪掉的話當作未登入（401），不是伺服器錯誤
     const respond = async () => {
-      const latest = await db.player.findUniqueOrThrow({ where: { id: player.id } });
+      const latest = await db.player.findUnique({ where: { id: player.id } });
+      if (!latest) throw new UnauthorizedError("帳號已刪除");
       return noStore(event, meResponse(latest, now));
     };
 
     if (body.custom === null) {
-      await db.player.update({ where: { id: player.id }, data: { nickCustom: null, nickKey: null } });
+      // updateMany 找不到玩家時回傳 0 筆，不會丟錯（update 會丟 P2025 變成 500）
+      const { count } = await db.player.updateMany({ where: { id: player.id }, data: { nickCustom: null, nickKey: null } });
+      if (count === 0) throw new UnauthorizedError("帳號已刪除");
       return respond();
     }
 

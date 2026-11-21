@@ -64,6 +64,23 @@ function loadAssets(read: (path: string) => Promise<Uint8Array>): Promise<Assets
   return assets;
 }
 
+/**
+ * SVG 轉 PNG。Resvg 和 render() 的結果都占著 WebAssembly 的記憶體，
+ * 不手動 free() 的話要等垃圾回收才釋放，大量請求集中時記憶體會衝高；失敗時也要釋放。
+ */
+function renderPng(svg: string): Uint8Array<ArrayBuffer> {
+  const resvg = new Resvg(svg, { fitTo: { mode: "width", value: CARD_SIZE.width } });
+  let image: ReturnType<InstanceType<typeof Resvg>["render"]> | null = null;
+  try {
+    image = resvg.render();
+    // asPng() 回傳的是複製到 JavaScript 的資料，釋放 WebAssembly 的記憶體後仍然可以用
+    return new Uint8Array(image.asPng());
+  } finally {
+    image?.free();
+    resvg.free();
+  }
+}
+
 /** 成績圖的回應：代碼無效時回 404，不會出錯。read：讀 public/ 底下的檔案 */
 export async function cardResponse(
   code: string,
@@ -75,8 +92,7 @@ export async function cardResponse(
   const [{ hero, fonts }] = await Promise.all([loadAssets(read), ready()]);
   // satori 的型別是 React 元素；這裡給的是同樣形狀的純物件
   const svg = await satori(cardTree(run, locale, hero) as never, { ...CARD_SIZE, fonts });
-  const png = new Resvg(svg, { fitTo: { mode: "width", value: CARD_SIZE.width } }).render().asPng();
-  return new Response(new Uint8Array(png), {
+  return new Response(renderPng(svg), {
     headers: {
       "Content-Type": "image/png",
       // 內容完全由代碼決定，可以長期快取
