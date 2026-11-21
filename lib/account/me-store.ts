@@ -1,6 +1,6 @@
 import { FLAGS } from "@/lib/flags";
 import type { Nick } from "./nick/nick";
-import type { NickError } from "./nick/rules";
+import { NICK_ERRORS, type NickError } from "./nick/rules";
 import type { MeResponse } from "./player";
 
 /**
@@ -94,7 +94,8 @@ export async function saveNick(custom: string | null): Promise<NickResult> {
   if (response.status === 401) set({ status: "loggedOut" });
   return {
     ok: false,
-    error: body.error ?? "network",
+    // 伺服器暫時無法處理（503 unavailable）或不認得的錯誤，畫面上都顯示「等一下再試一次」
+    error: body.error && NICK_ERRORS.has(body.error) ? body.error : "network",
     nickNextAt: body.nickNextAt ? new Date(body.nickNextAt) : undefined,
   };
 }

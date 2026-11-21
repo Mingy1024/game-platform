@@ -22,7 +22,7 @@
 | `npm run test:e2e` | E2E 測試（自動啟動開發伺服器和假的 Google 登入） |
 | `npm run build` | 正式建置，輸出到 `.output/`（Worker 在 `.output/server`、靜態檔與預先產生的頁面在 `.output/public`） |
 | `npm run preview` | 建置後用 `wrangler dev` 在本機的 workerd 執行，最接近正式環境（http://localhost:8787，用本機 D1） |
-| `npm run cf:deploy` | 建置並部署到 Cloudflare（正式環境，執行前請確認） |
+| `npm run cf:deploy` | 建置並部署到 Cloudflare（正式環境，執行前請確認）。建置前後會檢查 `SITE_URL`：不是 https 正式網址、或建置結果的 canonical 對不上時中止（`scripts/check-site-url.mjs`） |
 | `npm run db:migration -- <名稱>` | 改了 `prisma/schema.prisma` 之後產生下一個 migration |
 | `npm run db:migrate:remote` | 把 migrations 套用到正式 D1（正式環境，執行前請確認） |
 | `npm run db:generate` | 重新產生 Prisma Client |

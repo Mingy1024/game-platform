@@ -75,3 +75,13 @@ export function switchLocalePath(pathname: string, target: Locale): string {
 
 /** 記住使用者選過的語言 */
 export const LOCALE_COOKIE = "gs-locale";
+
+/**
+ * 首頁（/）要不要轉到使用者上次自己選的語言首頁：cookie 是有前綴的語言時回傳該語言的首頁，否則 null。
+ * 不看瀏覽器語言。伺服器（server/middleware/site-routes.ts）和站內換頁（app/middleware/locale-home.global.ts）共用。
+ */
+export function rememberedHomePath(cookieValue: string | null | undefined): string | null {
+  if (!cookieValue || !isLocale(cookieValue)) return null;
+  const { prefix } = localeInfo[cookieValue];
+  return prefix ? `/${prefix}` : null;
+}

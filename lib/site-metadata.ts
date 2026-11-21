@@ -24,8 +24,26 @@ export type PageMeta = {
     url: string;
     images: { url: string; width?: number; height?: number; alt?: string }[];
   };
-  twitter?: { card: "summary_large_image"; title: string; images: string[] };
+  twitter?: TwitterMeta;
 };
+
+export type TwitterMeta = { card: "summary" | "summary_large_image"; title: string; description?: string; images: string[] };
+
+/**
+ * 實際輸出的 Twitter 卡片：和原本的 Next.js 一樣，沒有指定時從 Open Graph 補齊
+ * （有圖片用大圖卡片），描述沒指定時沿用 Open Graph 的描述。
+ */
+export function resolveTwitter(meta: PageMeta): TwitterMeta | undefined {
+  const og = meta.openGraph;
+  if (meta.twitter) return { ...meta.twitter, description: meta.twitter.description ?? og?.description };
+  if (!og) return undefined;
+  return {
+    card: og.images.length ? "summary_large_image" : "summary",
+    title: og.title,
+    description: og.description,
+    images: og.images.map((image) => image.url),
+  };
+}
 
 /** 網站名稱與預設標題、描述 */
 export function siteMetadata(locale: Locale) {

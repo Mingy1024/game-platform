@@ -1,5 +1,5 @@
 import { createError, getCookie, getRequestURL, sendRedirect } from "h3";
-import { LOCALE_COOKIE, isLocale, localeInfo } from "@/lib/i18n/locales";
+import { LOCALE_COOKIE, rememberedHomePath } from "@/lib/i18n/locales";
 import { isSitePath } from "@/lib/routes";
 
 /**
@@ -28,11 +28,8 @@ export default defineEventHandler((event) => {
   }
 
   if (segments.length === 0) {
-    const chosen = getCookie(event, LOCALE_COOKIE);
-    if (chosen && isLocale(chosen) && localeInfo[chosen].prefix) {
-      return sendRedirect(event, `/${localeInfo[chosen].prefix}`, 307);
-    }
-    return;
+    const home = rememberedHomePath(getCookie(event, LOCALE_COOKIE));
+    return home ? sendRedirect(event, home, 307) : undefined;
   }
 
   if (!isSitePath(segments)) throw createError({ statusCode: 404, statusMessage: "Not Found" });

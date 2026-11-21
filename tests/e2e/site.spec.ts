@@ -123,6 +123,10 @@ test.describe("K3 不看瀏覽器語言", () => {
     await expect(page).toHaveURL("/en");
     await page.goto("/");
     await expect(page).toHaveURL("/en");
+    // 站內換頁回首頁（只有繁中的全部遊戲頁 → 頁首站名）也沿用選過的語言
+    await page.goto("/games");
+    await page.locator("header a").first().click();
+    await expect(page).toHaveURL("/en");
   });
 });
 

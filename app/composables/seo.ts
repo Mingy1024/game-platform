@@ -1,5 +1,5 @@
 import type { MaybeRefOrGetter } from "vue";
-import { absoluteUrl, type PageMeta } from "@/lib/site-metadata";
+import { absoluteUrl, resolveTwitter, type PageMeta } from "@/lib/site-metadata";
 
 type Tag = Record<string, string>;
 
@@ -8,7 +8,7 @@ export function usePageMeta(input: MaybeRefOrGetter<PageMeta>) {
   useHead(() => {
     const meta = toValue(input);
     const og = meta.openGraph;
-    const twitter = meta.twitter;
+    const twitter = resolveTwitter(meta);
     const tags: (Tag | undefined)[] = [
       meta.description ? { name: "description", content: meta.description } : undefined,
       meta.noindex ? { name: "robots", content: "noindex" } : undefined,
@@ -30,6 +30,7 @@ export function usePageMeta(input: MaybeRefOrGetter<PageMeta>) {
         ? [
             { name: "twitter:card", content: twitter.card },
             { name: "twitter:title", content: twitter.title },
+            twitter.description ? { name: "twitter:description", content: twitter.description } : undefined,
             ...twitter.images.map((url) => ({ name: "twitter:image", content: absoluteUrl(url) })),
           ]
         : []),

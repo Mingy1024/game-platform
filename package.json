@@ -17,7 +17,7 @@
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "cf:typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "cf:deploy": "nuxt build && wrangler deploy",
+    "cf:deploy": "node scripts/check-site-url.mjs && nuxt build && node scripts/check-site-url.mjs --built && wrangler deploy",
     "postinstall": "prisma generate --config prisma7.config.ts && nuxt prepare"
   },
   "dependencies": {

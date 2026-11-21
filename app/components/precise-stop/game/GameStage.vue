@@ -109,12 +109,22 @@ watch(
 const click = () => sound.play("ui-click.mp3");
 
 // ---- 進出遊戲畫面：隱藏網站其他部分、接管返回鍵 ----
+const pageRoute = useRoute();
+const router = useRouter();
 const onPopState = () => emit("exit", exitScroll);
 onMounted(() => {
   document.documentElement.dataset.playing = "1";
-  // 進遊戲時多記一筆瀏覽紀錄（網址相同），返回鍵會回到介紹而不是離開網站
+  // 進遊戲時多記一筆瀏覽紀錄（網址相同），返回鍵會回到介紹而不是離開網站。
+  // 透過 Vue Router 新增，它記錄的位置編號才會跟著加一（直接 pushState 複製狀態，前後兩筆的位置會一樣）。
+  // 從介紹頁按上一頁再按下一頁時，目前這一筆已經有標記，就不再新增：按返回會回到前一筆的介紹頁。
   if (!(window.history.state as Record<string, unknown> | null)?.[HISTORY_FLAG]) {
-    window.history.pushState({ ...(window.history.state ?? {}), [HISTORY_FLAG]: true }, "");
+    void router.push({
+      path: pageRoute.path,
+      query: pageRoute.query,
+      hash: pageRoute.hash,
+      state: { [HISTORY_FLAG]: true },
+      force: true,
+    });
   }
   window.addEventListener("popstate", onPopState);
 });

@@ -10,6 +10,9 @@ export const NICK_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
 export type NickError = "length" | "chars" | "blocked" | "taken" | "too_soon" | "rate";
 
+/** 伺服器會回的暱稱錯誤（前端有對應的提示文字） */
+export const NICK_ERRORS: ReadonlySet<string> = new Set<NickError>(["length", "chars", "blocked", "taken", "too_soon", "rate"]);
+
 /** 前端也能判斷的錯誤 */
 export type NickFormatError = Extract<NickError, "length" | "chars" | "blocked">;
 

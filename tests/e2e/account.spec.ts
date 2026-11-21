@@ -168,6 +168,16 @@ test.describe("帳號與登入", () => {
   });
 });
 
+test("A12 同時送出兩次改名，只有一次成功，不能繞過 7 天冷卻", async ({ page, context }) => {
+  await asGoogleUser(context);
+  await login(page, "/me");
+  const send = (custom: string) =>
+    page.request.patch("/api/me/nick", { headers: { Origin: new URL(page.url()).origin }, data: { custom } });
+  const suffix = unique().slice(-5);
+  const statuses = (await Promise.all([send(`甲${suffix}`), send(`乙${suffix}`)])).map((response) => response.status()).sort();
+  expect(statuses).toEqual([200, 409]);
+});
+
 test.describe("App 內建瀏覽器", () => {
   test.use({
     userAgent:

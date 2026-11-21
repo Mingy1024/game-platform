@@ -14,15 +14,24 @@ import type { Locale } from "@/lib/i18n/locales";
  * satori 固定在 0.32.0：0.33 起加入 HarfBuzz（harfbuzzjs，0.35 起內建），它的 WebAssembly 是在執行時
  * 從位元組編譯的，Workers 不允許，成績圖會整個失敗。升級前要先在 npm run preview 確認成績圖能產生。
  */
-let engines: Promise<void> | null = null;
-const ready = () =>
-  (engines ??= Promise.all([initSatori(yogaWasm), initWasm(resvgWasm)])
-    .then(() => undefined)
-    .catch((error) => {
-      // 初始化失敗不要把錯誤留在快取裡，下次請求重試
-      engines = null;
-      throw error;
-    }));
+/**
+ * 只初始化一次；失敗時清掉快取讓下次重試。兩個引擎各自記住結果：
+ * resvg 已經初始化成功後不能再呼叫 initWasm（會丟 Already initialized），所以不能和 satori 綁在一起重試。
+ */
+function once(init: () => Promise<unknown>): () => Promise<void> {
+  let pending: Promise<void> | null = null;
+  return () =>
+    (pending ??= init().then(
+      () => undefined,
+      (error: unknown) => {
+        pending = null;
+        throw error;
+      },
+    ));
+}
+const readySatori = once(() => initSatori(yogaWasm));
+const readyResvg = once(() => initWasm(resvgWasm));
+const ready = () => Promise.all([readySatori(), readyResvg()]);
 
 type Assets = {
   hero: string;
