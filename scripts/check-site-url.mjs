@@ -7,26 +7,16 @@
 // 部署後再改 Worker 的環境變數也改不到，所以忘了設定時要在部署前擋下來。
 import { existsSync, readFileSync } from "node:fs";
 import "dotenv/config";
+import { checkSiteUrl } from "./site-url.mjs";
 
 const fail = (message) => {
   console.error(`✘ ${message}`);
   process.exit(1);
 };
 
-const raw = process.env.SITE_URL;
-if (!raw) fail("沒有設定 SITE_URL。正式建置要設成正式網址，例如 SITE_URL=https://example.com npm run cf:deploy");
-
-let site;
-try {
-  site = new URL(raw);
-} catch {
-  fail(`SITE_URL 不是有效的網址：${raw}`);
-}
-if (site.protocol !== "https:") fail(`SITE_URL 要用 https：${raw}`);
-if (["localhost", "127.0.0.1", "0.0.0.0"].includes(site.hostname) || site.hostname.endsWith(".local")) {
-  fail(`SITE_URL 不能是本機網址：${raw}`);
-}
-const origin = site.origin;
+const checked = checkSiteUrl(process.env.SITE_URL);
+if ("error" in checked) fail(checked.error);
+const { origin } = checked;
 
 if (process.argv.includes("--built")) {
   const page = ".output/public/games/precise-stop/index.html";

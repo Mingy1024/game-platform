@@ -16,6 +16,7 @@ const ERROR_TEXT: Record<NickError | "network", (next?: Date) => string> = {
   blocked: () => "這個名字不能用，換一個試試",
   taken: () => "這個名字有人用了",
   too_soon: (next) => (next ? `7 天只能改一次，下次可以改：${taiwanDay(next)}` : "7 天只能改一次"),
+  conflict: () => "暱稱剛剛在別的地方改過了，已經換成最新的，請再確認一次",
   rate: () => "改太快了，等一分鐘再試",
   network: () => "沒有成功，等一下再試一次。",
 };

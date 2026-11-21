@@ -92,6 +92,8 @@ export async function saveNick(custom: string | null): Promise<NickResult> {
     return { ok: true };
   }
   if (response.status === 401) set({ status: "loggedOut" });
+  // 帳號剛在別的分頁改過：重新讀取，畫面顯示最新的暱稱
+  if (body.error === "conflict") void refreshMe();
   return {
     ok: false,
     // 伺服器暫時無法處理（503 unavailable）或不認得的錯誤，畫面上都顯示「等一下再試一次」

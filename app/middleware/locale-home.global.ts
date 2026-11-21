@@ -8,5 +8,7 @@ export default defineNuxtRouteMiddleware((to) => {
   if (import.meta.server || to.path !== "/") return;
   if (useNuxtApp().isHydrating) return;
   const home = rememberedHomePath(useCookie(LOCALE_COOKIE).value);
-  if (home) return navigateTo(home, { replace: true });
+  // 不指定 replace：沿用這次換頁原本的方式（點連結是新增一筆紀錄），上一頁才會回到原本的頁面。
+  // 查詢參數和錨點一起帶過去（例如登入結果 ?login=）
+  if (home) return navigateTo({ path: home, query: to.query, hash: to.hash });
 });

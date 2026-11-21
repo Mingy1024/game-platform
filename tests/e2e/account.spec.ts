@@ -178,6 +178,25 @@ test("A12 同時送出兩次改名，只有一次成功，不能繞過 7 天冷�
   expect(statuses).toEqual([200, 409]);
 });
 
+test("A13 改暱稱的請求內容超過 1 KB 時拒絕", async ({ page, context }) => {
+  await asGoogleUser(context);
+  await login(page, "/me");
+  const response = await page.request.patch("/api/me/nick", {
+    headers: { Origin: new URL(page.url()).origin },
+    data: { custom: "長".repeat(2000) },
+  });
+  expect(response.status()).toBe(413);
+});
+
+test.describe("選過其他語言的人", () => {
+  test("A14 從 Google 回到首頁時，轉到該語言首頁並保留登入結果", async ({ page, context }) => {
+    await context.addCookies([{ name: "gs-locale", value: "en", domain: "localhost", path: "/" }]);
+    await page.goto("/?login=error");
+    await expect(page.getByTestId("banner-error")).toBeVisible();
+    await expect(page).toHaveURL("/en");
+  });
+});
+
 test.describe("App 內建瀏覽器", () => {
   test.use({
     userAgent:

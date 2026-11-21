@@ -2,26 +2,15 @@ import type { Player, PrismaClient } from "@/generated/prisma/client";
 import { randomId, randomInt } from "./crypto";
 import { randomNick, type Nick } from "./nick/nick";
 import { nickNextAt } from "./nick/rules";
-import { validateSession } from "./session";
 
 export type { Player };
 
-/** 用 session cookie 的 token 找目前玩家；沒登入回傳 null */
-export async function getCurrentPlayer(db: PrismaClient, token: string | undefined): Promise<Player | null> {
-  if (!token) return null;
-  const result = await validateSession(db, token);
-  return result?.player ?? null;
-}
-
+/**
+ * 需要登入的 API 在沒登入時丟出（route handler 的 guarded 轉成 401）。
+ * 取得目前玩家請用 server/utils/account.ts 的 requireSessionPlayer：它會在 session 續期時一併更新 cookie。
+ */
 export class UnauthorizedError extends Error {
   status = 401;
-}
-
-/** 同上，但沒登入就丟 UnauthorizedError（route handler 用 jsonError 轉成 401）。遊戲寫紀錄的 API 用它。 */
-export async function requirePlayer(db: PrismaClient, token: string | undefined): Promise<Player> {
-  const player = await getCurrentPlayer(db, token);
-  if (!player) throw new UnauthorizedError("需要登入");
-  return player;
 }
 
 export function playerNick(player: Player): Nick {

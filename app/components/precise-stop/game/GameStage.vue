@@ -112,19 +112,24 @@ const click = () => sound.play("ui-click.mp3");
 const pageRoute = useRoute();
 const router = useRouter();
 const onPopState = () => emit("exit", exitScroll);
+const hasGameEntry = () => Boolean((window.history.state as Record<string, unknown> | null)?.[HISTORY_FLAG]);
+/** 新增遊戲瀏覽紀錄的導覽；離開遊戲前要等它完成，才知道能不能用上一頁回到介紹 */
+let historyEntry: Promise<unknown> = Promise.resolve();
 onMounted(() => {
   document.documentElement.dataset.playing = "1";
   // 進遊戲時多記一筆瀏覽紀錄（網址相同），返回鍵會回到介紹而不是離開網站。
   // 透過 Vue Router 新增，它記錄的位置編號才會跟著加一（直接 pushState 複製狀態，前後兩筆的位置會一樣）。
   // 從介紹頁按上一頁再按下一頁時，目前這一筆已經有標記，就不再新增：按返回會回到前一筆的介紹頁。
-  if (!(window.history.state as Record<string, unknown> | null)?.[HISTORY_FLAG]) {
-    void router.push({
-      path: pageRoute.path,
-      query: pageRoute.query,
-      hash: pageRoute.hash,
-      state: { [HISTORY_FLAG]: true },
-      force: true,
-    });
+  if (!hasGameEntry()) {
+    historyEntry = router
+      .push({
+        path: pageRoute.path,
+        query: pageRoute.query,
+        hash: pageRoute.hash,
+        state: { [HISTORY_FLAG]: true },
+        force: true,
+      })
+      .catch(() => undefined);
   }
   window.addEventListener("popstate", onPopState);
 });
@@ -136,10 +141,16 @@ onBeforeUnmount(() => {
   sound.dispose();
 });
 
-function exit(scrollToBoard: boolean) {
+/**
+ * 離開遊戲：有遊戲的瀏覽紀錄時按上一頁（和瀏覽器返回鍵走同一條路，popstate 收到後關閉遊戲）；
+ * 紀錄還沒建立成功（導覽被取消或失敗）時直接關閉，不能按上一頁，否則會離開介紹頁。
+ */
+async function exit(scrollToBoard: boolean) {
   exitScroll = scrollToBoard;
   if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
-  window.history.back();
+  await historyEntry;
+  if (hasGameEntry()) window.history.back();
+  else emit("exit", scrollToBoard);
 }
 
 // ---- 建立 Phaser 場景（這時才載入 Phaser）；按「重試」或換新的一局時重新建立 ----

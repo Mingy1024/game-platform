@@ -1,6 +1,7 @@
 import { deleteCookie, getCookie, getRequestURL, setCookie, setResponseHeader, setResponseStatus, type H3Event } from "h3";
-import { UnauthorizedError } from "@/lib/account/player";
-import { SESSION_COOKIE } from "@/lib/account/session";
+import type { PrismaClient } from "@/generated/prisma/client";
+import { UnauthorizedError, type Player } from "@/lib/account/player";
+import { SESSION_COOKIE, validateSession } from "@/lib/account/session";
 import { FLAGS } from "@/lib/flags";
 
 /** 本站的 https 一律加 Secure；本機 http://localhost 開發時不加，否則某些瀏覽器不存 cookie */
@@ -20,6 +21,22 @@ export function setSessionCookie(event: H3Event, token: string, expiresAt: Date)
 
 export function clearSessionCookie(event: H3Event) {
   deleteCookie(event, SESSION_COOKIE, { httpOnly: true, secure: isSecure(event), sameSite: "lax", path: "/" });
+}
+
+/**
+ * 需要登入的 API 取得目前玩家。session 快到期時資料庫會延長，這裡同時更新 cookie 的期限
+ * （只延長資料庫、不更新 cookie 的話，瀏覽器還是會在原本的期限登出）；token 無效時清掉 cookie。
+ * 沒登入丟 UnauthorizedError，guarded 會轉成 401。
+ */
+export async function requireSessionPlayer(event: H3Event, db: PrismaClient): Promise<Player> {
+  const token = sessionToken(event);
+  const result = token ? await validateSession(db, token) : null;
+  if (!result) {
+    if (token) clearSessionCookie(event);
+    throw new UnauthorizedError("需要登入");
+  }
+  if (token && result.renewedExpiresAt) setSessionCookie(event, token, result.renewedExpiresAt);
+  return result.player;
 }
 
 /**

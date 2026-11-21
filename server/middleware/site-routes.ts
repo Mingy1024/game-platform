@@ -14,7 +14,7 @@ const SKIP = /^\/(?:api|_nuxt|__nuxt|_fonts)(?:\/|$)/;
 
 export default defineEventHandler((event) => {
   if (event.method !== "GET" && event.method !== "HEAD") return;
-  const { pathname } = getRequestURL(event);
+  const { pathname, search } = getRequestURL(event);
   if (SKIP.test(pathname) || pathname === "/__nuxt_error") return;
   const last = pathname.split("/").at(-1) ?? "";
   // 有副檔名的是靜態檔案或 _payload.json；找不到時由後面的處理回 404
@@ -29,7 +29,8 @@ export default defineEventHandler((event) => {
 
   if (segments.length === 0) {
     const home = rememberedHomePath(getCookie(event, LOCALE_COOKIE));
-    return home ? sendRedirect(event, home, 307) : undefined;
+    // 查詢參數一起帶過去（例如登入結果 ?login=）
+    return home ? sendRedirect(event, `${home}${search}`, 307) : undefined;
   }
 
   if (!isSitePath(segments)) throw createError({ statusCode: 404, statusMessage: "Not Found" });

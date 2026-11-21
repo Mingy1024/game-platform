@@ -1,10 +1,36 @@
-import { getRequestHeader, readBody, type H3Event } from "h3";
+import { getRequestHeader, readRawBody, type H3Event } from "h3";
 import { Prisma } from "@/generated/prisma/client";
-import { meResponse, requirePlayer, type Player } from "@/lib/account/player";
+import { meResponse, UnauthorizedError, type Player } from "@/lib/account/player";
 import { checkNickFormat, cleanNick, nickKey, nickNextAt } from "@/lib/account/nick/rules";
 
-/** 請求內容的上限：暱稱最多 12 個字，正常的 JSON 遠小於這個大小 */
+/**
+ * 請求內容的上限：暱稱最多 12 個字，正常的 JSON 遠小於這個大小。
+ * 瀏覽器送 JSON 一定帶 Content-Length；沒有或超過就拒絕，讀進來後再用實際長度檢查一次。
+ * （Nitro 在呼叫 handler 前已經讀完請求內容，整體大小由 Cloudflare 平台的請求上限保護；
+ * 這裡確保超過上限的內容不會被解析、也不會寫進資料庫。）
+ */
 const MAX_BODY_BYTES = 1024;
+
+/** 讀取並解析請求內容；格式不對或太大時回傳錯誤狀態碼 */
+async function readNickBody(event: H3Event): Promise<{ custom: string | null } | 400 | 411 | 413> {
+  const header = getRequestHeader(event, "content-length");
+  if (header === undefined) return 411;
+  const declared = Number(header);
+  if (!Number.isFinite(declared) || declared < 0) return 400;
+  if (declared > MAX_BODY_BYTES) return 413;
+  const raw = await readRawBody(event, false).catch(() => undefined);
+  if (raw && raw.byteLength > MAX_BODY_BYTES) return 413;
+  let body: unknown;
+  try {
+    body = JSON.parse(new TextDecoder().decode(raw ?? new Uint8Array()));
+  } catch {
+    return 400;
+  }
+  if (!body || typeof body !== "object" || !("custom" in body)) return 400;
+  const { custom } = body as { custom: unknown };
+  if (custom !== null && typeof custom !== "string") return 400;
+  return { custom };
+}
 
 /**
  * 同一個人 1 分鐘內最多 5 次（wrangler.jsonc 的 NICK_LIMITER）。
@@ -34,25 +60,21 @@ async function checkRateLimit(event: H3Event, playerId: string): Promise<"ok" | 
  * 改暱稱或改回隨機名字。
  *   { "custom": "阿明號" }  自訂暱稱（7 天一次）
  *   { "custom": null }      改回隨機名字（不受冷卻限制）
- * 錯誤時回 400／409／413／429／503，body 是
- * { error: "bad_request" | "length" | "chars" | "blocked" | "taken" | "too_soon" | "rate" | "unavailable" }
+ * 錯誤時回 400／401／409／411／413／429／503，body 是
+ * { error: "bad_request" | "unauthorized" | "length" | "chars" | "blocked" | "taken" | "too_soon" | "conflict" | "rate" | "unavailable" }
  */
 export default defineEventHandler((event) =>
   guarded(event, async () => {
     const db = useDb(event);
-    const player = await requirePlayer(db, sessionToken(event));
+    const player = await requireSessionPlayer(event, db);
 
     // 先限流再讀內容：無效的請求也算次數
     const rate = await checkRateLimit(event, player.id);
     if (rate === "limited") return jsonError(event, 429, "rate");
     if (rate === "unavailable") return jsonError(event, 503, "unavailable");
 
-    const length = Number(getRequestHeader(event, "content-length") ?? 0);
-    if (length > MAX_BODY_BYTES) return jsonError(event, 413, "bad_request");
-    const body = (await readBody<unknown>(event).catch(() => null)) as { custom?: unknown } | null;
-    if (!body || typeof body !== "object" || !("custom" in body) || (body.custom !== null && typeof body.custom !== "string")) {
-      return jsonError(event, 400, "bad_request");
-    }
+    const body = await readNickBody(event);
+    if (typeof body === "number") return jsonError(event, body, "bad_request");
 
     const now = new Date();
     const respond = async () => {
@@ -98,9 +120,16 @@ export default defineEventHandler((event) =>
   }),
 );
 
-/** 改名途中被同一個人的其他請求搶先改過：回 409，有冷卻時附上下次可以改的時間 */
+/**
+ * 改名途中被同一個人的其他請求搶先改過（條件更新沒有更新到任何一筆）：
+ * - 帳號已經被刪除：401
+ * - 對方剛改過名字、進入冷卻：409 too_soon，附上下次可以改的時間
+ * - 其他（例如對方改回隨機名字）：409 conflict，前端重新讀取帳號狀態
+ */
 async function conflict(event: H3Event, db: ReturnType<typeof useDb>, playerId: Player["id"], now: Date) {
   const latest = await db.player.findUnique({ where: { id: playerId } });
-  const next = latest ? nickNextAt(latest.nickChangedAt, now) : null;
-  return jsonError(event, 409, "too_soon", next ? { nickNextAt: next.toISOString() } : undefined);
+  if (!latest) throw new UnauthorizedError("帳號已刪除");
+  const next = nickNextAt(latest.nickChangedAt, now);
+  if (next) return jsonError(event, 409, "too_soon", { nickNextAt: next.toISOString() });
+  return jsonError(event, 409, "conflict");
 }

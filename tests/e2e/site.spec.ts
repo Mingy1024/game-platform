@@ -127,6 +127,9 @@ test.describe("K3 不看瀏覽器語言", () => {
     await page.goto("/games");
     await page.locator("header a").first().click();
     await expect(page).toHaveURL("/en");
+    // 轉到語言首頁是新增一筆紀錄，上一頁回到原本的頁面
+    await page.goBack();
+    await expect(page).toHaveURL("/games");
   });
 });
 
