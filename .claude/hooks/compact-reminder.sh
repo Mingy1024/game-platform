@@ -4,7 +4,7 @@
 
 cat <<'EOF'
 【專案關鍵規則提醒（來自 CLAUDE.md）】
-- 遊戲小站：Nuxt 4 + Vue 3 + Phaser 4，Cloudflare Workers + D1 + Prisma 7。根目錄 AGENTS.md 的 Next.js 提示不適用。
+- 遊戲小站：Nuxt 4 + Vue 3 + Phaser 4，Cloudflare Workers + D1 + Prisma 7（不是 Next.js）。
 - 回覆、註解、commit、文件一律繁體中文（台灣用語）；commit 直接做在 main，格式 type: 描述。
 - 改 schema 要產生新 migration，不改已存在的 migration、不手改 generated/。
 - 會改資料的 API 包 guarded()；GET 不能有寫入副作用；共用狀態／API／登入類改動先照 docs/dev/sync-checklist.md。

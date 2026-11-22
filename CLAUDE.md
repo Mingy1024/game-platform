@@ -5,7 +5,7 @@
 遊戲小站（game-platform）— 免下載、免登入的原創網頁小遊戲站，目前上線「精準停車」，支援七種語言。
 Nuxt 4（Vue 3、TypeScript）+ Tailwind 4 + Phaser 4，部署在 Cloudflare Workers（Nitro `cloudflare_module`），資料庫 Cloudflare D1 + Prisma 7。
 
-> 根目錄的 `AGENTS.md` 是 `next dev` 殘留的 Next.js 提示，本專案已經移植到 Nuxt，**不適用**，也不用去讀 `node_modules/next`。
+> 根目錄的 `AGENTS.md` 是給其他 AI 工具（例如 Codex）看的精簡版，內容與本檔一致；本專案已經移植到 Nuxt，不是 Next.js。
 
 ## 常用指令
 
