@@ -2,7 +2,8 @@
 
 ## 環境
 
-- Node.js 24（`package.json` 的 `engines` 為 `>=24 <25`；`.nvmrc` 目前寫 26.13.1，與 engines 不一致，待確認）、npm 12.2.2（`packageManager`）。
+- Node.js 24（`package.json` 的 `engines` 為 `>=24 <25`）、npm 12.2.2（`packageManager`）。
+- 作者的 Windows 只裝了 Node 26，所以本機有一個**不進 Git** 的 `.nvmrc`（內容 `26.13.1`，已列在 `.git/info/exclude`），讓 nvm-windows 的 shim 不報「v>=24.0.0 <25 is not installed」。不要 commit 它，也不要把 `engines` 改成配合它。
 - WSL 與 Windows 的 `node_modules` 不互通：dev server 在 WSL 掛載的 Windows 磁碟上不偵測檔案變更，裝套件要用 Windows 的 Node。
 - 第一次開發：`npm install` → `npm run db:migrate:local` → `npm run dev`。
 - Playwright 瀏覽器不進 Git，換電腦後 `npx playwright install chromium`。
