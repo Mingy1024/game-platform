@@ -7,7 +7,9 @@ import {
   type MineResponse,
   type Scope,
   type TopResponse,
+  type TopRow,
 } from "@/lib/games/precise-stop/leaderboard";
+import { periodOf as officePeriodOf, type Scope as OfficeScope, type TopResponse as OfficeTopResponse } from "@/lib/games/office-escape/leaderboard";
 
 /**
  * 精準停車的全站排行查詢（設計稿第 14.1、14.3 節）。直接用 D1 的 SQL：
@@ -19,22 +21,27 @@ import {
  * - free：自由模式（date_key 是空字串）
  * achieved_at 是 Prisma 寫入的 ISO 字串（固定 +00:00、毫秒三位），字串順序就是時間順序。
  */
-function entries(scope: Scope, now: number): { sql: string; params: string[] } {
-  const period = periodOf(scope, now);
+/** 一款遊戲的最佳紀錄表。allMode 是「歷史最佳」那一種的 mode 值（date_key 一律是空字串） */
+export type Board = { table: string; allMode: string };
+export const PRECISE_STOP_BOARD: Board = { table: "precise_stop_bests", allMode: "free" };
+export const OFFICE_ESCAPE_BOARD: Board = { table: "office_escape_bests", allMode: "all" };
+
+/** period：這張榜現在的期間（daily 是今天、week 是本週週一、其餘是空字串） */
+function entries(board: Board, scope: string, period: string): { sql: string; params: string[] } {
   if (scope === "week") {
     const { from, to } = weekRange(period);
     return {
       sql: `SELECT player_id, score, achieved_at FROM (
               SELECT player_id, score, achieved_at,
                 ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY score DESC, achieved_at ASC) AS n
-              FROM precise_stop_bests WHERE mode = 'daily' AND date_key BETWEEN ? AND ?
+              FROM ${board.table} WHERE mode = 'daily' AND date_key BETWEEN ? AND ?
             ) WHERE n = 1`,
       params: [from, to],
     };
   }
   return {
-    sql: "SELECT player_id, score, achieved_at FROM precise_stop_bests WHERE mode = ? AND date_key = ?",
-    params: scope === "daily" ? ["daily", period] : ["free", ""],
+    sql: `SELECT player_id, score, achieved_at FROM ${board.table} WHERE mode = ? AND date_key = ?`,
+    params: scope === "daily" ? ["daily", period] : [board.allMode, ""],
   };
 }
 
@@ -50,8 +57,8 @@ type TopSqlRow = {
 };
 
 /** 前 100 名和上榜人數。回應不帶玩家 ID 或任何個人資料（T5） */
-export async function readTop(db: D1Database, scope: Scope, now: number): Promise<TopResponse> {
-  const { sql, params } = entries(scope, now);
+async function readBoardTop(db: D1Database, board: Board, scope: string, period: string): Promise<{ total: number; rows: TopRow[] }> {
+  const { sql, params } = entries(board, scope, period);
   const [rows, count] = await db.batch([
     db
       .prepare(
@@ -65,8 +72,6 @@ export async function readTop(db: D1Database, scope: Scope, now: number): Promis
   ]);
   const total = ((count!.results[0] as { total?: number } | undefined)?.total ?? 0) as number;
   return {
-    scope,
-    period: periodOf(scope, now),
     total,
     rows: (rows!.results as TopSqlRow[]).map((row, index) => ({
       rank: index + 1,
@@ -83,8 +88,8 @@ export async function readTop(db: D1Database, scope: Scope, now: number): Promis
  * 自己的名次：排在自己前面的人數＋1（分數比較高，或同分但比較早創下；同分同時間時用玩家 ID 決定，和前 100 名的順序一致）。
  * 每次現算、不快取（T5）。
  */
-export async function readMine(db: D1Database, scope: Scope, playerId: string, now: number): Promise<MineResponse> {
-  const { sql, params } = entries(scope, now);
+async function readBoardMine(db: D1Database, board: Board, scope: string, period: string, playerId: string): Promise<MineResponse> {
+  const { sql, params } = entries(board, scope, period);
   const row = await db
     .prepare(
       `WITH e AS (${sql}), me AS (SELECT score, achieved_at FROM e WHERE player_id = ?)
@@ -102,3 +107,20 @@ export async function readMine(db: D1Database, scope: Scope, playerId: string, n
   const rank = row.ahead + 1;
   return { rank, score: row.score, total, toTop100: pointsToTop(row.score, rank, row.hundredth) };
 }
+
+export async function readTop(db: D1Database, scope: Scope, now: number): Promise<TopResponse> {
+  const period = periodOf(scope, now);
+  return { scope, period, ...(await readBoardTop(db, PRECISE_STOP_BOARD, scope, period)) };
+}
+
+export const readMine = (db: D1Database, scope: Scope, playerId: string, now: number): Promise<MineResponse> =>
+  readBoardMine(db, PRECISE_STOP_BOARD, scope, periodOf(scope, now), playerId);
+
+/** 下班逃離辦公室的前 100 名與自己的名次：同一套查詢，換成它自己的表 */
+export async function readOfficeTop(db: D1Database, scope: OfficeScope, now: number): Promise<OfficeTopResponse> {
+  const period = officePeriodOf(scope, now);
+  return { scope, period, ...(await readBoardTop(db, OFFICE_ESCAPE_BOARD, scope, period)) };
+}
+
+export const readOfficeMine = (db: D1Database, scope: OfficeScope, playerId: string, now: number): Promise<MineResponse> =>
+  readBoardMine(db, OFFICE_ESCAPE_BOARD, scope, officePeriodOf(scope, now), playerId);

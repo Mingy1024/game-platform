@@ -7,13 +7,14 @@
 | 位置 | 內容 |
 | --- | --- |
 | `lib/games/precise-stop/__tests__/` | physics、scoring、route、records、session、share-code、card、config、leaderboard、account-sync、sound-mix、view |
+| `lib/games/office-escape/__tests__/` | game（模擬、計分、路線、自動駕駛）、records（本機紀錄、帳號紀錄檢查、待上傳、成績代碼、排行榜 SQL、訪客併入） |
 | `lib/account/__tests__/` | session、nick、return-path、me-store、guest-merge（用真的 SQL） |
 | `lib/catalog/__tests__/catalog.test.ts` | 遊戲目錄 schema 與唯一性 |
 | `lib/i18n/__tests__/` | 七種語言字典鍵值一致、語言前綴 |
 | `lib/__tests__/site-metadata.test.ts` | canonical、hreflang |
 | `server/__tests__/body-limit.test.ts` | 請求大小限制 |
 | `scripts/__tests__/site-url.test.ts` | `SITE_URL` 檢查 |
-| `tests/e2e/*.spec.ts` | account、game、leaderboard、records-sync、site、sound |
+| `tests/e2e/*.spec.ts` | account、game、leaderboard、office-escape、records-sync、site、sound |
 
 Vitest 設定（`vitest.config.mts`）：`environment: node`，收 `**/*.{test,spec}.ts`，排除 `tests/e2e/`、`.nuxt/`、`.output/`、`.wrangler/`、`.scratch/`；`@` 別名指向專案根目錄。
 

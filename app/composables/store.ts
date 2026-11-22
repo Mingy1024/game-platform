@@ -1,4 +1,7 @@
 import type { ShallowRef } from "vue";
+import { retryAccountSync as retryEscapeSync } from "@/lib/games/office-escape/account-sync";
+import { EMPTY_RECORDS as EMPTY_ESCAPE_RECORDS, readRecords as readEscapeRecords, subscribeRecords as subscribeEscapeRecords } from "@/lib/games/office-escape/records-store";
+import type { Records as EscapeRecords } from "@/lib/games/office-escape/records";
 import { retryAccountSync } from "@/lib/games/precise-stop/account-sync";
 import { EMPTY_RECORDS, readRecords, subscribeRecords } from "@/lib/games/precise-stop/records-store";
 import type { Records } from "@/lib/games/precise-stop/records";
@@ -62,6 +65,12 @@ export function usePref(pref: Pref) {
 export function useRecords() {
   onMounted(retryAccountSync);
   return useExternalStore<Records>(subscribeRecords, readRecords, EMPTY_RECORDS);
+}
+
+/** 下班逃離辦公室的本機紀錄（登入時是帳號的紀錄）。掛上時順便重送還沒存到帳號的部分 */
+export function useEscapeRecords() {
+  onMounted(retryEscapeSync);
+  return useExternalStore<EscapeRecords>(subscribeEscapeRecords, readEscapeRecords, EMPTY_ESCAPE_RECORDS);
 }
 
 /** 開發版可以用 localStorage 暫時打開版位（正式版一律不看） */

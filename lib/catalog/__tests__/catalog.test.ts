@@ -4,11 +4,11 @@ import { describe, expect, it } from "vitest";
 import { zhTW } from "../../i18n/dictionaries/zh-TW";
 import { getActiveCategories, getGameBySlug, getPublishedGames } from "../catalog";
 
-describe("A2 目錄只有精準停車", () => {
-  it("只有一款，slug 是 precise-stop，分類是反應、休閒", () => {
+describe("A2 目錄：精準停車與下班逃離辦公室", () => {
+  it("兩款，slug 是 precise-stop、office-escape，分類都是反應、休閒", () => {
     const games = getPublishedGames();
-    expect(games.map((game) => game.slug)).toEqual(["precise-stop"]);
-    expect(games[0].categories).toEqual(["reflex", "casual"]);
+    expect(games.map((game) => game.slug).sort()).toEqual(["office-escape", "precise-stop"]);
+    for (const game of games) expect(game.categories).toEqual(["reflex", "casual"]);
     expect(getActiveCategories().map((category) => category.slug)).toEqual(["reflex", "casual"]);
   });
 
@@ -17,15 +17,19 @@ describe("A2 目錄只有精準停車", () => {
   });
 
   it("封面與主視覺檔案存在且是 WebP", () => {
-    const { cover, hero } = getGameBySlug("precise-stop")!;
-    for (const file of [cover, hero]) {
-      expect(file).toMatch(/\.webp$/);
-      expect(existsSync(join(process.cwd(), "public", file))).toBe(true);
+    for (const slug of ["precise-stop", "office-escape"]) {
+      const { cover, hero } = getGameBySlug(slug)!;
+      for (const file of [cover, hero]) {
+        expect(file).toMatch(/\.webp$/);
+        expect(existsSync(join(process.cwd(), "public", file))).toBe(true);
+      }
     }
   });
 
   it("有玩法說明和常見問題", () => {
     expect(zhTW.preciseStop.howTo.steps).toHaveLength(3);
     expect(zhTW.preciseStop.faq.items.length).toBeGreaterThanOrEqual(3);
+    expect(zhTW.officeEscape.howTo.steps).toHaveLength(3);
+    expect(zhTW.officeEscape.faq.items.length).toBeGreaterThanOrEqual(3);
   });
 });

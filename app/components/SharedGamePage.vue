@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { sharedBanner, sharedMetadata } from "@/lib/games/precise-stop/meta";
+import { sharedBanner as officeBanner, sharedMetadata as officeMetadata } from "@/lib/games/office-escape/meta";
+import { sharedBanner as preciseBanner, sharedMetadata as preciseMetadata } from "@/lib/games/precise-stop/meta";
 import type { Locale } from "@/lib/i18n/locales";
 
 /**
@@ -7,12 +8,20 @@ import type { Locale } from "@/lib/i18n/locales";
  * 代碼是任意值，所以這一頁在請求時才產生（不預先產生）。代碼無效時就是一般的介紹頁。
  */
 const { locale, slug, code } = defineProps<{ locale: Locale; slug: string; code: string }>();
-usePageMeta(sharedMetadata(locale, slug, code));
-const banner = sharedBanner(locale, code);
+const office = slug === "office-escape";
+usePageMeta(office ? officeMetadata(locale, slug, code) : preciseMetadata(locale, slug, code));
+const banner = office ? officeBanner(locale, code) : preciseBanner(locale, code);
 </script>
 
 <template>
-  <PreciseStopPage :locale="locale">
+  <OfficeEscapePage v-if="office" :locale="locale">
+    <template #banner>
+      <p v-if="banner" data-testid="shared-banner" class="mt-4 rounded-xl border border-edge bg-edge-tint px-4 py-3 font-bold text-ink">
+        {{ banner }}
+      </p>
+    </template>
+  </OfficeEscapePage>
+  <PreciseStopPage v-else :locale="locale">
     <template #banner>
       <p v-if="banner" data-testid="shared-banner" class="mt-4 rounded-xl border border-edge bg-edge-tint px-4 py-3 font-bold text-ink">
         {{ banner }}

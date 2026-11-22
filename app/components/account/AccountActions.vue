@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { deleteAccount, logout } from "@/lib/account/me-store";
-import { hasUnsyncedRecords, syncNow } from "@/lib/games/precise-stop/account-sync";
+import { hasUnsyncedRecords as escapeUnsynced, syncNow as syncEscape } from "@/lib/games/office-escape/account-sync";
+import { hasUnsyncedRecords as preciseUnsynced, syncNow as syncPrecise } from "@/lib/games/precise-stop/account-sync";
+
+/** 各款遊戲有沒有還沒存到帳號的紀錄；登出前兩款都要先試著送出 */
+const hasUnsyncedRecords = () => preciseUnsynced() || escapeUnsynced();
+const syncNow = () => Promise.all([syncPrecise(), syncEscape()]);
 
 /**
  * 我的紀錄頁最下面的登出與刪除帳號。

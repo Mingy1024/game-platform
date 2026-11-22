@@ -38,6 +38,16 @@ export async function mergeGuest(d1: D1Database, guestId: string, accountId: str
          ON CONFLICT (player_id) DO UPDATE SET perfect_stops = precise_stop_stats.perfect_stops + excluded.perfect_stops`,
       )
       .bind(accountId, guestId),
+    // 下班逃離辦公室：只有最佳紀錄，取高分、同分留先創下的
+    d1
+      .prepare(
+        `INSERT INTO office_escape_bests (player_id, mode, date_key, score, achieved_at)
+         SELECT ?1, mode, date_key, score, achieved_at FROM office_escape_bests WHERE player_id = ?2 AND ${isGuest}
+         ON CONFLICT (player_id, mode, date_key) DO UPDATE SET score = excluded.score, achieved_at = excluded.achieved_at
+         WHERE excluded.score > office_escape_bests.score
+           OR (excluded.score = office_escape_bests.score AND excluded.achieved_at < office_escape_bests.achieved_at)`,
+      )
+      .bind(accountId, guestId),
     d1.prepare("DELETE FROM players WHERE id = ?1 AND kind = 'guest'").bind(guestId),
   ]);
 }

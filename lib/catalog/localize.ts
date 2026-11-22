@@ -8,6 +8,10 @@ export function localizeGame(game: GameManifest, dict: Dictionary): GameManifest
     const text = dict.preciseStop;
     return { ...game, title: text.title, summary: text.summary, tags: [...text.tags] };
   }
+  if (game.slug === "office-escape") {
+    const text = dict.officeEscape;
+    return { ...game, title: text.title, summary: text.summary, tags: [...text.tags] };
+  }
   return game;
 }
 

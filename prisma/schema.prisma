@@ -44,6 +44,7 @@ model Player {
   preciseStopBests PreciseStopBest[]
   preciseStopStats PreciseStopStats?
   preciseStopSyncBatches PreciseStopSyncBatch[]
+  officeEscapeBests OfficeEscapeBest[]
 
   /// 每日排程刪掉 90 天沒玩的訪客
   @@index([kind, lastPlayedAt])
@@ -112,4 +113,22 @@ model PreciseStopSyncBatch {
 
   @@id([playerId, syncId])
   @@map("precise_stop_sync_batches")
+}
+
+/// 下班逃離辦公室的最佳紀錄（取高分，重送不會重複；沒有累計次數，所以不需要同步批次）
+model OfficeEscapeBest {
+  playerId   String   @map("player_id")
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  /// daily（每天的最佳分）或 all（歷史最佳）
+  mode       String
+  /// daily 的台灣日期 YYYY-MM-DD；all 是空字串
+  dateKey    String   @map("date_key")
+  score      Int
+  /// 創下這個最佳分的時間（排行榜同分時先創下的排前面）
+  achievedAt DateTime @map("achieved_at")
+
+  @@id([playerId, mode, dateKey])
+  /// 排行榜：同一天、同一種榜依分數排序
+  @@index([mode, dateKey, score(sort: Desc)])
+  @@map("office_escape_bests")
 }

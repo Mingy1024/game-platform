@@ -23,7 +23,16 @@ const locales = {
 function cardText(locale, d) {
   const game = d.preciseStop;
   const stations = STATION_IDS.flatMap((id) => Object.values(stationName(id, locale)));
+  // 下班逃離辦公室的成績圖：標題、各結局的標題與說明、四項得分名稱、邀請文案
+  const office = d.officeEscape;
+  const officeText = [
+    office.title,
+    ...Object.values(office.final.endings).flatMap((ending) => [ending.title, ending.body]),
+    ...Object.values(office.final.parts),
+    ...Object.values(office.card),
+  ];
   return [
+    ...officeText,
     d.brand,
     game.title,
     game.modes.daily,

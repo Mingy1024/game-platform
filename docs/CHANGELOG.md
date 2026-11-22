@@ -2,6 +2,11 @@
 
 依 git 紀錄整理，新的在前。所有項目皆已合併進 `main`、尚未部署到正式環境。
 
+## 2026-11-23
+- 新遊戲「下班逃離辦公室」（three.js）：四段固定路線、突發事件三選一、四種結局、七種語言、成績分享。
+- 帶入訪客、全站排行（今日、本週、歷史最佳）與帳號紀錄同步；新增 `office_escape_bests`（migration 0005），`mergeGuest` 併兩款遊戲。
+- 驗收標準 `docs/acceptance/office-escape.md`（160 條）、音效提示詞 `docs/sound/office-escape-prompts.md`、實作計畫 `docs/plans/office-escape.md`。
+
 ## 2026-11-22
 - 精準停車全站排行：訪客上榜、歐盟地區先問同意、登入時把訪客併進帳號（今日／本週／自由三張榜）。
 - 排行榜 Codex 審查修正 7 項：身分改變順序、撤回同意、重複次數、GET 只讀、90 天清除、跨期間重讀。
