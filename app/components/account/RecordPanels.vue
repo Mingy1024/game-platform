@@ -1,18 +1,13 @@
 <script setup lang="ts">
-import type { IconName } from "@/lib/icons";
 import { bestOf } from "@/lib/games/precise-stop/records";
 import { taiwanDateKey } from "@/lib/games/precise-stop/route";
 import { fmt, formatNumber } from "@/lib/i18n/format";
 import { t } from "@/lib/i18n/zh-TW";
 
 /**
- * 我的紀錄頁的三個區塊。「最近玩過」「收藏」還沒做，顯示空狀態。
- * 「最佳紀錄」列出精準停車（帳號設計稿第 19 題）：登入時是帳號的紀錄，沒登入是這台裝置的（同一份 useRecords）。
+ * 我的紀錄頁的「最佳紀錄」區塊，列出精準停車（帳號設計稿第 19 題）：登入時是帳號的紀錄，沒登入是這台裝置的（同一份 useRecords）。
+ * 「最近玩過」「收藏」不做（2026-11-22 決定，T21）。
  */
-const panels: { id: string; icon: IconName; title: string; body: string }[] = [
-  { id: "recent", icon: "clock", title: "最近玩過", body: "還沒有玩過的遊戲。玩過之後，最近的 20 款會列在這裡。" },
-  { id: "favorites", icon: "heart", title: "收藏", body: "還沒有收藏。在遊戲頁按下收藏，之後就能從這裡快速找到。" },
-];
 
 const text = t.preciseStop.records;
 const records = useRecords();
@@ -34,15 +29,7 @@ const stats = computed(() => [
 </script>
 
 <template>
-  <div class="mt-10 grid gap-5 lg:grid-cols-3">
-    <section v-for="panel in panels" :key="panel.id" :aria-labelledby="`${panel.id}-title`" class="rounded-2xl border border-line bg-card p-5">
-      <h2 :id="`${panel.id}-title`" class="flex items-center gap-2 text-xl font-extrabold text-ink">
-        <Icon :name="panel.icon" :size="24" class="text-sign" />
-        {{ panel.title }}
-      </h2>
-      <p class="mt-3 text-muted">{{ panel.body }}</p>
-    </section>
-
+  <div class="mt-10 max-w-xl">
     <section aria-labelledby="bests-title" data-testid="me-bests" class="flex flex-col gap-3 rounded-2xl border border-line bg-card p-5">
       <h2 id="bests-title" class="flex items-center gap-2 text-xl font-extrabold text-ink">
         <Icon name="restart" :size="24" class="text-sign" />

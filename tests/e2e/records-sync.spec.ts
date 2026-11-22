@@ -128,10 +128,10 @@ test.describe("帳號紀錄 API", () => {
   });
 });
 
-test("P17 沒登入時不呼叫紀錄 API", async ({ page }) => {
-  const calls: string[] = [];
+test("P17 沒登入時只看介紹頁和 /me 不呼叫紀錄 API；玩完一局才送出（建立訪客，T8）", async ({ page }) => {
+  const calls: { url: string; body: string | null }[] = [];
   page.on("request", (request) => {
-    if (request.url().includes(API)) calls.push(request.url());
+    if (request.url().includes(API)) calls.push({ url: request.url(), body: request.postData() });
   });
   await seedLocal(page, { free: 1234, perfectStops: 2 });
   await page.goto(GAME);
@@ -140,6 +140,12 @@ test("P17 沒登入時不呼叫紀錄 API", async ({ page }) => {
   await expect(page.getByTestId("me-best-free")).toHaveText("1,234");
   await page.waitForTimeout(1000);
   expect(calls).toEqual([]);
+
+  await enterGame(page);
+  await playToFinal(page);
+  await expect.poll(() => calls.length).toBeGreaterThan(0);
+  expect(calls[0]!.url).toContain(`${API}/sync`);
+  expect(JSON.parse(calls[0]!.body!)).toMatchObject({ playerId: null });
 });
 
 test("P7 P8 P15 登入時合併本機紀錄；換裝置看到同一份；重複登入不重複加", async ({ browser }) => {

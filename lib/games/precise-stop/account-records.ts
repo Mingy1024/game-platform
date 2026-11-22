@@ -28,8 +28,12 @@ export const CLOCK_SKEW_MS = DAY_MS;
 /** 一筆最佳紀錄。自由模式的 dateKey 是 null */
 export type BestEntry = { mode: Mode; dateKey: string | null; score: number; achievedAt: number };
 
-/** playerId：前端以為登入的帳號。和伺服器認得的不同就不寫（另一個分頁換了帳號） */
-export type SyncBody = { syncId: string; playerId: string; bests: BestEntry[]; perfectDelta: number };
+/**
+ * playerId：前端以為的身分（Google 帳號或訪客）。和伺服器認得的不同就不寫（另一個分頁換了身分）。
+ * null 表示還沒有身分、請建立訪客（精準停車設計稿第 14.3 節）。
+ * consent：歐盟地區的人按了「上榜」（T11）；其他地區不用帶。
+ */
+export type SyncBody = { syncId: string; playerId: string | null; bests: BestEntry[]; perfectDelta: number; consent?: true };
 
 /** GET／sync 回傳的帳號紀錄，格式和本機紀錄相同 */
 export type AccountRecords = { daily: Record<string, number>; free: number | null; perfectStops: number };
@@ -54,9 +58,10 @@ const best = z.discriminatedUnion("mode", [
 ]);
 const syncSchema = z.strictObject({
   syncId: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/),
-  playerId: z.string().min(1).max(64),
+  playerId: z.string().min(1).max(64).nullable(),
   bests: z.array(best).max(MAX_SYNC_BESTS),
   perfectDelta: z.number().int().min(0).max(MAX_PERFECT_DELTA),
+  consent: z.literal(true).optional(),
 });
 
 /**

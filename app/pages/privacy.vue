@@ -15,10 +15,13 @@ const link = "font-bold text-sign underline underline-offset-2";
       <p>玩遊戲不需要註冊或登入，網站不會要求你提供姓名、信箱或電話。</p>
     </ProseSection>
     <ProseSection title="存在你裝置上的資料">
-      <p v-if="FLAGS.login">
-        最近玩過的遊戲、收藏、聲音設定與最佳紀錄，會存在你瀏覽器的本機儲存空間。沒登入時不會上傳；登入時最佳紀錄會存到帳號（見「帳號裡的遊戲紀錄」）。清除瀏覽器資料就會刪除這台裝置上的紀錄。
+      <p v-if="FLAGS.login && FLAGS.leaderboard">
+        聲音設定與最佳紀錄會存在你瀏覽器的本機儲存空間。登入時最佳紀錄會存到帳號（見「帳號裡的遊戲紀錄」）；沒登入時，玩完一局的成績會用訪客暱稱上排行榜（見「排行榜與訪客代號」）。清除瀏覽器資料就會刪除這台裝置上的紀錄。
       </p>
-      <p v-else>最近玩過的遊戲、收藏、聲音設定與最佳紀錄，會存在你瀏覽器的本機儲存空間，不會上傳。清除瀏覽器資料就會刪除這些紀錄。</p>
+      <p v-else-if="FLAGS.login">
+        聲音設定與最佳紀錄會存在你瀏覽器的本機儲存空間。沒登入時不會上傳；登入時最佳紀錄會存到帳號（見「帳號裡的遊戲紀錄」）。清除瀏覽器資料就會刪除這台裝置上的紀錄。
+      </p>
+      <p v-else>聲音設定與最佳紀錄會存在你瀏覽器的本機儲存空間，不會上傳。清除瀏覽器資料就會刪除這些紀錄。</p>
     </ProseSection>
     <template v-if="FLAGS.login">
       <!-- 帳號相關的段落（帳號與登入設計稿「隱私權政策」畫板） -->
@@ -31,7 +34,7 @@ const link = "font-bold text-sign underline underline-offset-2";
           <li>帳號建立的時間、最後使用的時間</li>
           <li>登入狀態：一組隨機代碼，資料庫只存它的雜湊值</li>
         </ul>
-        <p>資料存在 Cloudflare D1 資料庫。暱稱之後會顯示在排行榜上；Google 帳號代碼不會公開。</p>
+        <p>資料存在 Cloudflare D1 資料庫。暱稱會顯示在排行榜上；Google 帳號代碼不會公開。</p>
       </ProseSection>
       <ProseSection title="帳號裡的遊戲紀錄">
         <p>登入時，遊戲的最佳紀錄會存到你的帳號，換裝置登入也看得到。目前保存精準停車的：</p>
@@ -42,12 +45,26 @@ const link = "font-bold text-sign underline underline-offset-2";
         </ul>
         <p>登入前在這台裝置玩的紀錄，登入時會一起併進帳號。登出時會清掉這台裝置上的紀錄，帳號裡的不受影響。</p>
       </ProseSection>
+      <ProseSection v-if="FLAGS.leaderboard" title="排行榜與訪客代號">
+        <p>排行榜公開的只有暱稱、名次、成績、創下的時間，以及是不是訪客。Google 帳號代碼和訪客代號都不會公開。</p>
+        <p>
+          沒登入的人玩完一局，成績也會上排行榜：第一次送出成績時，本站建立一個「訪客」，配一個隨機暱稱，並在你的瀏覽器存一個訪客代號（<code class="font-mono text-[15px]">gs_guest</code>
+          cookie，資料庫只存它的雜湊值）。訪客保存的資料和帳號一樣：每天今日挑戰的最佳分、自由模式的最佳分、累計完美停車次數，以及建立和最後使用的時間。
+        </p>
+        <p>訪客 90 天沒玩會自動刪除，紀錄一起刪掉。之後用 Google 登入時，訪客的紀錄會併進帳號，訪客隨即刪除。</p>
+        <p>歐洲經濟區、英國、瑞士的訪客，會先詢問要不要上排行榜，同意後才建立訪客；不同意照常可以玩，成績只存在這台裝置。這個選擇可以在「<NuxtLink to="/me" :class="link">我的紀錄</NuxtLink>」頁更改。</p>
+        <p>想刪除訪客紀錄，可以在「<NuxtLink to="/me" :class="link">我的紀錄</NuxtLink>」頁按「刪除訪客紀錄」，排行榜上的成績和這台裝置上的紀錄會一起刪掉。</p>
+      </ProseSection>
       <ProseSection title="Cookie">
         <ul class="list-disc space-y-1 pl-6">
           <li><code class="font-mono text-[15px]">gs_session</code>：記住你已經登入，最長 400 天，登出就刪除。</li>
           <li><code class="font-mono text-[15px]">gs_oauth</code>：登入過程中防止偽造請求，10 分鐘後失效。</li>
+          <li v-if="FLAGS.leaderboard">
+            <code class="font-mono text-[15px]">gs_guest</code>：沒登入時記住你的排行榜訪客，最長 400 天；登入 Google、刪除訪客紀錄或訪客 90 天沒玩被刪除時失效。
+          </li>
         </ul>
-        <p>沒登入就不會設定這兩個 cookie。登入就表示同意本站用 cookie 記住你的登入狀態。</p>
+        <p v-if="FLAGS.leaderboard">gs_session、gs_oauth 只在登入時設定；gs_guest 在第一次送出成績時設定（歐洲經濟區、英國、瑞士要先同意）。</p>
+        <p v-else>沒登入就不會設定這兩個 cookie。登入就表示同意本站用 cookie 記住你的登入狀態。</p>
       </ProseSection>
       <ProseSection title="保存多久、怎麼刪除">
         <p>

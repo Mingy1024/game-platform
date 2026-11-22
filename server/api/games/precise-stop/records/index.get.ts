@@ -1,17 +1,23 @@
+import { guestInfo } from "@/lib/account/player";
+import { FLAGS } from "@/lib/flags";
+
 /**
- * 取得帳號裡的精準停車紀錄（P3）。沒登入回 401。
- * ?player=<前端以為登入的帳號>：和目前登入的不同時回 409 account_mismatch（另一個分頁換了帳號）。
- * 回應：{ daily: { "YYYY-MM-DD": 分數 }（最近 14 天）, free, perfectStops }
+ * 取得帳號（或訪客）裡的精準停車紀錄（P3）。沒有身分回 401。
+ * ?player=<前端以為的身分>：和目前的不同時回 409 account_mismatch（另一個分頁換了帳號）。
+ * 回應：{ daily: { "YYYY-MM-DD": 分數 }（最近 14 天）, free, perfectStops }；訪客另外帶 guest
  */
 export default defineEventHandler((event) =>
   guarded(
     event,
     async () => {
       const db = useDb(event);
-      const player = await requireSessionPlayer(event, db);
+      const google = await googlePlayer(event, db);
+      const player = google ?? (FLAGS.leaderboard ? await guestPlayer(event, db) : null);
+      if (!player) return jsonError(event, 401, "unauthorized");
       const expected = getQuery(event).player;
       if (typeof expected === "string" && expected !== player.id) return jsonError(event, 409, "account_mismatch");
-      return noStore(event, await readAccountRecords(db, player.id, Date.now()));
+      const records = await readAccountRecords(db, player.id, Date.now());
+      return noStore(event, player.kind === "guest" ? { ...records, guest: guestInfo(player) } : records);
     },
     { checkOrigin: false },
   ),

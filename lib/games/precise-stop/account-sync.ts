@@ -1,5 +1,17 @@
 import { randomId } from "@/lib/account/crypto";
-import { expireSession, readMe, refreshMe, subscribeMe, subscribeSignOut, withTimeout } from "@/lib/account/me-store";
+import { readConsent, writeConsent } from "@/lib/account/leaderboard-consent";
+import {
+  adoptGuest,
+  expireGuest,
+  expireSession,
+  markConsentRequired,
+  readMe,
+  refreshMe,
+  subscribeMe,
+  subscribeSignOut,
+  withTimeout,
+} from "@/lib/account/me-store";
+import type { GuestInfo } from "@/lib/account/player";
 import { FLAGS } from "@/lib/flags";
 import { parseAccountRecords } from "./account-records";
 import {
@@ -22,6 +34,7 @@ import {
   releaseOutbox,
   returnOutbox,
   takeOutbox,
+  type Target,
 } from "./sync-state";
 
 /**
@@ -41,6 +54,14 @@ import {
  * - 登入中玩完一局：送 sync。送不出去時留著，網路恢復、下次打開介紹頁或 /me、下一局結束時再送（第 17 題）。
  * - 在這一頁按登出、刪除帳號成功：清掉本機紀錄（第 16 題）。
  * - 伺服器回 401（session 過期）：當作已登出，但本機紀錄留著（P13）。
+ *
+ * 排行榜的訪客（精準停車設計稿第 14.2、14.6 節）：沒用 Google 登入時也會送，對象是這個瀏覽器的訪客（gs_guest），
+ * 還沒有訪客就請伺服器建立（playerId: null）。
+ * - 還沒有身分的人只在這一頁玩完一局之後才送（P17：只看介紹頁和 /me 不呼叫紀錄 API）
+ * - 歐盟地區要先在結算按「上榜」（consent: true）；選了「不要」或還沒決定就不送，成績只存本機（T11）
+ * - 403 consent_required：放回 pending、結算出現上榜詢問；429（建立太多）：留著下次再送（T10）
+ * - 訪客 cookie 無效（401）：當作沒有身分，舊的那一批不送給新的訪客（T16）
+ * - 刪除訪客紀錄（me-store 的 deleteGuest）和登出一樣清掉本機紀錄、通知其他分頁（T15）
  */
 export type SyncResult = "ok" | "failed" | "unauthorized" | "skipped";
 
@@ -82,6 +103,22 @@ const currentPlayer = () => {
   return me.status === "loggedIn" ? me.playerId : undefined;
 };
 
+/** 這一頁玩完過一局：還沒有身分的人從這之後才會送（建立訪客） */
+let playedHere = false;
+
+/**
+ * 現在要送給誰；不能送時是 null（登入狀態還不知道、排行榜關閉、歐盟地區沒同意）。
+ * consent：歐盟地區按過「上榜」，建立訪客時要附上
+ */
+function currentTarget(): (Target & { consent?: true }) | null {
+  const me = readMe();
+  if (me.status === "loggedIn") return { kind: "google", owner: me.playerId };
+  if (!FLAGS.leaderboard || me.status !== "loggedOut") return null;
+  if (me.guest) return { kind: "guest", owner: me.guest.playerId };
+  if (!me.consentRequired) return { kind: "new" };
+  return readConsent() === "yes" ? { kind: "new", consent: true } : null;
+}
+
 /**
  * 同一個瀏覽器的分頁之間一次只做一輪（Web Locks）：取出要送的那一批、送出、套用回應都在鎖裡，
  * 兩個分頁不會把同一批用不同的 syncId 各送一次，慢回來的讀取也不會蓋掉另一個分頁剛送完的結果。
@@ -100,14 +137,15 @@ async function round(): Promise<{ result: SyncResult; more: boolean }> {
   const mark = signOutMark();
   const stale = () => at !== epoch || mark !== signOutMark();
   // 剛玩完的局（inbox）在鎖裡收進共用狀態，再取出要送的一批
-  const owner = currentPlayer();
-  if (!owner) return { result: "skipped", more: false };
+  const target = currentTarget();
+  if (!target) return { result: "skipped", more: false };
+  const owner = target.owner;
   const collected = collectInbox();
   // 寫不進瀏覽器：這一輪不送（records-store.ts 的 collectInbox）
   if (!collected) return { result: "failed", more: false };
-  const own = dropForeignOutbox(collected, owner);
+  const own = dropForeignOutbox(collected, target);
   if (own !== collected) writeSyncState(own);
-  const taken = takeOutbox(own, Date.now(), randomId, { exclusive: hasWebLocks(), owner });
+  const taken = takeOutbox(own, Date.now(), randomId, { exclusive: hasWebLocks(), owner, kind: target.kind });
   // 要送的這一批一定要先存進瀏覽器才送：只記在記憶體的話，其他分頁看不到，會用新的 syncId 把同一份再送一次
   if (taken && !writeSyncState(taken.state)) {
     // 記憶體裡那份（帶著新的 syncId）也丟掉，下一輪從瀏覽器裡最後存好的狀態重來
@@ -116,10 +154,12 @@ async function round(): Promise<{ result: SyncResult; more: boolean }> {
   }
   // 沒有 Web Locks、而且其他分頁正在送同一批：這次只讀帳號紀錄
   const blocked = !taken && hasUnsynced(readSyncState());
+  // 訪客和還沒有身分的人：沒有要送的就不讀（只有 Google 帳號需要換裝置時拿回紀錄）
+  if (!taken && target.kind !== "google") return { result: blocked ? "failed" : "ok", more: false };
 
   // 附上這一頁以為登入的帳號：另一個分頁換了帳號時，伺服器回 409、什麼都不寫
   const response = await fetch(
-    taken ? `${RECORDS_URL}/sync` : `${RECORDS_URL}?player=${encodeURIComponent(owner)}`,
+    taken ? `${RECORDS_URL}/sync` : `${RECORDS_URL}?player=${encodeURIComponent(owner ?? "")}`,
     withTimeout(
       taken
         ? {
@@ -128,9 +168,10 @@ async function round(): Promise<{ result: SyncResult; more: boolean }> {
             credentials: "same-origin",
             body: JSON.stringify({
               syncId: taken.outbox.id,
-              playerId: owner,
+              playerId: owner ?? null,
               bests: taken.outbox.bests,
               perfectDelta: taken.outbox.perfectDelta,
+              ...(target.consent ? { consent: true } : {}),
             }),
           }
         : { cache: "no-store", credentials: "same-origin" },
@@ -147,9 +188,25 @@ async function round(): Promise<{ result: SyncResult; more: boolean }> {
     return { result: "failed", more: false };
   }
   if (response.status === 401) {
-    release();
-    expireSession();
+    // 伺服器在寫入前就拒絕了：這一批放回 pending，之後送給新的身分；之前有過不明確結果的（可能已經存進原本那裡）
+    // 留著，換身分時由 dropForeignOutbox 丟掉（P13、T16）。
+    // Google 的 session 過期：當作已登出、本機紀錄留著（P13）。訪客 cookie 無效（被刪除、90 天被清掉）：當作沒有身分
+    if (taken) writeSyncState(returnOutbox(loadStoredSyncState(), taken.outbox.id));
+    if (target.kind === "google") expireSession();
+    else expireGuest();
     return { result: "unauthorized", more: false };
+  }
+  if (taken && response.status === 403) {
+    const error = ((await response.json().catch(() => null)) as { error?: string } | null)?.error;
+    if (stale()) return { result: "skipped", more: false };
+    if (error === "consent_required") {
+      // 伺服器確定沒有建立訪客：放回 pending，結算出現上榜詢問（T11）
+      writeSyncState(returnOutbox(loadStoredSyncState(), taken.outbox.id));
+      markConsentRequired();
+      return { result: "failed", more: false };
+    }
+    release();
+    return { result: "failed", more: false };
   }
   if (response.status === 409) {
     // 另一個分頁換了帳號，伺服器什麼都沒寫：重新讀取登入狀態。
@@ -164,13 +221,16 @@ async function round(): Promise<{ result: SyncResult; more: boolean }> {
     writeSyncState(rejectOutboxBests(loadStoredSyncState(), taken.outbox.id));
     return { result: "failed", more: false };
   }
-  const account = response.ok ? parseAccountRecords(await response.json().catch(() => null)) : null;
+  const json = response.ok ? ((await response.json().catch(() => null)) as { guest?: GuestInfo } | null) : null;
+  const account = parseAccountRecords(json);
   if (stale()) return { result: "skipped", more: false };
   if (!account) {
     release();
     return { result: "failed", more: false };
   }
   if (taken) writeSyncState(confirmOutbox(loadStoredSyncState(), taken.outbox.id));
+  // 伺服器建立（或找回）的訪客：記下來，之後的批次送給它
+  if (target.kind !== "google" && json?.guest && typeof json.guest.playerId === "string") adoptGuest(json.guest);
   // 顯示用的狀態包含送出期間又玩完的局（inbox），才不會被這次的回應蓋掉
   const view = readSyncState();
   replaceRecords(displayRecords(account, view));
@@ -183,7 +243,13 @@ async function round(): Promise<{ result: SyncResult; more: boolean }> {
  * 回傳 ok 表示目前所有紀錄都已經存到帳號。
  */
 export function syncNow(): Promise<SyncResult> {
-  if (!FLAGS.login || !loggedIn()) return Promise.resolve("skipped");
+  if (!FLAGS.login) return Promise.resolve("skipped");
+  // 沒登入 Google、還不知道有沒有訪客（例如直接打開遊戲畫面）：先讀一次登入狀態
+  const status = readMe().status;
+  if (FLAGS.leaderboard && (status === "loading" || status === "error")) {
+    return refreshMe({ keepOnError: true }).then(() => (currentTarget() ? syncNow() : "skipped"));
+  }
+  if (!currentTarget()) return Promise.resolve("skipped");
   // 正在跑：記下來，跑完這輪再補一輪（這段期間可能又多了要送的紀錄，例如剛好網路恢復）
   if (running) {
     again = true;
@@ -195,7 +261,8 @@ export function syncNow(): Promise<SyncResult> {
       again = false;
       const step = await withSyncLock(round);
       result = step.result;
-      if (!loggedIn() || result === "unauthorized" || result === "skipped") break;
+      // 身分失效（401）時，換成新身分觸發的那一次（例如訪客被清掉、這一頁剛玩完一局）記在 again，接著送
+      if (!currentTarget() || result === "skipped" || (result === "unauthorized" && !again)) break;
       // 失敗時只有這段期間又有新的觸發（例如網路剛恢復）才再試，不然等下一次觸發
       if (result !== "ok" ? !again : !step.more && !again) break;
     }
@@ -216,8 +283,27 @@ export const hasUnsyncedRecords = () => hasUnsynced(readSyncState());
  * 讀到已登入時（startAccountSync 的 subscribeMe）就會送。
  */
 function kick() {
-  if (hasUnsyncedRecords() && loggedIn()) void syncNow();
+  if (!hasUnsyncedRecords()) return;
+  if (loggedIn()) {
+    void syncNow();
+    return;
+  }
+  // 訪客：已經有身分，照樣重送。還沒有身分：這一頁玩過一局才送（建立訪客，P17）
+  const me = readMe();
+  if (FLAGS.leaderboard && me.status === "loggedOut" && (me.guest || playedHere)) void syncNow();
 }
+
+/**
+ * 歐盟地區按「上榜」（結算的詢問、排行榜的「改成上榜」）：記下選擇，馬上把成績送出去（建立訪客）
+ */
+export function joinLeaderboard() {
+  writeConsent("yes");
+  playedHere = true;
+  if (hasUnsyncedRecords()) void syncNow();
+}
+
+/** 歐盟地區按「不要」：記下選擇，成績只存本機 */
+export const declineLeaderboard = () => writeConsent("no");
 
 /** 顯示紀錄的元件掛上時呼叫（站內換頁到介紹頁、/me 時也會重送；app/composables/store.ts 的 useRecords） */
 export const retryAccountSync = () => {
@@ -227,13 +313,17 @@ export const retryAccountSync = () => {
 export function startAccountSync() {
   if (!FLAGS.login || started) return;
   started = true;
-  // 變成已登入、或登入的帳號換了（另一個分頁換帳號後重新讀到）時同步
+  // 變成已登入、或登入的帳號換了（另一個分頁換帳號後重新讀到）時同步。
+  // 訪客換了（建立好、或被清掉後變成沒有身分）時，有還沒送的才送
   subscribeMe(() => {
     const status = readMe().status;
-    const player = currentPlayer();
-    if (status === "loggedIn" && (lastStatus !== "loggedIn" || player !== lastPlayer)) void syncNow();
+    const player = currentPlayer() ?? currentTarget()?.owner;
+    const changed = status !== lastStatus || player !== lastPlayer;
     lastStatus = status;
     lastPlayer = player;
+    if (!changed) return;
+    if (status === "loggedIn") void syncNow();
+    else if (status === "loggedOut") kick();
   });
   subscribeSignOut(() => {
     epoch += 1;
@@ -241,7 +331,11 @@ export function startAccountSync() {
     clearLocalRecords();
   });
   // 這一頁玩完一局時。不聽其他分頁的寫入：同步過程本身也會寫入，會讓分頁之間互相觸發、一直重送
-  subscribeRuns(kick);
+  // 登入狀態還不知道時 syncNow 會先讀一次（直接打開遊戲畫面的情況）
+  subscribeRuns(() => {
+    playedHere = true;
+    if (hasUnsyncedRecords() && (loggedIn() || FLAGS.leaderboard)) void syncNow();
+  });
   window.addEventListener("online", kick);
   // 其他分頁登出（或刪除帳號）：這一頁也當作已登出，再重新讀取登入狀態。
   // 那個分頁之後可能登入了別的帳號，不重新讀取的話，這一頁會把成績送進新帳號、卻還顯示舊帳號

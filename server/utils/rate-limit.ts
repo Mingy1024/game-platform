@@ -1,6 +1,6 @@
 import type { H3Event } from "h3";
 
-type LimiterName = "NICK_LIMITER" | "RECORDS_LIMITER";
+type LimiterName = "NICK_LIMITER" | "RECORDS_LIMITER" | "GUEST_LIMITER";
 
 /**
  * 同一個人在一段時間內的請求次數上限（wrangler.jsonc 的 ratelimits）。

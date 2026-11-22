@@ -153,24 +153,21 @@ test("L1 廣告只有一個版位，在怎麼玩和判定與計分之間，沒�
   expect(external).toEqual([]);
 });
 
-// 登入已經做好，改由環境變數 NEXT_PUBLIC_FEATURE_LOGIN 控制，測試在 tests/e2e/account.spec.ts
-test("L2 預留功能預設關閉：沒有排行榜、累計發車次數", async ({ page }) => {
+// 登入已經做好，改由環境變數 FEATURE_LOGIN 控制，測試在 tests/e2e/account.spec.ts；全站排行在 tests/e2e/leaderboard.spec.ts
+test("L2 累計發車次數預設關閉；全站排行預設打開（T22）", async ({ page }) => {
   await page.goto(GAME);
   await expect(page.getByTestId("records-card")).toBeVisible();
-  for (const id of ["rank-tab", "leaderboard", "play-count"]) {
-    await expect(page.getByTestId(id), id).toHaveCount(0);
-  }
+  await expect(page.getByTestId("play-count")).toHaveCount(0);
+  await expect(page.getByTestId("rank-tab")).toBeVisible();
+  await expect(page.getByTestId("rank-tab")).not.toContainText("預留");
 });
 
-test("L3 開關打開時版位會出現", async ({ page }) => {
+test("L3 開關打開時累計發車次數版位會出現", async ({ page }) => {
   await page.addInitScript(() => {
-    localStorage.setItem("game-station:flags", "leaderboard,playCount");
+    localStorage.setItem("game-station:flags", "playCount");
   });
   await page.goto(GAME);
-  await expect(page.getByTestId("rank-tab")).toBeVisible();
   await expect(page.getByTestId("play-count")).toBeVisible();
-  await page.getByTestId("rank-tab").click();
-  await expect(page.getByTestId("leaderboard")).toBeVisible();
 });
 
 test("N1 各種寬度都沒有橫向捲軸", async ({ page }) => {

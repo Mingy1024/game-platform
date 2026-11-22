@@ -5,6 +5,7 @@ interface __BaseEnv_CloudflareEnv {
 	DB: D1Database;
 	NICK_LIMITER: RateLimit;
 	RECORDS_LIMITER: RateLimit;
+	GUEST_LIMITER: RateLimit;
 	ASSETS: Fetcher;
 	NEXTJS_ENV: string;
 }

@@ -1,0 +1,22 @@
+import { getQuery } from "h3";
+import { isScope } from "@/lib/games/precise-stop/leaderboard";
+
+/**
+ * 自己的名次（精準停車設計稿第 14.3 節，T5、T6、T24）：?scope=daily|week|free&player=<前端以為的身分>
+ * 回應 { rank, score, total, toTop100 }；這張榜沒有成績時 rank、score 是 null。每次現算、不快取。
+ * 身分是 Google 登入或訪客；都沒有回 401。player 和目前的身分不同回 409 account_mismatch（另一個分頁換了身分）。
+ */
+export default defineEventHandler((event) =>
+  guarded(
+    event,
+    async () => {
+      const { scope, player } = getQuery(event);
+      if (!isScope(scope)) return jsonError(event, 400, "bad_request");
+      const identity = await resolveIdentity(event, useDb(event));
+      if (identity.kind === "none") return jsonError(event, 401, "unauthorized");
+      if (typeof player === "string" && player !== identity.player.id) return jsonError(event, 409, "account_mismatch");
+      return noStore(event, await readMine(useD1(event), scope, identity.player.id, Date.now()));
+    },
+    { checkOrigin: false, leaderboard: true },
+  ),
+);

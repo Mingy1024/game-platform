@@ -2,31 +2,18 @@
 import { useExperience } from "~/games/precise-stop/shared";
 import { bestOf } from "@/lib/games/precise-stop/records";
 import { taiwanDateKey } from "@/lib/games/precise-stop/route";
-import { fmt, formatNumber, formatShortDate } from "@/lib/i18n/format";
-
-const SAMPLE_PLAYERS = [
-  ["Riku", "#cc4409", 5912, 3],
-  ["Mina", "#1d3a8f", 5874, 12],
-  ["Noa", "#16794f", 5801, 60],
-  ["Kai", "#a83606", 5766, 70],
-  ["Sora", "#4a5263", 5702, 120],
-  ["Rin", "#152b6b", 5655, 130],
-  ["Yui", "#cc4409", 5590, 180],
-  ["Leo", "#16794f", 5541, 240],
-  ["Hana", "#1d3a8f", 5498, 300],
-  ["Tomo", "#4a5263", 5460, 360],
-] as const;
+import { fmt, formatNumber } from "@/lib/i18n/format";
 
 /**
- * 我的紀錄，以及預留的「全站排行」分頁。
- * 排行榜還沒有後端，預設不顯示（lib/flags.ts），開關打開時顯示的是版面示意，資料是固定的樣本。
- * 每列不顯示那一局停準幾站（★），玩家看不懂（精準停車設計稿第 28 題）。
+ * 我的紀錄，以及「全站排行」分頁（LeaderboardPanel.vue，排行榜開關打開時，lib/flags.ts）。
  * 登入開關打開時，卡片下方換成帳號區塊（RecordsAccount.vue）。
  */
 const { text, locale, dict } = useExperience();
 const records = useRecords();
-const showRank = useFlag("leaderboard");
+const rankFlag = useFlag("leaderboard");
 const showLogin = useFlag("login");
+// 排行榜要有帳號系統（訪客、名次 API 都在登入功能底下）
+const showRank = computed(() => rankFlag.value && showLogin.value);
 const tab = ref<"mine" | "rank">("mine");
 const dateKey = useClientValue(taiwanDateKey);
 
@@ -47,21 +34,6 @@ const stats = computed(() => [
     testId: "record-perfect",
   },
 ]);
-
-const scopes = computed(() => [
-  fmt(text.rank.daily, { date: dateKey.value ? formatShortDate(dateKey.value, locale) : "" }),
-  text.rank.week,
-  text.rank.free,
-]);
-
-const medal = (index: number) =>
-  index === 0
-    ? "bg-edge shadow-[inset_0_-3px_0_#b8860b]"
-    : index === 1
-      ? "bg-line shadow-[inset_0_-3px_0_#8a93a3]"
-      : index === 2
-        ? "bg-[#e8a06b] shadow-[inset_0_-3px_0_var(--express-deep)]"
-        : "text-muted";
 </script>
 
 <template>
@@ -86,7 +58,6 @@ const medal = (index: number) =>
         @click="tab = 'rank'"
       >
         {{ text.records.tabRank }}
-        <span class="rounded-full border-[1.5px] border-dashed border-[#a3adbd] px-2 text-xs text-muted">{{ dict.nav.reserved }}</span>
       </button>
     </div>
     <h2 v-else id="records-title" class="px-4 pt-4 text-xl font-extrabold text-ink">{{ text.records.tabMine }}</h2>
@@ -102,59 +73,6 @@ const medal = (index: number) =>
       <p v-else class="px-4 pb-4 text-sm text-muted">{{ text.records.deviceNote }}</p>
     </template>
 
-    <div v-else data-testid="leaderboard">
-      <div role="group" :aria-label="text.rank.scopeLabel" class="flex flex-wrap items-center gap-1.5 px-4 pb-1.5 pt-3">
-        <button
-          v-for="(label, index) in scopes"
-          :key="label"
-          type="button"
-          :aria-pressed="index === 0"
-          :disabled="index !== 0"
-          :class="`min-h-9 rounded-full px-3.5 text-sm ${index === 0 ? 'bg-sign font-extrabold text-white' : 'bg-platform font-bold text-muted'}`"
-        >
-          {{ label }}
-        </button>
-        <span class="ml-auto hidden text-sm text-muted lg:block">{{ fmt(text.rank.updated, { count: formatNumber(3284, locale) }) }}</span>
-      </div>
-      <ol class="flex flex-col gap-0.5 px-2 pt-1">
-        <li
-          v-for="([name, color, score, minutes], index) in SAMPLE_PLAYERS"
-          :key="name"
-          :class="`flex min-h-12 items-center gap-2.5 rounded-xl px-3 ${index < 3 ? 'bg-[#fff9e6]' : ''} ${index >= 7 ? 'max-lg:hidden' : ''}`"
-        >
-          <span :class="`flex size-[30px] shrink-0 items-center justify-center rounded-full text-[15px] font-black tabular-nums ${medal(index)}`">
-            {{ index + 1 }}
-          </span>
-          <span
-            aria-hidden="true"
-            class="flex size-[30px] shrink-0 items-center justify-center rounded-full text-sm font-black text-white"
-            :style="{ background: color }"
-          >
-            {{ name[0] }}
-          </span>
-          <span class="flex min-w-0 flex-1 flex-col leading-tight">
-            <span class="truncate font-extrabold">{{ name }}</span>
-            <span class="hidden text-xs text-muted lg:block">
-              {{
-                minutes < 60
-                  ? fmt(text.rank.minutesAgo, { count: minutes })
-                  : fmt(text.rank.hoursAgo, { count: Math.round(minutes / 60) })
-              }}
-            </span>
-          </span>
-          <span class="w-16 text-right text-[17px] font-black tabular-nums">{{ formatNumber(score, locale) }}</span>
-        </li>
-      </ol>
-      <button type="button" disabled class="mx-auto block min-h-10 px-3.5 text-sm font-bold text-sign lg:hidden">
-        {{ text.rank.viewTop }}
-      </button>
-      <div class="mx-4 mb-4 mt-1.5 flex min-h-13 items-center gap-2.5 rounded-xl bg-edge-tint px-3 py-2.5 text-sm">
-        <p class="min-w-0 flex-1 leading-snug">
-          <strong>{{ daily === null ? text.records.none : fmt(text.rank.yourBest, { score: number(daily) }) }}</strong>
-          <br >
-          <span class="text-muted">{{ text.rank.loginToRank }}</span>
-        </p>
-      </div>
-    </div>
+    <LeaderboardPanel v-else />
   </section>
 </template>

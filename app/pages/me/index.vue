@@ -2,12 +2,12 @@
 import { FLAGS } from "@/lib/flags";
 import { t } from "@/lib/i18n/zh-TW";
 
-usePageMeta({ title: "我的紀錄", description: "這台裝置上最近玩過的遊戲、收藏與最佳紀錄。", noindex: true });
+usePageMeta({ title: "我的紀錄", description: "每款遊戲的最佳紀錄。", noindex: true });
 </script>
 
 <template>
   <Container class="py-10 sm:py-14">
-    <PageHeading title="我的紀錄" lead="最近玩過的遊戲、收藏和最佳紀錄都在這裡。" />
+    <PageHeading title="我的紀錄" lead="每款遊戲的最佳紀錄都在這裡。" />
 
     <!-- 登入開關打開時，「只存在這台裝置」的提示併進帳號卡（MeAccount.vue） -->
     <MeAccount v-if="FLAGS.login" :labels="t.account">

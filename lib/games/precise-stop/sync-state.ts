@@ -27,10 +27,18 @@ export const LOCK_MS = 20_000;
 
 export type Batch = { bests: BestEntry[]; perfectDelta: number };
 /**
- * owner：第一次送出時登入的帳號（站內玩家 ID）。換了帳號就不再重送，避免送進別的帳號。
+ * 送給誰（精準停車設計稿第 14.6 節）：
+ * - google：Google 帳號；guest：這個瀏覽器的訪客（gs_guest）；new：還沒有身分，請伺服器建立訪客
+ * owner 是 google、guest 時的站內玩家 ID
+ */
+export type OwnerKind = "google" | "guest" | "new";
+export type Target = { kind: OwnerKind; owner?: string };
+/**
+ * owner、ownerKind：上次送出時的身分。換了身分就不再重送，避免送進別人那裡（規則見 dropForeignOutbox）。
+ * 舊版存的 outbox 沒有 ownerKind：有 owner 的當作 google，沒有的當作 new。
  * ambiguous：送出過但沒收到明確結果（逾時、伺服器錯誤），伺服器可能已經寫入
  */
-export type Outbox = Batch & { id: string; sentAt: number | null; owner?: string; ambiguous?: boolean };
+export type Outbox = Batch & { id: string; sentAt: number | null; owner?: string; ownerKind?: OwnerKind; ambiguous?: boolean };
 export type SyncState = { pending: Batch; outbox: Outbox | null };
 
 const emptyBatch = (): Batch => ({ bests: [], perfectDelta: 0 });
@@ -234,19 +242,21 @@ export function takeOutbox(
   state: SyncState,
   now: number,
   newId: () => string,
-  { exclusive = false, owner }: { exclusive?: boolean; owner?: string } = {},
+  { exclusive = false, owner, kind = owner ? "google" : "new" }: { exclusive?: boolean; owner?: string; kind?: OwnerKind } = {},
 ): { state: SyncState; outbox: Outbox } | null {
-  state = dropForeignOutbox(state, owner);
+  const target: Target = { kind, owner };
+  state = dropForeignOutbox(state, target);
   if (state.outbox) {
     // exclusive：已經拿到 Web Lock，不會有別的分頁正在送（sentAt 可能是重新整理前那一頁留下的），直接重送
     if (!exclusive && state.outbox.sentAt !== null && now - state.outbox.sentAt < LOCK_MS) return null;
     // 重送前也濾掉這段期間過期的今日挑戰：最佳紀錄取高分可以重複套用，完美次數靠同一個 syncId 擋重複，
     // 所以拿掉一筆再送也安全；不拿掉的話伺服器會整批拒絕
-    const outbox = {
+    // 這次送給目前的身分（dropForeignOutbox 已經確認可以送）。目前還沒有身分（new）時沿用原本的標記
+    const outbox: Outbox = {
       ...state.outbox,
       bests: state.outbox.bests.filter((entry) => isAcceptable(entry, now)),
       sentAt: now,
-      owner: state.outbox.owner ?? owner,
+      ...(kind === "new" ? {} : { owner, ownerKind: kind }),
     };
     return { state: { ...state, outbox }, outbox };
   }
@@ -255,16 +265,32 @@ export function takeOutbox(
   const bests = valid.slice(0, MAX_SYNC_BESTS);
   const rest: Batch = { bests: valid.slice(MAX_SYNC_BESTS), perfectDelta: state.pending.perfectDelta - perfectDelta };
   if (bests.length === 0 && perfectDelta === 0) return null;
-  const outbox: Outbox = { bests, perfectDelta, id: newId(), sentAt: now, owner };
+  const outbox: Outbox = { bests, perfectDelta, id: newId(), sentAt: now, ownerKind: kind, ...(owner ? { owner } : {}) };
   return { state: { pending: rest, outbox }, outbox };
 }
 
+const outboxKind = (outbox: Outbox): OwnerKind => outbox.ownerKind ?? (outbox.owner ? "google" : "new");
+
 /**
- * 上次送給別的帳號、還沒收到回應的那一批：可能已經存進那個帳號了，不能再送給現在的帳號，丟掉。
- * 從沒送出過的 pending 不受影響，照樣併進現在登入的帳號（P13）
+ * 上次送出、還沒收到回應的那一批，現在的身分還能不能送（精準停車設計稿第 14.6 節）：
+ * - 同一個身分：可以（重送）
+ * - 上次是 new（請伺服器建立訪客）：可以送給任何身分。建立的回應掉了但 cookie 收到的話，伺服器那邊就是同一個訪客，
+ *   同一個 syncId 擋重複；登入 Google 時那個訪客和它的批次代碼會併進帳號
+ * - 上次送給訪客、現在是 Google 帳號：可以（T14）。登入時伺服器已經把訪客的批次代碼搬進帳號，完美次數不會重複加
+ * - 其他（別的 Google 帳號、別的訪客、訪客被清掉後還沒有身分）：可能已經存進原本那裡了，丟掉（P13、T16）
+ * 從沒送出過的 pending 不受影響，照樣送給現在的身分。target 是 undefined 時不判斷（舊的呼叫方式：只比對 owner）
  */
-export function dropForeignOutbox(state: SyncState, owner: string | undefined): SyncState {
-  return state.outbox?.owner && owner && state.outbox.owner !== owner ? { ...state, outbox: null } : state;
+export function dropForeignOutbox(state: SyncState, target: Target | string | undefined): SyncState {
+  const outbox = state.outbox;
+  if (!outbox || target === undefined) return state;
+  const next: Target = typeof target === "string" ? { kind: "google", owner: target } : target;
+  const kind = outboxKind(outbox);
+  if (kind === "new") return state;
+  if (outbox.owner === next.owner && next.owner !== undefined) return state;
+  // 舊版只記 owner 的 outbox：沒有 owner 就沒辦法判斷，照舊保留
+  if (!outbox.owner && kind === "google") return state;
+  if (kind === "guest" && next.kind === "google") return state;
+  return { ...state, outbox: null };
 }
 
 /** 那一批已經存到帳號：清掉 outbox */

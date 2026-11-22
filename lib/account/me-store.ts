@@ -1,17 +1,22 @@
 import { FLAGS } from "@/lib/flags";
 import type { Nick } from "./nick/nick";
 import { NICK_ERRORS, type NickError } from "./nick/rules";
-import type { MeResponse } from "./player";
+import type { GuestInfo, MeResponse } from "./player";
 
 /**
  * 前端的登入狀態：各頁共用同一份，登入、登出、改暱稱後即時更新。
  * 第一次有元件用到時才向 /api/me 要資料（ensureMe）；登入功能關閉時一律是「未登入」，不發請求。
  * 純邏輯，只在瀏覽器端呼叫；畫面層用 app/composables/useMe.ts 訂閱。
  */
+/**
+ * loggedOut 是「沒用 Google 登入」，另外帶排行榜的訪客（精準停車設計稿第 14.2 節）：
+ * - guest：這個瀏覽器的訪客，還沒有是 null
+ * - consentRequired：這個地區要先問同意才建立訪客（歐洲經濟區、英國、瑞士，T11）
+ */
 export type MeState =
   | { status: "loading" }
   | { status: "error" }
-  | { status: "loggedOut" }
+  | { status: "loggedOut"; guest: GuestInfo | null; consentRequired: boolean }
   | { status: "loggedIn"; playerId: string; nick: Nick; nickNextAt: Date | null };
 
 let state: MeState = { status: "loading" };
@@ -35,6 +40,9 @@ const listeners = new Set<() => void>();
  */
 let session = 0;
 let refreshTicket = 0;
+/** 最近一次從伺服器知道的地區（登出時沒有重新讀取，沿用這個值） */
+let consentRequired = false;
+const loggedOutState = (guest: GuestInfo | null = null): MeState => ({ status: "loggedOut", guest, consentRequired });
 
 /** 每個請求的等待上限：網路卡住時不會讓畫面或等待中的讀取一直等下去 */
 const REQUEST_TIMEOUT_MS = 15_000;
@@ -70,7 +78,7 @@ function endSession() {
   session += 1;
   refreshTicket += 1;
   latestRefresh = Promise.resolve("ended");
-  set({ status: "loggedOut" });
+  set(loggedOutState());
 }
 
 /** 採用伺服器回的最新狀態（改名成功），還在路上的讀取全部作廢 */
@@ -82,14 +90,11 @@ function commit(next: MeState) {
 }
 
 function fromResponse(body: MeResponse): MeState {
-  return body.loggedIn
-    ? {
-        status: "loggedIn",
-        playerId: body.playerId,
-        nick: body.nick,
-        nickNextAt: body.nickNextAt ? new Date(body.nickNextAt) : null,
-      }
-    : { status: "loggedOut" };
+  if (body.loggedIn) {
+    return { status: "loggedIn", playerId: body.playerId, nick: body.nick, nickNextAt: body.nickNextAt ? new Date(body.nickNextAt) : null };
+  }
+  if (typeof body.consentRequired === "boolean") consentRequired = body.consentRequired;
+  return loggedOutState(body.guest ?? null);
 }
 
 /**
@@ -99,7 +104,7 @@ function fromResponse(body: MeResponse): MeState {
  */
 export function refreshMe({ keepOnError = false } = {}): Promise<RefreshResult> {
   if (!FLAGS.login) {
-    set({ status: "loggedOut" });
+    set(loggedOutState());
     return Promise.resolve("ended");
   }
   const ticket = ++refreshTicket;
@@ -116,9 +121,9 @@ export function refreshMe({ keepOnError = false } = {}): Promise<RefreshResult> 
       return "failed";
     }
     if (next.status === "loggedOut") {
-      // 伺服器說已經登出（例如在別的分頁登出）：和本頁登出一樣結束登入期
+      // 伺服器說已經登出（例如在別的分頁登出）：和本頁登出一樣結束登入期，再換上訪客的狀態
       if (state.status === "loggedIn") endSession();
-      else set(next);
+      set(next);
       return "ended";
     }
     set(next);
@@ -135,6 +140,31 @@ export function refreshMe({ keepOnError = false } = {}): Promise<RefreshResult> 
  */
 export function expireSession() {
   if (state.status === "loggedIn") endSession();
+}
+
+/**
+ * 送成績時伺服器建立（或找回）了這個瀏覽器的訪客：記下來，不用再讀一次 /api/me。
+ * 只在還是「沒登入 Google」時採用（送出期間登入了的話，訪客已經併進帳號）。
+ */
+export function adoptGuest(guest: GuestInfo) {
+  if (state.status !== "loggedOut") return;
+  if (state.guest?.playerId === guest.playerId) return;
+  set(loggedOutState(guest));
+}
+
+/** 訪客 cookie 已經無效（被刪除、90 天沒玩被清掉，T16）：當作沒有身分，再向伺服器確認一次 */
+export function expireGuest() {
+  if (state.status === "loggedOut" && state.guest) {
+    refreshTicket += 1;
+    set(loggedOutState());
+  }
+  void refreshMe({ keepOnError: true });
+}
+
+/** 伺服器說這個地區要先問同意（403 consent_required）：結算畫面出現上榜詢問 */
+export function markConsentRequired() {
+  consentRequired = true;
+  if (state.status === "loggedOut" && !state.consentRequired) set({ ...state, consentRequired: true });
 }
 
 /** 在這一頁按登出或刪除帳號成功時通知（用來清掉這台裝置上的遊戲紀錄，帳號設計稿第 16 題） */
@@ -174,6 +204,26 @@ export async function logout(): Promise<boolean> {
   const response = await fetch("/api/auth/logout", withTimeout({ method: "POST", credentials: "same-origin" })).catch(() => null);
   if (!response?.ok) return false;
   endSession();
+  signedOut();
+  return true;
+}
+
+/**
+ * 刪除訪客紀錄（精準停車設計稿第 35 題，T15）：伺服器刪掉訪客和紀錄、清掉 cookie；成功後和登出一樣清掉本機紀錄，
+ * 其他分頁收到登出記號。失敗（含 409：另一個分頁換了身分）時本機不清。
+ */
+export async function deleteGuest(): Promise<boolean> {
+  const expected = state.status === "loggedOut" ? state.guest?.playerId : undefined;
+  const query = expected ? `?player=${encodeURIComponent(expected)}` : "";
+  const response = await fetch(`/api/guest${query}`, withTimeout({ method: "DELETE", credentials: "same-origin" })).catch(() => null);
+  if (!response?.ok) {
+    if (response?.status === 409) void refreshMe({ keepOnError: true });
+    return false;
+  }
+  session += 1;
+  refreshTicket += 1;
+  latestRefresh = Promise.resolve("ended");
+  set(loggedOutState());
   signedOut();
   return true;
 }

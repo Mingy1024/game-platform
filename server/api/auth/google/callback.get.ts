@@ -3,6 +3,7 @@ import { finishGoogleLogin, OAUTH_COOKIE } from "@/lib/account/google";
 import { findOrCreateGooglePlayer } from "@/lib/account/player";
 import { safeReturnPath, withLoginResult } from "@/lib/account/return-path";
 import { createSession } from "@/lib/account/session";
+import { FLAGS } from "@/lib/flags";
 
 type OAuthCookie = { state: string; verifier: string; returnPath: string };
 
@@ -52,6 +53,8 @@ export default defineEventHandler((event) =>
       const player = await findOrCreateGooglePlayer(db, googleSub);
       const { token, expiresAt } = await createSession(db, player.id);
       setSessionCookie(event, token, expiresAt);
+      // 這個瀏覽器的訪客併進帳號（精準停車設計稿第 33 題，T13）。失敗不影響登入，下次讀 /api/me 再併
+      if (FLAGS.leaderboard) await absorbGuest(event, db, player.id);
       return finish("ok");
     },
     // 從 Google 導回來是一般的頁面跳轉，不帶本站的 Origin；改用 state 防偽造

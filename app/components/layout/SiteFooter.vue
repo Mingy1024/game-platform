@@ -19,7 +19,7 @@ const dict = useDictionary();
         <p class="text-lg font-extrabold tracking-wide">{{ dict.brand }}</p>
         <p class="mt-1 text-white/85">{{ dict.tagline }}</p>
         <p class="mt-4 text-sm text-white/75">
-          {{ FLAGS.login ? dict.footer.deviceNoteLoggedOut : dict.footer.deviceNote }}
+          {{ FLAGS.login ? (FLAGS.leaderboard ? dict.footer.deviceNoteGuest : dict.footer.deviceNoteLoggedOut) : dict.footer.deviceNote }}
         </p>
       </div>
       <nav :aria-label="dict.footer.label">

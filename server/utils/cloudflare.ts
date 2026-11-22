@@ -8,9 +8,14 @@ export function cloudflareEnv(event: H3Event): Partial<CloudflareEnv> {
   return (event.context.cloudflare?.env ?? {}) as Partial<CloudflareEnv>;
 }
 
-/** 連到 D1 的 Prisma Client */
-export function useDb(event: H3Event) {
+/** D1 binding 本身（需要 batch 或 Prisma 寫不出來的 SQL 時用） */
+export function useD1(event: H3Event): D1Database {
   const db = cloudflareEnv(event).DB;
   if (!db) throw new Error("沒有 D1 binding（DB）：請確認 wrangler.jsonc，並用 nuxt dev 或 wrangler dev 執行");
-  return prismaFor(db);
+  return db;
+}
+
+/** 連到 D1 的 Prisma Client */
+export function useDb(event: H3Event) {
+  return prismaFor(useD1(event));
 }

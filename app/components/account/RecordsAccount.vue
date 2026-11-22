@@ -5,13 +5,15 @@ import type { Locale } from "@/lib/i18n/locales";
 
 /**
  * 遊戲介紹頁「我的紀錄」卡下方的帳號區塊（設計稿「紀錄卡」畫板）。
- * 未登入：說明紀錄只在這台裝置＋登入按鈕；已登入：暱稱＋改暱稱。
+ * 未登入：說明（排行榜打開時是「玩一局就會上榜」）＋登入按鈕；已登入：暱稱＋改暱稱。
  */
 defineProps<{
   locale: Locale;
   labels: Dictionary["account"];
-  records: { deviceOnly: string; loginHint: string };
+  records: { deviceOnly: string; loginHint: string; rankHint: string; rankLoginHint: string };
 }>();
+// 排行榜打開時，沒登入的人玩一局就會用訪客暱稱上榜（精準停車設計稿第 14.4 節，T19）
+const ranked = useFlag("leaderboard");
 const me = useMe();
 const inApp = useClientValue(() => detectInAppBrowser(navigator.userAgent));
 </script>
@@ -47,9 +49,9 @@ const inApp = useClientValue(() => detectInAppBrowser(navigator.userAgent));
     <InAppNotice v-if="inApp === 'other'" :labels="labels" />
     <div v-else class="flex flex-wrap items-center gap-3 rounded-[14px] bg-sign-tint px-3.5 py-3">
       <p class="min-w-[12rem] flex-1 text-[15px] leading-normal">
-        <strong>{{ records.deviceOnly }}</strong>
+        <strong>{{ ranked ? records.rankHint : records.deviceOnly }}</strong>
         <br >
-        <span class="text-muted">{{ records.loginHint }}</span>
+        <span class="text-muted">{{ ranked ? records.rankLoginHint : records.loginHint }}</span>
       </p>
       <LoginButton :labels="labels" />
     </div>

@@ -35,7 +35,8 @@
 建置時決定（寫進程式，預先產生的頁面也依它產生，改了要重新建置）：
 
 - `FEATURE_LOGIN`：登入功能，預設打開（帳號設計稿第 20 題：精準停車紀錄同步做好後打開）。要關掉時建置前設 `FEATURE_LOGIN=0`。舊名稱 `NEXT_PUBLIC_FEATURE_LOGIN` 也認得。
-- `FEATURE_LEADERBOARD`、`FEATURE_PLAY_COUNT`：預留版位的開關（同上，舊名稱 `NEXT_PUBLIC_FEATURE_*` 也認得）。
+- `FEATURE_LEADERBOARD`：全站排行（含排行榜訪客），預設打開（精準停車設計稿第 14 節）。要關掉時建置前設 `FEATURE_LEADERBOARD=0`。要登入功能也打開才會出現。
+- `FEATURE_PLAY_COUNT`：累計發車次數的預留版位，預設關閉（設成 `1` 才顯示；舊名稱 `NEXT_PUBLIC_FEATURE_*` 也認得）。
 - `SITE_URL`：正式網址，用在 canonical、hreflang、社群預覽的絕對網址。正式建置時一定要設。
 - `ADS_MODE`：`mock`（預設，顯示版位示意）或 `off`。
 
@@ -49,8 +50,10 @@
 - `DB`：D1。本機開發和 `npm run preview` 用 `.wrangler/state` 裡的本機資料庫；正式的 `database_id` 在第一次部署前用 `wrangler d1 create` 建立後填入。
 - `NICK_LIMITER`：改暱稱的限流（同一個人 1 分鐘 5 次）。
 - `RECORDS_LIMITER`：精準停車紀錄同步的限流（同一個人 1 分鐘 30 次）。
+- `GUEST_LIMITER`：建立排行榜訪客的限流（同一個 IP 1 分鐘 3 個）。
 - `ASSETS`：靜態檔案（`.output/public`）。`html_handling: drop-trailing-slash` 讓 `/games/precise-stop` 直接對到預先產生的頁面。
-- `triggers.crons`：每天台灣時間凌晨 3 點清掉過期 session（`server/plugins/session-cleanup.ts`）。
+- `triggers.crons`：每天台灣時間凌晨 3 點清掉過期 session 和 90 天沒玩的排行榜訪客（`server/plugins/session-cleanup.ts`）。
+- 排行榜前 100 名用 Workers 的 Cache API 在邊緣快取 60 秒；`*.workers.dev` 網域沒有 Cache API，要綁自己的網域才會快取。
 
 ## 開發規範
 

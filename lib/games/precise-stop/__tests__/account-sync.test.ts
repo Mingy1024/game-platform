@@ -329,3 +329,47 @@ describe("P10 重送與被拒", () => {
     expect(rejectOutboxBests(noDelta, "id-reject-01").outbox).toBeNull();
   });
 });
+
+describe("T8 T14 T16 排行榜訪客：outbox 送給誰", () => {
+  const outbox = (extra: Record<string, unknown>) => ({
+    pending: { bests: [], perfectDelta: 1 },
+    outbox: { id: "id-guest-0001", sentAt: null, bests: [], perfectDelta: 4, ...extra },
+  });
+  const take = (state: ReturnType<typeof outbox>, kind: "google" | "guest" | "new", owner?: string) =>
+    takeOutbox(state as never, NOW, () => "id-fresh-0001", { owner, kind, exclusive: true })!;
+
+  it("還沒有身分時建立的 outbox 標成 new，不帶 owner", () => {
+    const taken = takeOutbox({ pending: { bests: [], perfectDelta: 2 }, outbox: null }, NOW, () => "id-new-00001", { kind: "new" })!;
+    expect(taken.outbox).toMatchObject({ id: "id-new-00001", ownerKind: "new" });
+    expect(taken.outbox.owner).toBeUndefined();
+  });
+
+  it("new 的那一批之後可以送給訪客或 Google 帳號（同一個 syncId，伺服器擋重複）", () => {
+    const state = outbox({ ownerKind: "new" });
+    expect(take(state, "guest", "guest-1").outbox).toMatchObject({ id: "id-guest-0001", owner: "guest-1", ownerKind: "guest" });
+    expect(take(state, "google", "acct-1").outbox).toMatchObject({ id: "id-guest-0001", owner: "acct-1", ownerKind: "google" });
+    expect(take(state, "new").outbox).toMatchObject({ id: "id-guest-0001", ownerKind: "new" });
+  });
+
+  it("T14 送給訪客、還沒收到回應的那一批，登入 Google 後改送新帳號", () => {
+    const state = outbox({ owner: "guest-1", ownerKind: "guest", ambiguous: true });
+    expect(take(state, "google", "acct-1").outbox).toMatchObject({ id: "id-guest-0001", owner: "acct-1", ownerKind: "google", perfectDelta: 4 });
+  });
+
+  it("T16 訪客被清掉後：舊訪客的那一批不送給新的訪客，也不在沒有身分時送出；pending 照樣送", () => {
+    const state = outbox({ owner: "guest-1", ownerKind: "guest", ambiguous: true });
+    expect(take(state, "guest", "guest-2").outbox).toMatchObject({ id: "id-fresh-0001", perfectDelta: 1 });
+    expect(take(state, "new").outbox).toMatchObject({ id: "id-fresh-0001", perfectDelta: 1, ownerKind: "new" });
+  });
+
+  it("送給 Google 帳號的那一批不會改送給訪客", () => {
+    const state = outbox({ owner: "acct-1", ownerKind: "google" });
+    expect(take(state, "guest", "guest-1").outbox.id).toBe("id-fresh-0001");
+  });
+
+  it("T8 送出格式：playerId 可以是 null（請建立訪客）、consent 只能是 true", () => {
+    expect(parseSyncBody({ ...body([]), playerId: null }, NOW)?.playerId).toBeNull();
+    expect(parseSyncBody({ ...body([]), playerId: null, consent: true }, NOW)?.consent).toBe(true);
+    expect(parseSyncBody({ ...body([]), consent: false }, NOW)).toBeNull();
+  });
+});

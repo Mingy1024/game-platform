@@ -19,7 +19,7 @@ datasource db {
 model Player {
   /// 隨機 ID（21 字元），對外 API、紀錄、排行榜都用它
   id            String    @id
-  /// google 或 guest。這次只會建立 google；guest 留給排行榜
+  /// google 或 guest（排行榜的訪客，精準停車設計稿第 14.2 節）
   kind          String
   /// Google 帳號代碼（ID token 的 sub）。不存名字、信箱、大頭貼
   googleSub     String?   @unique @map("google_sub")
@@ -36,15 +36,20 @@ model Player {
   /// 建立時間、最後使用時間（訪客 90 天清除會用到）
   createdAt     DateTime  @map("created_at")
   lastSeenAt    DateTime  @map("last_seen_at")
+  /// 訪客：建立它的那一批同步代碼。建立訪客的回應掉了、用同一個 syncId 重送時，靠它找回同一個訪客（T9）
+  guestSyncId   String?   @unique @map("guest_sync_id")
   sessions      Session[]
   preciseStopBests PreciseStopBest[]
   preciseStopStats PreciseStopStats?
   preciseStopSyncBatches PreciseStopSyncBatch[]
 
+  /// 每日排程刪掉 90 天沒玩的訪客
+  @@index([kind, lastSeenAt])
   @@map("players")
 }
 
 /// 登入狀態。cookie 存隨機 token，資料庫只存它的 SHA-256。
+/// Google 登入（gs_session）和訪客代號（gs_guest）共用這張表，用玩家的 kind 區分。
 model Session {
   /// token 的 SHA-256（hex）
   id        String   @id

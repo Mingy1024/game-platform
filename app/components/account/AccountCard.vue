@@ -34,6 +34,28 @@ const card = "mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 rounded-[20px] bo
     </NuxtLink>
   </section>
 
+  <!-- 排行榜的訪客（精準停車設計稿第 35 張，T12） -->
+  <section
+    v-else-if="me.status === 'loggedOut' && me.guest"
+    aria-labelledby="account-title"
+    :class="card"
+    data-testid="me-account"
+    data-guest="true"
+  >
+    <div class="flex min-w-0 flex-[999_1_26rem] flex-col gap-1">
+      <h2 id="account-title" class="text-[15px] font-bold text-muted">{{ labels.nickLabel }}</h2>
+      <p class="flex flex-wrap items-center gap-x-2 text-[30px] leading-tight">
+        <NickName :nick="me.guest.nick" locale="zh-TW" number-class="text-[22px]" />
+        <span data-testid="guest-badge" class="rounded-full border border-[#a3adbd] px-2 text-sm font-bold leading-[22px] text-muted">訪客</span>
+      </p>
+      <p class="mt-0.5 text-[15px] leading-relaxed text-muted">
+        訪客的紀錄 90 天沒玩會自動刪除。用 Google 登入，紀錄會併進帳號、永久保留。{{ labels.privacyNote }}<NuxtLink to="/privacy" class="font-bold text-sign underline underline-offset-2">{{ labels.privacyLink }}</NuxtLink>
+      </p>
+    </div>
+    <InAppNotice v-if="inApp === 'other'" :labels="labels" />
+    <LoginButton v-else :labels="labels" size="lg" />
+  </section>
+
   <section v-else aria-labelledby="account-title" :class="card" data-testid="me-account">
     <div class="min-w-0 flex-[999_1_26rem]">
       <h2 id="account-title" class="text-xl font-extrabold">還沒登入</h2>

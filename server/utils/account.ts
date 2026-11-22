@@ -1,7 +1,7 @@
 import { deleteCookie, getCookie, getRequestURL, setCookie, setResponseHeader, setResponseStatus, type H3Event } from "h3";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { UnauthorizedError, type Player } from "@/lib/account/player";
-import { SESSION_COOKIE, validateSession } from "@/lib/account/session";
+import { SESSION_COOKIE } from "@/lib/account/session";
 import { FLAGS } from "@/lib/flags";
 
 /** 本站的 https 一律加 Secure；本機 http://localhost 開發時不加，否則某些瀏覽器不存 cookie */
@@ -24,19 +24,15 @@ export function clearSessionCookie(event: H3Event) {
 }
 
 /**
- * 需要登入的 API 取得目前玩家。session 快到期時資料庫會延長，這裡同時更新 cookie 的期限
+ * 需要登入的 API 取得目前玩家（server/utils/guest.ts 的 googlePlayer）。session 快到期時資料庫會延長，同時更新 cookie 的期限
  * （只延長資料庫、不更新 cookie 的話，瀏覽器還是會在原本的期限登出）；token 無效時清掉 cookie。
  * 沒登入丟 UnauthorizedError，guarded 會轉成 401。
  */
 export async function requireSessionPlayer(event: H3Event, db: PrismaClient): Promise<Player> {
-  const token = sessionToken(event);
-  const result = token ? await validateSession(db, token) : null;
-  if (!result) {
-    if (token) clearSessionCookie(event);
-    throw new UnauthorizedError("需要登入");
-  }
-  if (token && result.renewedExpiresAt) setSessionCookie(event, token, result.renewedExpiresAt);
-  return result.player;
+  // 只認 Google 登入的玩家：訪客的 token 放進 gs_session 也不行（訪客不能改暱稱，T17）
+  const player = await googlePlayer(event, db);
+  if (!player) throw new UnauthorizedError("需要登入");
+  return player;
 }
 
 /**
@@ -68,10 +64,10 @@ export function noStore<T>(event: H3Event, body: T): T {
 export async function guarded<T>(
   event: H3Event,
   handler: () => Promise<T>,
-  { checkOrigin = true } = {},
+  { checkOrigin = true, leaderboard = false } = {},
 ): Promise<T | { error: string }> {
-  // 登入功能關閉時（正式站目前如此），帳號 API 一律當作不存在
-  if (!FLAGS.login) return jsonError(event, 404, "not_found");
+  // 登入功能關閉時，帳號 API 一律當作不存在；排行榜和訪客的 API 另外要排行榜開關
+  if (!FLAGS.login || (leaderboard && !FLAGS.leaderboard)) return jsonError(event, 404, "not_found");
   if (checkOrigin && !sameOrigin(event)) return jsonError(event, 403, "origin");
   try {
     return await handler();

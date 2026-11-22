@@ -14,7 +14,7 @@
     "not_found_handling": "none"
   },
   "triggers": {
-    // 每天 UTC 19:00（台灣時間凌晨 3 點）清掉過期的 session，見 server/plugins/session-cleanup.ts
+    // 每天 UTC 19:00（台灣時間凌晨 3 點）清掉過期的 session 和 90 天沒玩的訪客，見 server/plugins/session-cleanup.ts
     "crons": ["0 19 * * *"]
   },
   "d1_databases": [
@@ -38,6 +38,12 @@
       "name": "RECORDS_LIMITER",
       "namespace_id": "1002",
       "simple": { "limit": 30, "period": 60 }
+    },
+    {
+      // 建立排行榜訪客：同一個 IP 1 分鐘內最多 3 個（精準停車設計稿第 36 題）
+      "name": "GUEST_LIMITER",
+      "namespace_id": "1003",
+      "simple": { "limit": 3, "period": 60 }
     }
   ]
 }

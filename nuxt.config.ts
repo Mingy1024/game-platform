@@ -17,9 +17,11 @@ const flagValue = (name: string) => process.env[`FEATURE_${name}`] ?? process.en
 const flag = (name: string) => flagValue(name) === "1";
 /** 登入預設打開（帳號設計稿第 20 題）；要關掉時設 FEATURE_LOGIN=0 */
 const loginFlag = flagValue("LOGIN") !== "0";
+/** 全站排行預設打開（精準停車設計稿第 14.4 節，T22）；要關掉時設 FEATURE_LEADERBOARD=0 */
+const leaderboardFlag = flagValue("LEADERBOARD") !== "0";
 const buildTime = {
   "process.env.FEATURE_LOGIN": JSON.stringify(loginFlag ? "1" : ""),
-  "process.env.FEATURE_LEADERBOARD": JSON.stringify(flag("LEADERBOARD") ? "1" : ""),
+  "process.env.FEATURE_LEADERBOARD": JSON.stringify(leaderboardFlag ? "1" : ""),
   "process.env.FEATURE_PLAY_COUNT": JSON.stringify(flag("PLAY_COUNT") ? "1" : ""),
   "process.env.ADS_MODE": JSON.stringify(process.env.ADS_MODE ?? "mock"),
   "process.env.SITE_URL": JSON.stringify(process.env.SITE_URL ?? "http://localhost:3000"),
