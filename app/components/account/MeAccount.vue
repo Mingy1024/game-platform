@@ -39,6 +39,7 @@ onBeforeUnmount(() => window.clearTimeout(timer));
   />
   <GuestActions
     v-else-if="FLAGS.leaderboard && me.status === 'loggedOut' && (me.guest || me.consentRequired)"
+    :guest-id="me.guest?.playerId ?? null"
     :nick="me.guest ? nickText(me.guest.nick, 'zh-TW') : null"
     :consent-required="me.consentRequired"
     :on-deleted="() => (notice = 'deleted')"

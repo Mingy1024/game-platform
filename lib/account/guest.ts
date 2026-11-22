@@ -50,6 +50,7 @@ export async function createGuest(
         nickNum: nick.num,
         createdAt: now,
         lastSeenAt: now,
+        lastPlayedAt: now,
       },
     });
   } catch (error) {
@@ -59,6 +60,11 @@ export async function createGuest(
     player = existing;
   }
   return { player, ...(await createSession(db, player.id, now)) };
+}
+
+/** 訪客送了成績：記下最後遊玩時間（90 天清除照它算，T16） */
+export async function touchGuestPlayed(db: PrismaClient, playerId: string, now = new Date()) {
+  await db.player.updateMany({ where: { id: playerId, kind: "guest" }, data: { lastPlayedAt: now } });
 }
 
 /** 找回訪客時補發一組 token */

@@ -60,12 +60,21 @@ export function sqliteD1() {
 /** Prisma 在 D1 寫入 DateTime 的格式（固定 +00:00、毫秒三位） */
 export const iso = (ms: number) => new Date(ms).toISOString().replace("Z", "+00:00");
 
-export function addPlayer(raw: DatabaseSync, id: string, kind: "google" | "guest", { lastSeen = Date.now(), custom = null as string | null } = {}) {
+export function addPlayer(
+  raw: DatabaseSync,
+  id: string,
+  kind: "google" | "guest",
+  options: { lastSeen?: number; lastPlayed?: number | null; created?: number; custom?: string | null } = {},
+) {
+  const lastSeen = options.lastSeen ?? Date.now();
+  const lastPlayed = options.lastPlayed === undefined ? lastSeen : options.lastPlayed;
+  const created = options.created ?? lastSeen;
+  const custom = options.custom ?? null;
   raw
     .prepare(
-      "INSERT INTO players (id, kind, nick_adj, nick_noun, nick_num, nick_custom, created_at, last_seen_at) VALUES (?, ?, 1, 2, 3, ?, ?, ?)",
+      "INSERT INTO players (id, kind, nick_adj, nick_noun, nick_num, nick_custom, created_at, last_seen_at, last_played_at) VALUES (?, ?, 1, 2, 3, ?, ?, ?, ?)",
     )
-    .run(id, kind, custom, iso(lastSeen), iso(lastSeen));
+    .run(id, kind, custom, iso(created), iso(lastSeen), lastPlayed === null ? null : iso(lastPlayed));
 }
 
 export function addBest(raw: DatabaseSync, playerId: string, mode: "daily" | "free", dateKey: string, score: number, at: number) {

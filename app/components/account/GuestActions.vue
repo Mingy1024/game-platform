@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { readConsent, subscribeConsent, writeConsent } from "@/lib/account/leaderboard-consent";
-import { deleteGuest } from "@/lib/account/me-store";
+import { deleteGuest, revokeGuest } from "@/lib/account/me-store";
 
 /**
  * 我的紀錄頁最下面的「訪客」區塊（精準停車設計稿第 35 張，T11、T15）。
@@ -9,10 +9,31 @@ import { deleteGuest } from "@/lib/account/me-store";
  * - 歐盟地區另外有「上全站排行」開關：關掉等於刪除訪客紀錄（還沒有訪客時只記下選擇）
  * 完成通知用函式 props（刪除後這個元件可能先被卸載，emit 會被忽略）。
  */
-const { nick, consentRequired, onDeleted } = defineProps<{ nick: string | null; consentRequired: boolean; onDeleted: () => void }>();
+const { guestId, nick, consentRequired, onDeleted } = defineProps<{
+  guestId: string | null;
+  nick: string | null;
+  consentRequired: boolean;
+  onDeleted: () => void;
+}>();
 
 const consent = useExternalStore(subscribeConsent, readConsent, null);
 const confirming = ref(false);
+/** 打開確認視窗時的訪客：之後身分換了（例如另一個分頁刪掉又建立了新的訪客）就關掉視窗，不改成刪除新的那一個 */
+const target = ref<{ id: string; nick: string } | null>(null);
+watch(
+  () => guestId,
+  (id) => {
+    if (target.value && target.value.id !== id) {
+      confirming.value = false;
+      target.value = null;
+    }
+  },
+);
+function openConfirm() {
+  if (!guestId || nick === null) return;
+  target.value = { id: guestId, nick };
+  confirming.value = true;
+}
 const busy = ref(false);
 const failed = ref(false);
 const cancelButton = useTemplateRef<HTMLButtonElement>("cancel");
@@ -25,31 +46,39 @@ watch(confirming, async (value) => {
   cancelButton.value?.focus();
 });
 
-async function remove(): Promise<boolean> {
+async function remove(id: string): Promise<boolean> {
   busy.value = true;
   failed.value = false;
-  const ok = await deleteGuest();
+  const ok = await deleteGuest(id);
   busy.value = false;
   if (!ok) failed.value = true;
   return ok;
 }
 
 async function confirmDelete() {
-  if (!(await remove())) return;
+  if (!target.value || !(await remove(target.value.id))) return;
   confirming.value = false;
   if (consentRequired) writeConsent("no");
   onDeleted();
 }
 
+/**
+ * 關掉：先記下「不要」（之後所有分頁都不再送，正在建立訪客的分頁收到回應時會撤銷），再刪掉訪客。
+ * 這一頁還不知道有訪客時也請伺服器刪一次：另一個分頁可能剛建立好（docs/dev/sync-checklist.md 第 7 節）。
+ */
 async function toggle() {
-  if (on.value) {
-    // 關掉：有訪客就刪掉，成功才記下「不要」
-    if (nick !== null && !(await remove())) return;
-    writeConsent("no");
-    if (nick !== null) onDeleted();
-  } else {
+  if (!on.value) {
     writeConsent("yes");
+    return;
   }
+  writeConsent("no");
+  if (guestId) {
+    if (await remove(guestId)) onDeleted();
+    return;
+  }
+  busy.value = true;
+  await revokeGuest();
+  busy.value = false;
 }
 
 const plain = "press inline-flex min-h-12 items-center rounded-full border border-line bg-card px-[22px] font-bold disabled:opacity-60";
@@ -86,7 +115,7 @@ const plain = "press inline-flex min-h-12 items-center rounded-full border borde
       >
         <h3 id="guest-delete-title" class="text-[22px] font-black text-express-deep">刪除訪客紀錄？</h3>
         <p id="guest-delete-text" class="leading-relaxed">
-          「<strong>{{ nick }}</strong>」會從排行榜移除，紀錄全部刪掉，<strong>無法復原</strong>。
+          「<strong>{{ target?.nick ?? nick }}</strong>」會從排行榜移除，紀錄全部刪掉，<strong>無法復原</strong>。
         </p>
         <div class="mt-1 flex flex-col gap-2 sm:flex-row">
           <button
@@ -113,7 +142,7 @@ const plain = "press inline-flex min-h-12 items-center rounded-full border borde
         </div>
       </div>
       <div v-else class="flex flex-wrap gap-3">
-        <button type="button" :disabled="busy" data-testid="guest-delete" :class="`${plain} text-express-deep`" @click="confirming = true">
+        <button type="button" :disabled="busy" data-testid="guest-delete" :class="`${plain} text-express-deep`" @click="openConfirm">
           刪除訪客紀錄
         </button>
       </div>

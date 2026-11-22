@@ -4,7 +4,7 @@ import { readConsent, subscribeConsent } from "@/lib/account/leaderboard-consent
 import { refreshMe } from "@/lib/account/me-store";
 import { nickParts, nickText, type Nick } from "@/lib/account/nick/nick";
 import { joinLeaderboard } from "@/lib/games/precise-stop/account-sync";
-import { AVATAR_COLORS, TOP_PREVIEW, type MineResponse, type Scope, type TopResponse } from "@/lib/games/precise-stop/leaderboard";
+import { AVATAR_COLORS, periodOf, TOP_PREVIEW, type MineResponse, type Scope, type TopResponse } from "@/lib/games/precise-stop/leaderboard";
 import { fetchMine, fetchTop, localBest } from "@/lib/games/precise-stop/leaderboard-client";
 import { taiwanDateKey } from "@/lib/games/precise-stop/route";
 import { fmt, formatNumber, formatShortDate } from "@/lib/i18n/format";
@@ -12,6 +12,7 @@ import { fmt, formatNumber, formatShortDate } from "@/lib/i18n/format";
 /**
  * 「我的紀錄」卡的第二個分頁「全站排行」（精準停車設計稿第 14.4 節，第 28、29、33 張；T1–T7、T12）。
  * 三張榜各自讀一次前 100 名（伺服器快取 60 秒），切回來不重讀；讀不到時顯示「再試一次」，不自動重試。
+ * 頁面開著跨過午夜或換週時（期間變了），切榜或回到前景就重讀前 100 名和名次（docs/dev/sync-checklist.md 第 6 節）。
  * 最下面「你的名次」每次現算：切榜、身分換了、紀錄更新（剛同步完）時重讀。
  */
 const { text, locale, dict } = useExperience();
@@ -63,14 +64,29 @@ async function loadMine() {
   mine.value = result;
 }
 
+/** 讀過的前 100 名已經不是現在的期間（跨過午夜、換週） */
+const outdated = (value: Scope) => {
+  const current = tops.value[value];
+  return typeof current === "object" && current.period !== periodOf(value, Date.now());
+};
+
+function onVisible() {
+  if (document.visibilityState !== "visible" || !outdated(scope.value)) return;
+  expanded.value = false;
+  void loadTop(scope.value);
+  void loadMine();
+}
+
 onMounted(() => {
   void loadTop(scope.value);
   void loadMine();
+  document.addEventListener("visibilitychange", onVisible);
 });
+onBeforeUnmount(() => document.removeEventListener("visibilitychange", onVisible));
 watch(scope, (value) => {
   expanded.value = false;
   const current = tops.value[value];
-  if (!current || current === "error") void loadTop(value);
+  if (!current || current === "error" || outdated(value)) void loadTop(value);
 });
 watch([scope, () => identity.value?.id, records], () => void loadMine());
 

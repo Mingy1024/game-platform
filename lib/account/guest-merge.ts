@@ -2,8 +2,11 @@
 
 /** 訪客幾天沒玩就刪掉（紀錄、session 一起 CASCADE，T16） */
 export const GUEST_TTL_DAYS = 90;
-/** 每日排程刪掉 90 天沒玩的訪客（server/plugins/session-cleanup.ts） */
-export const PURGE_GUESTS_SQL = `DELETE FROM players WHERE kind = 'guest' AND julianday(last_seen_at) <= julianday('now', '-${GUEST_TTL_DAYS} days')`;
+/**
+ * 每日排程刪掉 90 天沒玩的訪客（server/plugins/session-cleanup.ts）。看最後一次送成績的時間（last_played_at），
+ * 不看 last_seen_at：只打開頁面、查名次也會更新 last_seen_at（2026-11-22 Codex 審查）
+ */
+export const PURGE_GUESTS_SQL = `DELETE FROM players WHERE kind = 'guest' AND julianday(COALESCE(last_played_at, created_at)) <= julianday('now', '-${GUEST_TTL_DAYS} days')`;
 
 /**
  * 把訪客併進 Google 帳號（第 33 題，T13）：最佳紀錄取高分、完美次數相加、

@@ -198,6 +198,28 @@ test.describe("排行榜 API", () => {
   });
 });
 
+test("T13 T24 登入時沒併成功：GET /api/me 不改資料，前端改用同源 POST 併", async ({ page, context, browser }) => {
+  const other = await newBrowser(browser);
+  const guestId = (await postAsNew(other, [run(4100)], 2)).body!.guest!.playerId;
+  const cookie = (await guestCookie(other))!;
+  await login(page, context, "/me");
+  // 模擬登入回來時沒併成功：這個瀏覽器還帶著訪客 cookie
+  await context.addCookies([{ ...cookie }]);
+
+  const meBody = await (await page.request.get("/api/me")).json();
+  expect(meBody).toMatchObject({ loggedIn: true, guestPending: true });
+  // 讀取不會併：訪客還在
+  expect((await other.request.get(`${LB}/me?scope=daily&player=${guestId}`)).status()).toBe(200);
+  expect((await page.request.post("/api/me/guest-merge", { headers: { Origin: "https://evil.example" } })).status()).toBe(403);
+
+  await page.goto("/me");
+  await expect.poll(async () => (await (await page.request.get(RECORDS)).json()).daily[today()] ?? null).toBe(4100);
+  expect((await (await page.request.get(RECORDS)).json()).perfectStops).toBe(2);
+  expect(await guestCookie(context)).toBeUndefined();
+  expect((await other.request.get(`${LB}/me?scope=daily&player=${guestId}`)).status()).toBe(401);
+  await other.close();
+});
+
 test.describe("排行榜畫面", () => {
   test("T8 T12 T17 沒登入玩完一局：自動建立訪客上榜；榜上、你的名次、/me 都有訪客標籤；不能改暱稱", async ({ page, context }) => {
     await enterGame(page);
@@ -248,31 +270,42 @@ test.describe("排行榜畫面", () => {
     await expect(page.getByTestId("rank-scope-week")).toHaveAttribute("aria-pressed", "true");
     if (info.project.name === "desktop") await expect(page.getByTestId("rank-updated")).toContainText("每週一 0 點重新開始");
 
-    // 訪客：只玩過今日挑戰，自由模式這張榜還沒有成績（本機也有同一筆，讀不到名次時顯示它）
-    await postAsNew(page, [run(3210)]);
-    await page.evaluate(([key, day]) => localStorage.setItem(key, JSON.stringify({ daily: { [day]: 3210 }, free: null, perfectStops: 0 })), [LOCAL, today()] as const);
+    // 訪客：只玩過今日挑戰，自由模式這張榜還沒有成績（本機也有同一筆，讀不到名次時顯示它）。
+    // 本機 D1 是所有測試共用的，今天的榜可能已經超過 100 人：真實資料只檢查有名次，前 100 名內的文字用固定回應檢查
+    await postAsNew(page, [run(5996)]);
+    await page.evaluate(([key, day]) => localStorage.setItem(key, JSON.stringify({ daily: { [day]: 5996 }, free: null, perfectStops: 0 })), [LOCAL, today()] as const);
     await page.reload();
     await openRank(page);
     await expect(page.getByTestId("rank-mine")).toHaveAttribute("data-kind", "ranked");
-    await expect(page.getByTestId("rank-mine-note")).toContainText("今日挑戰的最佳 3,210 分");
+    await expect(page.getByTestId("rank-mine-rank")).toHaveText(/^#[\d,]+$/);
     await page.getByTestId("rank-scope-free").click();
     await expect(page.getByTestId("rank-mine")).toHaveAttribute("data-kind", "none");
     await expect(page.getByTestId("rank-mine")).toContainText("還沒有自由模式的成績");
+
+    // 前 100 名內
+    await page.route(`**${LB}/me?**`, (route) =>
+      route.fulfill({ json: { rank: 37, score: 5996, total: 3000, toTop100: null }, headers: { "Cache-Control": "no-store" } }),
+    );
+    await page.getByTestId("rank-scope-daily").click();
+    await expect(page.getByTestId("rank-mine-rank")).toHaveText("#37");
+    await expect(page.getByTestId("rank-mine-note")).toContainText("今日挑戰的最佳 5,996 分");
+    await page.unroute(`**${LB}/me?**`);
 
     // 100 名外
     await page.route(`**${LB}/me?**`, (route) =>
       route.fulfill({ json: { rank: 128, score: 4510, total: 3000, toTop100: 92 }, headers: { "Cache-Control": "no-store" } }),
     );
-    await page.getByTestId("rank-scope-daily").click();
+    await page.getByTestId("rank-scope-week").click();
     await expect(page.getByTestId("rank-mine-rank")).toHaveText("#128");
     await expect(page.getByTestId("rank-mine-note")).toHaveText(/再 92 分可以進前 100 名/);
 
     // 讀不到名次：只顯示自己的最佳分
     await page.unroute(`**${LB}/me?**`);
     await page.route(`**${LB}/me?**`, (route) => route.fulfill({ status: 500, body: "{}" }));
+    await page.getByTestId("rank-scope-daily").click();
     await page.getByTestId("rank-scope-week").click();
     await expect(page.getByTestId("rank-mine-rank")).toHaveText("—");
-    await expect(page.getByTestId("rank-mine-note")).toContainText("本週的最佳 3,210 分");
+    await expect(page.getByTestId("rank-mine-note")).toContainText("本週的最佳 5,996 分");
 
     // 讀不到前 100 名：不自動重試，按「再試一次」
     let calls = 0;

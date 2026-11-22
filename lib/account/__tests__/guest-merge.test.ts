@@ -76,17 +76,20 @@ describe("T13 訪客併進 Google 帳號", () => {
 });
 
 describe("T16 每日排程刪掉 90 天沒玩的訪客", () => {
-  it("只刪 90 天沒玩的訪客，紀錄和 session 一起刪；Google 帳號不動", () => {
+  it("只刪 90 天沒玩的訪客（看最後送成績的時間，打開頁面不算），紀錄和 session 一起刪；Google 帳號不動", () => {
     const now = Date.now();
-    addPlayer(raw, "old-guest", "guest", { lastSeen: now - 91 * DAY });
+    // 91 天沒送成績、但昨天還打開過頁面：照樣刪
+    addPlayer(raw, "old-guest", "guest", { lastSeen: now - DAY, lastPlayed: now - 91 * DAY, created: now - 100 * DAY });
     addPlayer(raw, "old-acct", "google", { lastSeen: now - 200 * DAY });
-    addPlayer(raw, "new-guest", "guest", { lastSeen: now - 10 * DAY });
+    addPlayer(raw, "new-guest", "guest", { lastSeen: now - 95 * DAY, lastPlayed: now - 10 * DAY, created: now - 95 * DAY });
+    // 舊資料沒有 last_played_at：看建立時間
+    addPlayer(raw, "legacy-new", "guest", { lastSeen: now - 5 * DAY, lastPlayed: null, created: now - 5 * DAY });
     addBest(raw, "old-guest", "free", "", 3000, now - 91 * DAY);
     raw.prepare("INSERT INTO sessions (id, player_id, expires_at, created_at) VALUES ('h', 'old-guest', ?, ?)").run(iso(now + DAY), iso(now));
     const result = raw.prepare(PURGE_GUESTS_SQL).run();
     expect(Number(result.changes)).toBe(1);
     const ids = raw.prepare("SELECT id FROM players ORDER BY id").all().map((row) => (row as { id: string }).id);
-    expect(ids).toEqual(["acct", "guest", "new-guest", "old-acct"]);
+    expect(ids).toEqual(["acct", "guest", "legacy-new", "new-guest", "old-acct"]);
     expect(raw.prepare("SELECT COUNT(*) AS n FROM precise_stop_bests").get()).toEqual({ n: 0 });
     expect(raw.prepare("SELECT COUNT(*) AS n FROM sessions").get()).toEqual({ n: 0 });
   });

@@ -18,6 +18,7 @@ import {
   rejectOutboxBests,
   releaseOutbox,
   removeInbox,
+  requeueOutbox,
   returnOutbox,
   runBatch,
   saveSyncState,
@@ -371,5 +372,31 @@ describe("T8 T14 T16 排行榜訪客：outbox 送給誰", () => {
     expect(parseSyncBody({ ...body([]), playerId: null }, NOW)?.playerId).toBeNull();
     expect(parseSyncBody({ ...body([]), playerId: null, consent: true }, NOW)?.consent).toBe(true);
     expect(parseSyncBody({ ...body([]), consent: false }, NOW)).toBeNull();
+  });
+});
+
+describe("2026-11-22 Codex 審查：送出後沒有結果、撤回同意", () => {
+  it("上次送出後沒有任何結果（分頁關掉）：接手時當作不明確，409 也保留同一個 syncId", () => {
+    const state = {
+      pending: { bests: [], perfectDelta: 1 },
+      outbox: { id: "id-closed-001", sentAt: NOW - 60_000, bests: [], perfectDelta: 4, owner: "guest-1", ownerKind: "guest" as const },
+    };
+    const taken = takeOutbox(state, NOW, () => "x", { owner: "guest-1", kind: "guest", exclusive: true })!;
+    expect(taken.outbox).toMatchObject({ id: "id-closed-001", ambiguous: true });
+    const after409 = returnOutbox(taken.state, "id-closed-001");
+    expect(after409.outbox).toMatchObject({ id: "id-closed-001", sentAt: null, ambiguous: true });
+    // 之後改送 Google 帳號：同一個 syncId（登入時批次代碼已經搬進帳號，伺服器擋重複）
+    expect(takeOutbox(after409, NOW, () => "y", { owner: "acct-1", kind: "google", exclusive: true })!.outbox.id).toBe("id-closed-001");
+  });
+
+  it("這一頁剛送出、收到 409：沒有不明確的結果，放回 pending", () => {
+    const fresh = takeOutbox({ pending: { bests: [], perfectDelta: 2 }, outbox: null }, NOW, () => "id-fresh-409", { kind: "guest", owner: "g" })!;
+    expect(fresh.outbox.ambiguous).toBeUndefined();
+    expect(returnOutbox(fresh.state, "id-fresh-409")).toEqual({ pending: { bests: [], perfectDelta: 2 }, outbox: null });
+  });
+
+  it("撤回同意時刪掉剛建立的訪客：這一批放回 pending（不論是否不明確）", () => {
+    const state = { pending: { bests: [], perfectDelta: 1 }, outbox: { id: "id-revoke-01", sentAt: NOW, bests: [daily(TODAY, 5)], perfectDelta: 2, ambiguous: true } };
+    expect(requeueOutbox(state, "id-revoke-01")).toEqual({ pending: { bests: [daily(TODAY, 5)], perfectDelta: 3 }, outbox: null });
   });
 });

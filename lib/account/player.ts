@@ -24,10 +24,11 @@ export type GuestInfo = { playerId: string; nick: Nick };
  * GET /api/me 的回應。沒登入 Google 時另外帶：
  * - guest：這個瀏覽器的訪客（gs_guest），還沒有是 null（排行榜關閉時不帶）
  * - consentRequired：這個地區要先問同意才建立訪客（歐洲經濟區、英國、瑞士，T11）
+ * 登入 Google 時：guestPending 表示瀏覽器還帶著訪客 cookie（登入時沒併成功），前端要呼叫 POST /api/me/guest-merge
  */
 export type MeResponse =
   | { loggedIn: false; guest?: GuestInfo | null; consentRequired?: boolean }
-  | { loggedIn: true; playerId: string; nick: Nick; nickNextAt: string | null };
+  | { loggedIn: true; playerId: string; nick: Nick; nickNextAt: string | null; guestPending?: boolean };
 
 export const guestInfo = (player: Player): GuestInfo => ({ playerId: player.id, nick: playerNick(player) });
 

@@ -252,8 +252,11 @@ export function takeOutbox(
     // 重送前也濾掉這段期間過期的今日挑戰：最佳紀錄取高分可以重複套用，完美次數靠同一個 syncId 擋重複，
     // 所以拿掉一筆再送也安全；不拿掉的話伺服器會整批拒絕
     // 這次送給目前的身分（dropForeignOutbox 已經確認可以送）。目前還沒有身分（new）時沿用原本的標記
+    // sentAt 還在：上次送出後沒有任何結果（送出的分頁關掉、重新整理），伺服器可能已經收到，當作不明確。
+    // 之後遇到 409 也不放回 pending 換新代碼，保留同一個 syncId（docs/dev/sync-checklist.md 第 2 節，2026-11-22 Codex 審查）
     const outbox: Outbox = {
       ...state.outbox,
+      ...(state.outbox.sentAt !== null ? { ambiguous: true } : {}),
       bests: state.outbox.bests.filter((entry) => isAcceptable(entry, now)),
       sentAt: now,
       ...(kind === "new" ? {} : { owner, ownerKind: kind }),
@@ -320,6 +323,13 @@ export function returnOutbox(state: SyncState, id: string): SyncState {
   const outbox = state.outbox;
   if (outbox?.id !== id) return state;
   if (outbox.ambiguous) return { ...state, outbox: { ...outbox, sentAt: null } };
+  return { pending: withInbox(state, outbox).pending, outbox: null };
+}
+
+/** 這一批寫進去的地方已經整個刪掉（撤回同意時刪掉剛建立的訪客）：放回 pending，之後照從沒送過的規則送 */
+export function requeueOutbox(state: SyncState, id: string): SyncState {
+  const outbox = state.outbox;
+  if (outbox?.id !== id) return state;
   return { pending: withInbox(state, outbox).pending, outbox: null };
 }
 

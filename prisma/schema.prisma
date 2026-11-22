@@ -36,6 +36,8 @@ model Player {
   /// 建立時間、最後使用時間（訪客 90 天清除會用到）
   createdAt     DateTime  @map("created_at")
   lastSeenAt    DateTime  @map("last_seen_at")
+  /// 最後一次送成績的時間（只在收下成績時更新，打開頁面、查名次不算）。90 天沒玩的訪客照它刪除（T16）
+  lastPlayedAt  DateTime? @map("last_played_at")
   /// 訪客：建立它的那一批同步代碼。建立訪客的回應掉了、用同一個 syncId 重送時，靠它找回同一個訪客（T9）
   guestSyncId   String?   @unique @map("guest_sync_id")
   sessions      Session[]
@@ -44,7 +46,7 @@ model Player {
   preciseStopSyncBatches PreciseStopSyncBatch[]
 
   /// 每日排程刪掉 90 天沒玩的訪客
-  @@index([kind, lastSeenAt])
+  @@index([kind, lastPlayedAt])
   @@map("players")
 }
 

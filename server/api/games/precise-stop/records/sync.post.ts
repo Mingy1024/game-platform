@@ -1,6 +1,6 @@
 import type { Player } from "@/lib/account/player";
 import { guestInfo } from "@/lib/account/player";
-import { createGuest, findGuestBySyncId, reissueGuest } from "@/lib/account/guest";
+import { createGuest, findGuestBySyncId, reissueGuest, touchGuestPlayed } from "@/lib/account/guest";
 import { FLAGS } from "@/lib/flags";
 import { MAX_SYNC_BODY_BYTES, parseSyncBody } from "@/lib/games/precise-stop/account-records";
 
@@ -61,6 +61,7 @@ export default defineEventHandler((event) =>
     }
 
     await applySync(db, target.id, body, now);
+    if (target.kind === "guest") await touchGuestPlayed(db, target.id, new Date(now));
     const records = await readAccountRecords(db, target.id, now);
     return noStore(event, target.kind === "guest" ? { ...records, guest: guestInfo(target) } : records);
   }),

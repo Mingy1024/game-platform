@@ -7,6 +7,8 @@ import {
   markConsentRequired,
   readMe,
   refreshMe,
+  revokeGuest,
+  subscribeGuestMerged,
   subscribeMe,
   subscribeSignOut,
   withTimeout,
@@ -32,6 +34,7 @@ import {
   hasUnsynced,
   rejectOutboxBests,
   releaseOutbox,
+  requeueOutbox,
   returnOutbox,
   takeOutbox,
   type Target,
@@ -114,6 +117,8 @@ function currentTarget(): (Target & { consent?: true }) | null {
   const me = readMe();
   if (me.status === "loggedIn") return { kind: "google", owner: me.playerId };
   if (!FLAGS.leaderboard || me.status !== "loggedOut") return null;
+  // 歐盟地區撤回了同意：已經有訪客也不再送（docs/dev/sync-checklist.md 第 7 節）
+  if (me.consentRequired && readConsent() === "no") return null;
   if (me.guest) return { kind: "guest", owner: me.guest.playerId };
   if (!me.consentRequired) return { kind: "new" };
   return readConsent() === "yes" ? { kind: "new", consent: true } : null;
@@ -228,9 +233,17 @@ async function round(): Promise<{ result: SyncResult; more: boolean }> {
     release();
     return { result: "failed", more: false };
   }
+  const guest = target.kind !== "google" && json?.guest && typeof json.guest.playerId === "string" ? json.guest : null;
+  if (guest && target.consent && readConsent() !== "yes") {
+    // 送出期間使用者在別的分頁撤回了上榜同意：剛建立的訪客立刻刪掉、不公開。
+    // 這一批放回待送（訪客整個刪掉了，之後再同意時送給新的訪客不會重複），本機紀錄留著
+    if (taken) writeSyncState(requeueOutbox(loadStoredSyncState(), taken.outbox.id));
+    void revokeGuest(guest.playerId);
+    return { result: "skipped", more: false };
+  }
   if (taken) writeSyncState(confirmOutbox(loadStoredSyncState(), taken.outbox.id));
   // 伺服器建立（或找回）的訪客：記下來，之後的批次送給它
-  if (target.kind !== "google" && json?.guest && typeof json.guest.playerId === "string") adoptGuest(json.guest);
+  if (guest) adoptGuest(guest);
   // 顯示用的狀態包含送出期間又玩完的局（inbox），才不會被這次的回應蓋掉
   const view = readSyncState();
   replaceRecords(displayRecords(account, view));
@@ -325,8 +338,10 @@ export function startAccountSync() {
     if (status === "loggedIn") void syncNow();
     else if (status === "loggedOut") kick();
   });
+  // 登出、刪除帳號、刪除訪客：在登入狀態改變之前呼叫（me-store），清完才會有人用新的身分觸發同步
   subscribeSignOut(() => {
     epoch += 1;
+    playedHere = false;
     markSignOut();
     clearLocalRecords();
   });
@@ -336,6 +351,8 @@ export function startAccountSync() {
     playedHere = true;
     if (hasUnsyncedRecords() && (loggedIn() || FLAGS.leaderboard)) void syncNow();
   });
+  // 登入時沒併成功的訪客剛併進帳號：重新讀帳號紀錄
+  subscribeGuestMerged(() => void syncNow());
   window.addEventListener("online", kick);
   // 其他分頁登出（或刪除帳號）：這一頁也當作已登出，再重新讀取登入狀態。
   // 那個分頁之後可能登入了別的帳號，不重新讀取的話，這一頁會把成績送進新帳號、卻還顯示舊帳號

@@ -235,3 +235,63 @@ describe("前端登入狀態：第一次讀取", () => {
     await vi.waitFor(() => expect(store.readMe().status).toBe("loggedIn"));
   });
 });
+
+describe("排行榜訪客：身分改變的順序（2026-11-22 Codex 審查）", () => {
+  let store: Store;
+  let pending: ReturnType<typeof deferredFetch>;
+  beforeEach(async () => {
+    vi.resetModules();
+    vi.stubEnv("FEATURE_LOGIN", "1");
+    vi.stubEnv("FEATURE_LEADERBOARD", "1");
+    store = await import("../me-store");
+    pending = deferredFetch();
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  /** 記下 subscribeSignOut 被呼叫時，登入狀態是否已經改了 */
+  const watchOrder = () => {
+    const seen: string[] = [];
+    store.subscribeSignOut(() => seen.push(`signOut:${store.readMe().status}`));
+    store.subscribeMe(() => seen.push(`me:${store.readMe().status}`));
+    return seen;
+  };
+
+  it("登出：先通知清掉本機紀錄，最後才改成未登入", async () => {
+    const first = store.refreshMe();
+    pending[0].resolve(json(me(null)));
+    await first;
+    const seen = watchOrder();
+    const logout = store.logout();
+    pending[1].resolve(json({ ok: true }));
+    await logout;
+    expect(seen).toEqual(["signOut:loggedIn", "me:loggedOut"]);
+  });
+
+  it("刪除訪客：用打開確認時的 ID；先通知清掉本機紀錄，最後才變成沒有訪客", async () => {
+    const guest = { playerId: "guest-a", nick: nick(null) };
+    const first = store.refreshMe();
+    pending[0].resolve(json({ loggedIn: false, guest, consentRequired: false }));
+    await first;
+    const seen = watchOrder();
+    const removal = store.deleteGuest("guest-a");
+    expect(pending[1].url).toBe("/api/guest?player=guest-a");
+    pending[1].resolve(json({ ok: true }));
+    expect(await removal).toBe(true);
+    expect(seen[0]).toBe("signOut:loggedOut");
+    expect(store.readMe()).toMatchObject({ status: "loggedOut", guest: null });
+  });
+
+  it("GET /api/me 回 guestPending：用 POST 併訪客，成功後通知", async () => {
+    const merged = vi.fn();
+    store.subscribeGuestMerged(merged);
+    const first = store.refreshMe();
+    pending[0].resolve(json({ ...me(null), guestPending: true }));
+    await first;
+    expect(pending[1]).toMatchObject({ url: "/api/me/guest-merge", method: "POST" });
+    pending[1].resolve(json({ ok: true }));
+    await vi.waitFor(() => expect(merged).toHaveBeenCalledTimes(1));
+  });
+});

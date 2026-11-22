@@ -110,9 +110,10 @@ export function refreshMe({ keepOnError = false } = {}): Promise<RefreshResult> 
   const ticket = ++refreshTicket;
   const sessionAt = session;
   const run = async (): Promise<RefreshResult> => {
-    const next = await fetch("/api/me", withTimeout({ cache: "no-store", credentials: "same-origin" }))
-      .then(async (response) => (response.ok ? fromResponse((await response.json()) as MeResponse) : null))
+    const body = await fetch("/api/me", withTimeout({ cache: "no-store", credentials: "same-origin" }))
+      .then(async (response) => (response.ok ? ((await response.json()) as MeResponse) : null))
       .catch(() => null);
+    const next = body ? fromResponse(body) : null;
     if (session !== sessionAt) return "ended";
     // 這段期間有比較新的讀取或改名：以它為準
     if (ticket !== refreshTicket) return latestRefresh;
@@ -127,6 +128,7 @@ export function refreshMe({ keepOnError = false } = {}): Promise<RefreshResult> 
       return "ended";
     }
     set(next);
+    if (body?.loggedIn && body.guestPending) void mergeGuest(sessionAt);
     return "applied";
   };
   const promise = run();
@@ -159,6 +161,27 @@ export function expireGuest() {
     set(loggedOutState());
   }
   void refreshMe({ keepOnError: true });
+}
+
+/**
+ * 登入時沒併成功的訪客，重新併一次（POST，檢查 Origin）。成功時通知 subscribeGuestMerged，
+ * 帳號同步重新讀取帳號紀錄。一頁同時只送一次；失敗就等下一次讀到 guestPending。
+ */
+const mergedListeners = new Set<() => void>();
+let merging = false;
+async function mergeGuest(sessionAt: number) {
+  if (merging) return;
+  merging = true;
+  const response = await fetch("/api/me/guest-merge", withTimeout({ method: "POST", credentials: "same-origin" })).catch(() => null);
+  merging = false;
+  if (!response?.ok || session !== sessionAt) return;
+  for (const listener of mergedListeners) listener();
+}
+export function subscribeGuestMerged(listener: () => void) {
+  mergedListeners.add(listener);
+  return () => {
+    mergedListeners.delete(listener);
+  };
 }
 
 /** 伺服器說這個地區要先問同意（403 consent_required）：結算畫面出現上榜詢問 */
@@ -200,39 +223,59 @@ export function ensureMe(): void {
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
+/*
+ * 登出、刪除帳號、刪除訪客成功時：先通知 subscribeSignOut（清掉本機紀錄、讓同步中的請求作廢），最後才改登入狀態。
+ * 改狀態會同步通知訂閱者；先改的話，帳號同步會看到「沒有身分」，把還沒清掉的紀錄拿去建立新的訪客
+ * （docs/dev/sync-checklist.md 第 7 節，2026-11-22 Codex 審查）。
+ */
 export async function logout(): Promise<boolean> {
   const response = await fetch("/api/auth/logout", withTimeout({ method: "POST", credentials: "same-origin" })).catch(() => null);
   if (!response?.ok) return false;
-  endSession();
   signedOut();
+  endSession();
   return true;
 }
 
 /**
  * 刪除訪客紀錄（精準停車設計稿第 35 題，T15）：伺服器刪掉訪客和紀錄、清掉 cookie；成功後和登出一樣清掉本機紀錄，
  * 其他分頁收到登出記號。失敗（含 409：另一個分頁換了身分）時本機不清。
+ * expected：打開確認視窗時的訪客 ID（之後身分換了也只刪它；cookie 已經是別的訪客時伺服器回 409）
  */
-export async function deleteGuest(): Promise<boolean> {
-  const expected = state.status === "loggedOut" ? state.guest?.playerId : undefined;
-  const query = expected ? `?player=${encodeURIComponent(expected)}` : "";
+export async function deleteGuest(expected: string): Promise<boolean> {
+  const query = `?player=${encodeURIComponent(expected)}`;
   const response = await fetch(`/api/guest${query}`, withTimeout({ method: "DELETE", credentials: "same-origin" })).catch(() => null);
   if (!response?.ok) {
     if (response?.status === 409) void refreshMe({ keepOnError: true });
     return false;
   }
+  signedOut();
   session += 1;
   refreshTicket += 1;
   latestRefresh = Promise.resolve("ended");
   set(loggedOutState());
-  signedOut();
   return true;
+}
+
+/**
+ * 歐盟地區撤回上榜同意、這一頁還不知道有訪客時：請伺服器刪掉這個瀏覽器的訪客（另一個分頁可能剛建立），
+ * 不清本機紀錄（沒有訪客的話什麼都沒刪）。也用在建立訪客的回應晚於撤回時（account-sync.ts）。
+ */
+export async function revokeGuest(expected?: string): Promise<boolean> {
+  const query = expected ? `?player=${encodeURIComponent(expected)}` : "";
+  const response = await fetch(`/api/guest${query}`, withTimeout({ method: "DELETE", credentials: "same-origin" })).catch(() => null);
+  if (response?.ok && state.status === "loggedOut" && state.guest && (!expected || state.guest.playerId === expected)) {
+    refreshTicket += 1;
+    set(loggedOutState());
+  }
+  void refreshMe({ keepOnError: true });
+  return !!response?.ok;
 }
 
 export async function deleteAccount(): Promise<boolean> {
   const response = await fetch("/api/me", withTimeout({ method: "DELETE", credentials: "same-origin" })).catch(() => null);
   if (!response?.ok) return false;
-  endSession();
   signedOut();
+  endSession();
   return true;
 }
 
