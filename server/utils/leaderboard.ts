@@ -10,6 +10,7 @@ import {
   type TopRow,
 } from "@/lib/games/precise-stop/leaderboard";
 import { periodOf as officePeriodOf, type Scope as OfficeScope, type TopResponse as OfficeTopResponse } from "@/lib/games/office-escape/leaderboard";
+import { periodOf as minePeriodOf, type Scope as MineScope, type TopResponse as MineTopResponse } from "@/lib/games/mine-descent/leaderboard";
 
 /**
  * 精準停車的全站排行查詢（設計稿第 14.1、14.3 節）。直接用 D1 的 SQL：
@@ -22,12 +23,14 @@ import { periodOf as officePeriodOf, type Scope as OfficeScope, type TopResponse
  * achieved_at 是 Prisma 寫入的 ISO 字串（固定 +00:00、毫秒三位），字串順序就是時間順序。
  */
 /** 一款遊戲的最佳紀錄表。allMode 是「歷史最佳」那一種的 mode 值（date_key 一律是空字串） */
-export type Board = { table: string; allMode: string };
+export type Board = { table: string; allMode: string; /** 沒有 date_key 欄位，榜的名稱（scope）就是 mode（一路向下） */ byScope?: boolean };
 export const PRECISE_STOP_BOARD: Board = { table: "precise_stop_bests", allMode: "free" };
 export const OFFICE_ESCAPE_BOARD: Board = { table: "office_escape_bests", allMode: "all" };
+export const MINE_DESCENT_BOARD: Board = { table: "mine_descent_bests", allMode: "", byScope: true };
 
 /** period：這張榜現在的期間（daily 是今天、week 是本週週一、其餘是空字串） */
 function entries(board: Board, scope: string, period: string): { sql: string; params: string[] } {
+  if (board.byScope) return { sql: `SELECT player_id, score, achieved_at FROM ${board.table} WHERE mode = ?`, params: [scope] };
   if (scope === "week") {
     const { from, to } = weekRange(period);
     return {
@@ -124,3 +127,12 @@ export async function readOfficeTop(db: D1Database, scope: OfficeScope, now: num
 
 export const readOfficeMine = (db: D1Database, scope: OfficeScope, playerId: string, now: number): Promise<MineResponse> =>
   readBoardMine(db, OFFICE_ESCAPE_BOARD, scope, officePeriodOf(scope, now), playerId);
+
+/** 一路向下的前 100 名與自己的名次：同一套查詢，換成它自己的表（scope 就是 mode：score／depth） */
+export async function readMineTop(db: D1Database, scope: MineScope, now: number): Promise<MineTopResponse> {
+  const period = minePeriodOf(scope, now);
+  return { scope, period, ...(await readBoardTop(db, MINE_DESCENT_BOARD, scope, period)) };
+}
+
+export const readMineMine = (db: D1Database, scope: MineScope, playerId: string, now: number): Promise<MineResponse> =>
+  readBoardMine(db, MINE_DESCENT_BOARD, scope, minePeriodOf(scope, now), playerId);

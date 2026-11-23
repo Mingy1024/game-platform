@@ -1,3 +1,4 @@
+import { startAccountSync as startMineSync } from "@/lib/games/mine-descent/account-sync";
 import { startAccountSync as startEscapeSync } from "@/lib/games/office-escape/account-sync";
 import { startAccountSync } from "@/lib/games/precise-stop/account-sync";
 
@@ -9,5 +10,6 @@ export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.hook("app:suspense:resolve", () => {
     startAccountSync();
     startEscapeSync();
+    startMineSync();
   });
 });

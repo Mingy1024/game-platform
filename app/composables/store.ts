@@ -1,4 +1,7 @@
 import type { ShallowRef } from "vue";
+import { retryAccountSync as retryMineSync } from "@/lib/games/mine-descent/account-sync";
+import { EMPTY_RECORDS as EMPTY_MINE_RECORDS, readRecords as readMineRecords, subscribeRecords as subscribeMineRecords } from "@/lib/games/mine-descent/records-store";
+import type { Records as MineRecords } from "@/lib/games/mine-descent/records";
 import { retryAccountSync as retryEscapeSync } from "@/lib/games/office-escape/account-sync";
 import { EMPTY_RECORDS as EMPTY_ESCAPE_RECORDS, readRecords as readEscapeRecords, subscribeRecords as subscribeEscapeRecords } from "@/lib/games/office-escape/records-store";
 import type { Records as EscapeRecords } from "@/lib/games/office-escape/records";
@@ -71,6 +74,12 @@ export function useRecords() {
 export function useEscapeRecords() {
   onMounted(retryEscapeSync);
   return useExternalStore<EscapeRecords>(subscribeEscapeRecords, readEscapeRecords, EMPTY_ESCAPE_RECORDS);
+}
+
+/** 一路向下的本機紀錄（登入時是帳號的紀錄）。掛上時順便重送還沒存到帳號的部分 */
+export function useMineRecords() {
+  onMounted(retryMineSync);
+  return useExternalStore<MineRecords>(subscribeMineRecords, readMineRecords, EMPTY_MINE_RECORDS);
 }
 
 /** 開發版可以用 localStorage 暫時打開版位（正式版一律不看） */

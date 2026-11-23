@@ -12,6 +12,10 @@ export function localizeGame(game: GameManifest, dict: Dictionary): GameManifest
     const text = dict.officeEscape;
     return { ...game, title: text.title, summary: text.summary, tags: [...text.tags] };
   }
+  if (game.slug === "mine-descent") {
+    const text = dict.mineDescent;
+    return { ...game, title: text.title, summary: text.summary, tags: [...text.tags] };
+  }
   return game;
 }
 

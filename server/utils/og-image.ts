@@ -2,6 +2,8 @@ import { initWasm, Resvg } from "@resvg/resvg-wasm";
 import resvgWasm from "@resvg/resvg-wasm/index_bg.wasm?module";
 import satori, { init as initSatori } from "satori/standalone";
 import yogaWasm from "satori/yoga.wasm?module";
+import { decodeRun as decodeMineRun } from "@/lib/games/mine-descent/share-code";
+import { MINE_CARD_HERO, cardTree as mineCardTree } from "@/lib/games/mine-descent/share/card";
 import { decodeRun as decodeOfficeRun } from "@/lib/games/office-escape/share-code";
 import { OFFICE_CARD_HERO, cardTree as officeCardTree } from "@/lib/games/office-escape/share/card";
 import { decodeRun } from "@/lib/games/precise-stop/share-code";
@@ -102,10 +104,11 @@ export async function cardResponse(
   // 先解碼（不用讀檔、不用初始化 WebAssembly）：代碼無效或沒有這款遊戲就直接 404
   const precise = slug === "precise-stop" ? decodeRun(code) : null;
   const office = slug === "office-escape" ? decodeOfficeRun(code) : null;
-  if (!precise && !office) return new Response("Not found", { status: 404 });
-  const [fonts, hero] = await Promise.all([loadFonts(read), loadHero(office ? OFFICE_CARD_HERO : "hero.jpg", read), ready()]);
+  const mine = slug === "mine-descent" ? decodeMineRun(code) : null;
+  if (!precise && !office && !mine) return new Response("Not found", { status: 404 });
+  const [fonts, hero] = await Promise.all([loadFonts(read), loadHero(mine ? MINE_CARD_HERO : office ? OFFICE_CARD_HERO : "hero.jpg", read), ready()]);
   // satori 的型別是 React 元素；這裡給的是同樣形狀的純物件
-  const tree = precise ? cardTree(precise, locale, hero) : officeCardTree(office!, locale, hero);
+  const tree = precise ? cardTree(precise, locale, hero) : mine ? mineCardTree(mine, locale, hero) : officeCardTree(office!, locale, hero);
   const svg = await satori(tree as never, { ...CARD_SIZE, fonts });
   return new Response(renderPng(svg), {
     headers: {

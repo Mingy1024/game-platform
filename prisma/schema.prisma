@@ -45,6 +45,7 @@ model Player {
   preciseStopStats PreciseStopStats?
   preciseStopSyncBatches PreciseStopSyncBatch[]
   officeEscapeBests OfficeEscapeBest[]
+  mineDescentBests MineDescentBest[]
 
   /// 每日排程刪掉 90 天沒玩的訪客
   @@index([kind, lastPlayedAt])
@@ -131,4 +132,21 @@ model OfficeEscapeBest {
   /// 排行榜：同一天、同一種榜依分數排序
   @@index([mode, dateKey, score(sort: Desc)])
   @@map("office_escape_bests")
+}
+
+/// 一路向下的最佳紀錄（取高值，重送不會重複；沒有累計次數，所以不需要同步批次）
+model MineDescentBest {
+  playerId   String   @map("player_id")
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  /// score（最高分）或 depth（最深的公尺數）
+  mode       String
+  /// 那一種的數值
+  score      Int
+  /// 創下這個最佳值的時間（排行榜同值時先創下的排前面）
+  achievedAt DateTime @map("achieved_at")
+
+  @@id([playerId, mode])
+  /// 排行榜：每一種榜依數值排序
+  @@index([mode, score(sort: Desc)])
+  @@map("mine_descent_bests")
 }

@@ -15,10 +15,11 @@
 app/                      Nuxt 前端
   app.vue、error.vue      根元件、404／錯誤頁（「這一站沒有停靠」）
   assets/css/main.css     Tailwind 入口與全站樣式
-  components/             元件（account/、catalog/、layout/、precise-stop/、office-escape/…）
+  components/             元件（account/、catalog/、layout/、precise-stop/、office-escape/、mine-descent/…）
   composables/            locale、login、seo、store、useMe
   games/precise-stop/     Phaser 場景（scene.ts）、音效（sound.ts）、標籤（labels.ts）、共用（shared.ts）
   games/office-escape/    three.js 場景（scene.ts）、角色庫（characters.ts，設計稿 F1 移植）、音效（sound.ts）、共用（shared.ts）
+  games/mine-descent/     Phaser 4 場景（scene.ts）、程式產生的 SVG 美術（art.ts）、音效（sound.ts）、共用（shared.ts）
   layouts/default.vue     車站主題外框
   middleware/locale-home.global.ts  首頁語言轉址（前端導航）
   pages/                  路由頁面（[locale]/ 是其他語言的前綴版本）
@@ -30,6 +31,7 @@ lib/                      與框架無關的 TypeScript（可直接單元測試�
   catalog/                遊戲目錄（catalog.ts）、分類、熱門榜、manifest schema（zod）
   games/precise-stop/     物理、計分、路線、自動駕駛、紀錄、排行榜、成績代碼、分享卡
   games/office-escape/    固定路線與隨機、模擬（固定步長）、計分、自動駕駛、紀錄與同步（pending／inbox）、排行榜、成績代碼、分享卡
+  games/mine-descent/     岩板產生（保證有路）、模擬（固定步長）、計分、自動駕駛、紀錄與同步（pending／inbox）、排行榜（最深／最高分）、成績代碼、分享卡
   i18n/                   七種語言（locales.ts）與字典（dictionaries/）
   flags.ts                功能開關（建置時決定）
   routes.ts               網站有哪些網址（404 判斷與預先產生清單共用）
@@ -47,7 +49,7 @@ migrations/               D1 migrations（0001–0005），由 wrangler 套用
 generated/prisma/         Prisma Client（自動產生，不手改）
 scripts/                  check-site-url、db-migration、fetch-share-fonts
 tests/e2e/                Playwright 測試與假的 Google（fake-google.mjs）
-public/games/             遊戲素材（precise-stop/、office-escape/）
+public/games/             遊戲素材（precise-stop/、office-escape/、mine-descent/）
 docs/                     文件（acceptance/、dev/、sound/、plans/）
 wrangler.jsonc            Cloudflare 設定（D1、限流、排程、靜態資源）
 ```
@@ -95,6 +97,10 @@ wrangler.jsonc            Cloudflare 設定（D1、限流、排程、靜態資�
 | POST `/api/games/office-escape/records/sync` | `…/records/sync.post.ts` | Google／訪客／建立訪客 | 合併本機最佳（取高分，重送冪等） |
 | GET `/api/games/office-escape/leaderboard?scope=daily\|week\|all` | `…/leaderboard/index.get.ts` | 無 | 前 100 名，邊緣快取 60 秒 |
 | GET `/api/games/office-escape/leaderboard/me` | `…/leaderboard/me.get.ts` | Google／訪客 | 自己的名次 |
+| GET `/api/games/mine-descent/records` | `server/api/games/mine-descent/records/index.get.ts` | Google／訪客 | 讀帳號紀錄（只讀） |
+| POST `/api/games/mine-descent/records/sync` | `…/records/sync.post.ts` | Google／訪客／建立訪客 | 合併本機最佳（取高值，重送冪等） |
+| GET `/api/games/mine-descent/leaderboard?scope=score\|depth` | `…/leaderboard/index.get.ts` | 無 | 前 100 名，邊緣快取 60 秒 |
+| GET `/api/games/mine-descent/leaderboard/me` | `…/leaderboard/me.get.ts` | Google／訪客 | 自己的名次 |
 
 ### 回應格式
 
@@ -134,6 +140,9 @@ PK `(player_id, sync_id)`、`perfect_delta`、`created_at`。**由觸發器 `pre
 
 ### `office_escape_bests`
 PK `(player_id, mode, date_key)`；`mode` 為 `daily`／`all`，`date_key` 為台灣日期（`all` 為空字串）；`score`、`achieved_at`。索引 `(mode, date_key, score DESC)`。**沒有累計次數、也沒有同步批次表**：只取高分，所以重送一定冪等（見 `docs/plans/office-escape.md`）。訪客併進帳號時 `mergeGuest` 一起併這張表。
+
+### `mine_descent_bests`
+PK `(player_id, mode)`；`mode` 為 `score`（最高分）／`depth`（最深公尺）；`score`（那一種的數值）、`achieved_at`。索引 `(mode, score DESC)`。**沒有日期、累計次數與同步批次表**：只取高值，重送一定冪等（見 `docs/plans/mine-descent.md`）。訪客併進帳號時 `mergeGuest` 一起併這張表。
 
 ## 排程
 

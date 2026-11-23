@@ -48,6 +48,16 @@ export async function mergeGuest(d1: D1Database, guestId: string, accountId: str
            OR (excluded.score = office_escape_bests.score AND excluded.achieved_at < office_escape_bests.achieved_at)`,
       )
       .bind(accountId, guestId),
+    // 一路向下：最高分與最深深度各取高值、同值留先創下的
+    d1
+      .prepare(
+        `INSERT INTO mine_descent_bests (player_id, mode, score, achieved_at)
+         SELECT ?1, mode, score, achieved_at FROM mine_descent_bests WHERE player_id = ?2 AND ${isGuest}
+         ON CONFLICT (player_id, mode) DO UPDATE SET score = excluded.score, achieved_at = excluded.achieved_at
+         WHERE excluded.score > mine_descent_bests.score
+           OR (excluded.score = mine_descent_bests.score AND excluded.achieved_at < mine_descent_bests.achieved_at)`,
+      )
+      .bind(accountId, guestId),
     d1.prepare("DELETE FROM players WHERE id = ?1 AND kind = 'guest'").bind(guestId),
   ]);
 }
