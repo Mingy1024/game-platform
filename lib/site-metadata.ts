@@ -4,6 +4,16 @@ import { LOCALES, localeInfo, localePath, type Locale } from "@/lib/i18n/locales
 /** 正式網址（建置時由 SITE_URL 決定），canonical、hreflang、社群預覽的絕對網址都用它 */
 export const SITE_URL = process.env.SITE_URL ?? "http://localhost:3000";
 
+/**
+ * 測試站（例如 *.workers.dev）不要被搜尋引擎收錄：建置時設 SITE_NOINDEX=1，
+ * 全站加 noindex、robots.txt 禁止爬取。正式站不要設。
+ */
+export const SITE_NOINDEX = process.env.SITE_NOINDEX === "1";
+
+/** robots.txt 的內容；noindex 為真時禁止全部爬取，否則全部允許 */
+export const robotsTxt = (noindex: boolean) =>
+  noindex ? "User-agent: *\nDisallow: /\n" : "User-agent: *\nAllow: /\n";
+
 export const absoluteUrl = (path: string) => new URL(path, SITE_URL).toString();
 
 /**

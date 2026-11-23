@@ -38,6 +38,7 @@
 - `FEATURE_LEADERBOARD`：全站排行（含排行榜訪客），預設打開（精準停車設計稿第 14 節）。要關掉時建置前設 `FEATURE_LEADERBOARD=0`。要登入功能也打開才會出現。
 - `FEATURE_PLAY_COUNT`：累計發車次數的預留版位，預設關閉（設成 `1` 才顯示；舊名稱 `NEXT_PUBLIC_FEATURE_*` 也認得）。
 - `SITE_URL`：正式網址，用在 canonical、hreflang、社群預覽的絕對網址。正式建置時一定要設。
+- `SITE_NOINDEX`：測試站（例如 `*.workers.dev`）設 `1`，全站加 `noindex`、`/robots.txt` 禁止爬取；正式站不要設。建置時決定，改了要重新建置。
 - `ADS_MODE`：`mock`（預設，顯示版位示意）或 `off`。
 
 執行時讀取（只在伺服器端）：

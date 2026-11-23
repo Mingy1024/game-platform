@@ -24,6 +24,7 @@ const buildTime = {
   "process.env.FEATURE_LEADERBOARD": JSON.stringify(leaderboardFlag ? "1" : ""),
   "process.env.FEATURE_PLAY_COUNT": JSON.stringify(flag("PLAY_COUNT") ? "1" : ""),
   "process.env.ADS_MODE": JSON.stringify(process.env.ADS_MODE ?? "mock"),
+  "process.env.SITE_NOINDEX": JSON.stringify(process.env.SITE_NOINDEX === "1" ? "1" : ""),
   "process.env.SITE_URL": JSON.stringify(process.env.SITE_URL ?? "http://localhost:3000"),
 };
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { gameMetadata, sharedMetadata } from "@/lib/games/precise-stop/meta";
-import { resolveTwitter } from "@/lib/site-metadata";
+import { resolveTwitter, robotsTxt } from "@/lib/site-metadata";
 
 describe("K4 社群預覽的 Twitter 卡片", () => {
   it("遊戲頁沒有指定時從 Open Graph 補齊（大圖卡片、標題、描述、圖片）", () => {
@@ -25,5 +25,12 @@ describe("K4 社群預覽的 Twitter 卡片", () => {
     expect(twitter.card).toBe("summary_large_image");
     expect(twitter.images).toEqual([`/en/games/precise-stop/r/${code}/card`]);
     expect(twitter.description).toBe(meta.openGraph!.description);
+  });
+});
+
+describe("測試站 noindex", () => {
+  it("robots.txt：測試站禁止全部爬取，正式站全部允許", () => {
+    expect(robotsTxt(true)).toBe("User-agent: *\nDisallow: /\n");
+    expect(robotsTxt(false)).toBe("User-agent: *\nAllow: /\n");
   });
 });
