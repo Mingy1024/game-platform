@@ -292,7 +292,8 @@ function applyAxis() {
 function onKeyDown(event: KeyboardEvent) {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
   const target = event.target as HTMLElement | null;
-  const onButton = target?.closest("button, a, input, textarea, select") != null;
+  // 事件目標不一定是元素（例如直接送到 window 或 document 的鍵盤事件）
+  const onButton = typeof target?.closest === "function" && target.closest("button, a, input, textarea, select") != null;
   if (sharing.value) return;
   const state = session.value.phase;
   const space = event.key === " " || event.key === "Spacebar";
