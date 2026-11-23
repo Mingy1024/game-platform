@@ -372,12 +372,18 @@ test.describe("結算、紀錄與分享", () => {
 });
 
 test.describe("聲音與特效", () => {
-  test("M1 M6 M7 喇叭鈕只開關音效、記在本機、暫停選單同步；沒有音符鈕；15 個音檔都載入", async ({ page }) => {
+  test("M1 M6 M7 喇叭鈕只開關音效、音符鈕只開關背景音樂、記在本機、暫停選單同步；15 個音檔與背景音樂都載入", async ({ page }) => {
     await enter(page);
     await expect.poll(() => page.evaluate(() => window.__mineDescentSound!.state.loaded)).toBe(15);
     expect(await page.evaluate(() => window.__mineDescentSound!.state.failed)).toBe(0);
     await page.getByTestId("depart-in-game").click();
-    await expect(page.getByTestId("music-button")).toHaveCount(0);
+    await expect(page.getByTestId("music-button")).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.__mineDescentSound!.state.musicLoaded)).toBe(true);
+    await page.getByTestId("music-button").click();
+    await expect.poll(() => page.evaluate(() => window.__mineDescentSound!.state.musicOn)).toBe(false);
+    expect(await page.evaluate(() => window.__mineDescentSound!.state.muted)).toBe(false);
+    await page.getByTestId("music-button").click();
+    await expect.poll(() => page.evaluate(() => window.__mineDescentSound!.state.musicOn)).toBe(true);
     const box = await page.getByTestId("mute-button").boundingBox();
     expect(box!.width).toBeGreaterThanOrEqual(44);
     expect(box!.height).toBeGreaterThanOrEqual(44);
@@ -387,6 +393,7 @@ test.describe("聲音與特效", () => {
     await expect(page.getByTestId("sound-switch")).toHaveAttribute("aria-checked", "false");
     await page.getByTestId("sound-switch").click();
     await expect(page.getByTestId("sound-switch")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("music-switch")).toHaveAttribute("aria-checked", "true");
     expect(await page.evaluate(() => window.__mineDescentSound!.state.active)).toBe(false);
     await page.getByTestId("resume-button").click();
     await expect.poll(() => page.evaluate(() => window.__mineDescentSound!.state.active)).toBe(true);

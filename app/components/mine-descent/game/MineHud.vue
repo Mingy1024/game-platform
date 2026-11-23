@@ -6,7 +6,7 @@ import { fmt, formatNumber } from "@/lib/i18n/format";
 export type Popup = { id: number; text: string; tone: "good" | "bad" | "info"; x: number; y: number };
 
 /** 進行中的儀表：深度、體力（安全帽）、連段倍率、分數、提示字、前 3 秒的觸控提示。每一格畫面都會更新。 */
-const props = defineProps<{ popups: Popup[]; hint: boolean; labels: { pause: string; mute: string; unmute: string } }>();
+const props = defineProps<{ popups: Popup[]; hint: boolean; labels: { pause: string; mute: string; unmute: string; muteMusic: string; unmuteMusic: string } }>();
 defineEmits<{ pause: [] }>();
 const game = useGame();
 const text = computed(() => game.value.text);

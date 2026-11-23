@@ -12,7 +12,7 @@ import { grazeRate, landGain, soundFor } from "@/lib/games/mine-descent/sound-mi
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { fmt, formatNumber } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
-import { mutedPref, readMuted } from "@/lib/sound-pref";
+import { musicOffPref, mutedPref, readMusicOff, readMuted } from "@/lib/sound-pref";
 
 /**
  * 遊戲主畫面。按下出發後整頁換成這個畫面（網址不變）：
@@ -67,11 +67,13 @@ function popup(message: string, tone: Popup["tone"], x = 50, y = 38) {
 }
 
 // ---- 音效：遊戲畫面掛上（按了出發）才建立並載入音檔，離開時關掉 ----
-const sound = new MineSound(readMuted());
+const sound = new MineSound(readMuted(), !readMusicOff());
 void sound.load();
 if (import.meta.dev) (window as unknown as Record<string, unknown>).__mineDescentSound = sound;
 const muted = usePref(mutedPref);
 watch(muted, (value) => sound.setMuted(value));
+const musicOff = usePref(musicOffPref);
+watch(musicOff, (value) => sound.setMusicOn(!value));
 const click = () => sound.play("ui-click.mp3");
 
 // ---- 進出遊戲畫面：隱藏網站其他部分、接管返回鍵（和精準停車相同） ----

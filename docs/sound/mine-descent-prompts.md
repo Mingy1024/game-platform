@@ -32,3 +32,13 @@
 | game-over.mp3 | 失敗 | 1.8 s | comedic failure sound for a dizzy cartoon creature, three slow wobbly descending notes on a muted horn ending with a small dizzy spinning twirl, gentle and funny, not sad or harsh |
 | new-record.mp3 | 破紀錄 | 2.2 s | joyful short celebratory fanfare for a casual mobile game, bright brass stabs rising to a final chord with bell sparkles and a light cymbal swell, triumphant but friendly, clean |
 | score-tick.mp3 | 結算分數跑動 | 0.08 s | a single very short soft digital tick, score counter increment in a casual game, crisp, quiet, dry, no tail |
+
+## 背景音樂
+
+2026-11-23 用本機的 Stable Audio 3 Small-Music 生成 5 首候選（生成腳本 `gen_mine_bgm.py`，結果放 `outputs\mine-descent-bgm\`），使用者在選片頁選定第 5 首「崩塌追逐」，轉成單聲道 MP3（約 751 KB、54.9 秒、首尾交叉淡化可循環）放進 `public/games/mine-descent/0.1.0/music/bgm.mp3`。
+
+其餘 4 首候選：礦坑探險（120 BPM）、洞穴像素（132 BPM）、礦工鄉村（118 BPM）、水晶洞窟（92 BPM），保留在本機資料夾，沒有進專案。
+
+| 檔名 | 用途 | 長度 | 提示詞（前面加 `TrackType: Music, VocalType: Instrumental, `；負面提示詞 `vocals, singing, speech, choir, distortion, harsh noise, low quality, lo-fi crackle, sfx, crowd`） |
+|---|---|---|---|
+| bgm.mp3 | 遊戲中循環（seed 555、140 BPM） | 54.9 s | Genre: Cinematic, Genre: Action. A tense but comedic chase instrumental for a mole racing downward ahead of a collapsing cave ceiling. Driving low string ostinato, taiko and tom drums, staccato brass stabs, rising snare rolls, urgent and exciting yet playful, not scary, 140 BPM. |

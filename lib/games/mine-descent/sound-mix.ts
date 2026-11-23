@@ -2,7 +2,7 @@ import type { SimEvent } from "./sim";
 
 /**
  * 音效的混音規則（驗收 M 組）。純計算，不碰 Web Audio，也不回頭影響模擬與判定（M8）。
- * 音檔由 Stable Audio 3 Small-SFX 生成，放在 public/games/mine-descent/0.1.0/sfx；
+ * 音效由 Stable Audio 3 Small-SFX 生成，放在 public/games/mine-descent/0.1.0/sfx；背景音樂由 Small-Music 生成，放在 music；
  * 提示詞見 docs/sound/mine-descent-prompts.md。檔案不存在時遊戲照常可玩，只是沒有那個聲音。
  */
 export const SOUND_FILES = [
@@ -26,6 +26,10 @@ export const SOUND_FILES = [
 export type OneShot = (typeof SOUND_FILES)[number];
 
 export const SOUND_BASE = "/games/mine-descent/0.1.0/sfx/";
+
+/** 背景音樂（崩塌追逐）：和音效分開載入、分開計算大小；音量壓在音效底下 */
+export const MUSIC_URL = "/games/mine-descent/0.1.0/music/bgm.mp3";
+export const MUSIC_GAIN = 0.3;
 
 export const SOUND_GAIN: Record<OneShot, number> = {
   "ui-click.mp3": 0.55,

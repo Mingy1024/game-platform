@@ -61,8 +61,10 @@ describe("H 美術資產", () => {
     // 沒有 2D 圖檔被遊戲程式引用
     expect(gameFiles.filter((file) => file.startsWith("app/")).map(read).join("\n")).not.toMatch(/\.(png|jpg|jpeg)["']/);
   });
-  it("H8 資料夾裡只有封面、主視覺和 sfx；音效合計不超過 600 KB", () => {
-    expect(readdirSync(join(root, dir)).sort()).toEqual(["cover.webp", "hero.webp", "sfx"]);
+  it("H8 資料夾裡只有封面、主視覺、music 和 sfx；音效合計不超過 600 KB、背景音樂不超過 1 MB", () => {
+    expect(readdirSync(join(root, dir)).sort()).toEqual(["cover.webp", "hero.webp", "music", "sfx"]);
+    expect(readdirSync(join(root, dir, "music"))).toEqual(["bgm.mp3"]);
+    expect(statSync(join(root, dir, "music", "bgm.mp3")).size).toBeLessThan(1024 * 1024);
     const sfx = join(root, dir, "sfx");
     expect(readdirSync(sfx).reduce((sum, name) => sum + statSync(join(sfx, name)).size, 0)).toBeLessThan(600 * 1024);
   });

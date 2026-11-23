@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { u } from "~/games/mine-descent/shared";
-import { mutedPref, setMuted } from "@/lib/sound-pref";
+import { musicOffPref, mutedPref, setMusicOff, setMuted } from "@/lib/sound-pref";
 
-/** 右上的聲音鈕：喇叭開關音效（全站共用的設定）。這款遊戲沒有背景音樂，所以沒有音符鈕 */
-const props = defineProps<{ labels: { mute: string; unmute: string } }>();
+/** 右上的聲音鈕組：音符只開關背景音樂、喇叭只開關音效，互不影響；狀態全站共用 */
+const props = defineProps<{ labels: { mute: string; unmute: string; muteMusic: string; unmuteMusic: string } }>();
 const muted = usePref(mutedPref);
+const musicOff = usePref(musicOffPref);
 const style = {
   width: u(44),
   height: u(44),
@@ -18,6 +19,18 @@ const style = {
 </script>
 
 <template>
+  <button
+    type="button"
+    data-no-brake
+    data-testid="music-button"
+    :aria-label="musicOff ? props.labels.unmuteMusic : props.labels.muteMusic"
+    :aria-pressed="!musicOff"
+    class="flex shrink-0 cursor-pointer items-center justify-center"
+    :style="style"
+    @click="setMusicOff(!musicOff)"
+  >
+    <Icon :name="musicOff ? 'musicOff' : 'music'" :size="22" />
+  </button>
   <button
     type="button"
     data-no-brake

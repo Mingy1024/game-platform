@@ -2,9 +2,9 @@
 import { u, useGame } from "~/games/mine-descent/shared";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { fmt, formatNumber } from "@/lib/i18n/format";
-import { mutedPref } from "@/lib/sound-pref";
+import { musicOffPref, mutedPref } from "@/lib/sound-pref";
 
-/** 暫停選單：繼續、重新開始、回到介紹；「音效」開關和右上的鈕同步 */
+/** 暫停選單：繼續、重新開始、回到介紹；「音樂」「音效」開關和右上的鈕同步 */
 defineProps<{ base: Dictionary["preciseStop"]["pause"] }>();
 defineEmits<{ resume: []; restart: []; back: [] }>();
 const game = useGame();
@@ -32,6 +32,7 @@ onMounted(() => resume.value?.focus());
       <p class="text-center" :style="{ fontSize: u(30), fontWeight: 900, fontStyle: 'italic', color: '#fff3d0', WebkitTextStroke: `${u(2.5)} #1a120c`, paintOrder: 'stroke fill' }">{{ base.title }}</p>
       <p class="text-center" :style="{ fontSize: u(15), fontWeight: 700 }">{{ status }}</p>
       <PrefSwitch :pref="mutedPref" test-id="sound-switch" :icons="['volume', 'volumeOff']">{{ base.sound }}</PrefSwitch>
+      <PrefSwitch :pref="musicOffPref" test-id="music-switch" :icons="['music', 'musicOff']">{{ base.music }}</PrefSwitch>
       <button
         ref="resume"
         type="button"

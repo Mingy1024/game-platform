@@ -106,7 +106,7 @@ U 單元測試（Vitest）、E 自動操作測試（Playwright）、S 截圖比�
 | H1 | 封面與主視覺是 WebP，成績圖背景是 JPEG，都在專案內 | U | 通過｜單元 H1 |
 | H2 | 遊戲內美術全是程式產生的 SVG，不引用 2D 圖檔 | U | 通過｜單元 H2 |
 | H3 | 進遊戲時 15 個音檔都載入、沒有 404 | E | 通過｜E2E M1 M6 M7（loaded = 15、failed = 0） |
-| H8 | public/games/mine-descent 只有封面、主視覺和 sfx；音效合計不超過 600 KB | U | 通過｜單元 H8（共 222 KB） |
+| H8 | public/games/mine-descent 只有封面、主視覺、music 和 sfx；音效合計不超過 600 KB、背景音樂不超過 1 MB | U | 通過｜單元 H8（音效 222 KB、音樂 751 KB） |
 
 ## I 介紹頁與整頁切換
 
