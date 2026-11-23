@@ -604,10 +604,10 @@ export const en: Dictionary = {
     },
   },
   mineDescent: {
-    title: "Down We Go",
+    title: "Great Mine Escape",
     summary: "The mine is collapsing! Move left and right, drop from slab to slab, dodge the pickaxe spikes and see how deep you can get.",
     lead: "The mine is collapsing! Guide the mole miner straight down and get as deep as you can.",
-    metaDescription: "Down We Go is an endless descent game. The mine is caving in and a mole miner can only move left and right, dropping from slab to slab, dodging pickaxe spikes and cracking rock while using mine carts, wooden braces and glowing crystals. The deeper and the closer the call, the higher the score. Plays on phones and computers.",
+    metaDescription: "Great Mine Escape is an endless descent game. The mine is caving in and a mole miner can only move left and right, dropping from slab to slab, dodging pickaxe spikes and cracking rock while using mine carts, wooden braces and glowing crystals. Go deeper and survive close calls to score more points. Play on phones and computers.",
     tags: ["Endless", "One finger"],
     chip: "Endless · about 2 min a run",
     heroAlt: "A mole miner in a hard hat digging down through a collapsing mine",
@@ -618,7 +618,7 @@ export const en: Dictionary = {
       bestDepth: "Deepest",
       bestScore: "Best score",
       depart: "Start escape",
-      departAria: "Start the game: Down We Go",
+      departAria: "Start the game: Great Mine Escape",
       zonesTitle: "Five depths",
       fromMeters: "from {count} m",
     },
@@ -741,7 +741,7 @@ export const en: Dictionary = {
       back: "Back to game intro",
     },
     stage: {
-      gameLabel: "Down We Go game screen",
+      gameLabel: "Great Mine Escape game screen",
       zones: "Depth",
       controls: "Controls",
       moveKey: "Move",
@@ -755,7 +755,7 @@ export const en: Dictionary = {
       points: "{score} pts",
     },
     share: {
-      text: "I got {depth} m deep in Down We Go and scored {score}! Can you go deeper?",
+      text: "I got {depth} m deep in Great Mine Escape and scored {score}! Can you go deeper?",
       cardAlt: "Result card: {depth} m deep, total {score}",
     },
     card: {

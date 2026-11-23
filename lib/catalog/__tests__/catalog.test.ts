@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { zhTW } from "../../i18n/dictionaries/zh-TW";
 import { getActiveCategories, getGameBySlug, getPublishedGames } from "../catalog";
 
-describe("A1 A2 目錄：精準停車、下班逃離辦公室與一路向下", () => {
+describe("A1 A2 目錄：精準停車、下班逃離辦公室與礦坑大逃亡", () => {
   it("三款，slug 是 mine-descent、office-escape、precise-stop，分類都是反應、休閒", () => {
     const games = getPublishedGames();
     expect(games.map((game) => game.slug).sort()).toEqual(["mine-descent", "office-escape", "precise-stop"]);

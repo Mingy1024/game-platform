@@ -604,10 +604,10 @@ export const ja: Dictionary = {
     },
   },
   mineDescent: {
-    title: "ひたすら下へ",
+    title: "鉱山大脱出",
     summary: "坑道が崩れる！左右に動いて岩の足場を選び、つるはしのトゲをよけて、どこまで深く逃げられるか挑戦。",
     lead: "坑道が崩れる！モグラの鉱夫を地底へ導いて、できるだけ深く逃げよう。",
-    metaDescription: "「ひたすら下へ」は終わりのない降下ゲームです。崩れはじめた坑道で、モグラの鉱夫は左右にしか動けません。足場を選んで地底へ逃げ、つるはしのトゲや割れる岩をよけ、トロッコ・木の支柱・光る水晶を活用しましょう。深くてきわどいほど高得点。スマホでもパソコンでも遊べます。",
+    metaDescription: "「鉱山大脱出」は終わりのない降下ゲームです。崩れはじめた坑道で、モグラの鉱夫は左右にしか動けません。足場を選んで地底へ逃げ、つるはしのトゲや割れる岩をよけ、トロッコ・木の支柱・光る水晶を活用しましょう。深くてきわどいほど高得点。スマホでもパソコンでも遊べます。",
     tags: ["エンドレス", "片手で遊べる"],
     chip: "エンドレス · 1回 約2分",
     heroAlt: "ヘルメットをかぶったモグラの鉱夫が崩れる坑道を掘り進む",
@@ -618,7 +618,7 @@ export const ja: Dictionary = {
       bestDepth: "最深",
       bestScore: "ハイスコア",
       depart: "脱出スタート",
-      departAria: "ゲーム開始：ひたすら下へ",
+      departAria: "ゲーム開始：鉱山大脱出",
       zonesTitle: "5つの深度",
       fromMeters: "{count} m から",
     },
@@ -741,7 +741,7 @@ export const ja: Dictionary = {
       back: "ゲーム紹介に戻る",
     },
     stage: {
-      gameLabel: "ひたすら下へのゲーム画面",
+      gameLabel: "鉱山大脱出のゲーム画面",
       zones: "深度",
       controls: "操作",
       moveKey: "左右移動",
@@ -755,7 +755,7 @@ export const ja: Dictionary = {
       points: "{score} 点",
     },
     share: {
-      text: "「ひたすら下へ」で {depth} m まで逃げて {score} 点！もっと深く逃げられる？",
+      text: "「鉱山大脱出」で {depth} m まで逃げて {score} 点！もっと深く逃げられる？",
       cardAlt: "成績画像：{depth} m 降下、合計 {score} 点",
     },
     card: {

@@ -134,7 +134,7 @@ model OfficeEscapeBest {
   @@map("office_escape_bests")
 }
 
-/// 一路向下的最佳紀錄（取高值，重送不會重複；沒有累計次數，所以不需要同步批次）
+/// 礦坑大逃亡的最佳紀錄（取高值，重送不會重複；沒有累計次數，所以不需要同步批次）
 model MineDescentBest {
   playerId   String   @map("player_id")
   player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)

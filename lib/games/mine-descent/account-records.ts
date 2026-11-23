@@ -4,7 +4,7 @@ import { MAX_DEPTH, MAX_SCORE } from "./config";
 import type { Records } from "./types";
 
 /**
- * 一路向下的帳號紀錄：前端和伺服器共用的格式與檢查（P 組）。
+ * 礦坑大逃亡的帳號紀錄：前端和伺服器共用的格式與檢查（P 組）。
  * 純邏輯，不碰資料庫和瀏覽器。只存取高分的最佳紀錄（最高分、最深深度），沒有累計次數，所以重送是冪等的。
  */
 export { CLOCK_SKEW_MS, MAX_SYNC_BODY_BYTES };

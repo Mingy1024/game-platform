@@ -606,10 +606,10 @@ export const zhTW = {
     },
   },
   mineDescent: {
-    title: "一路向下",
+    title: "礦坑大逃亡",
     summary: "礦坑要塌了！左右移動、挑岩板往下鑽，避開鎬頭尖刺，看你能逃多深。",
     lead: "礦坑要塌了！帶著地鼠礦工一路往地底鑽，能逃多深就逃多深。",
-    metaDescription: "一路向下是一款無盡下降的小遊戲：礦坑開始崩塌，地鼠礦工只能左右移動、挑岩板往地底逃生，避開鎬頭尖刺和碎裂的岩板，善用礦軌推車、木支架和發光水晶。下降越深、越驚險，分數越高。手機和電腦都能玩。",
+    metaDescription: "礦坑大逃亡是一款無盡下降的小遊戲：礦坑開始崩塌，地鼠礦工只能左右移動、挑岩板往地底逃生，避開鎬頭尖刺和碎裂的岩板，善用礦軌推車、木支架和發光水晶。下降越深、越驚險，分數越高。手機和電腦都能玩。",
     tags: ["無盡模式", "單指可玩"],
     chip: "無盡模式 · 一局約 2 分鐘",
     heroAlt: "戴著安全帽的地鼠礦工在崩塌的礦坑裡往下鑽",
@@ -620,7 +620,7 @@ export const zhTW = {
       bestDepth: "最深",
       bestScore: "最高分",
       depart: "開始逃生",
-      departAria: "開始遊戲：一路向下",
+      departAria: "開始遊戲：礦坑大逃亡",
       zonesTitle: "五段深度",
       fromMeters: "{count} 公尺起",
     },
@@ -743,7 +743,7 @@ export const zhTW = {
       back: "回到遊戲介紹",
     },
     stage: {
-      gameLabel: "一路向下遊戲畫面",
+      gameLabel: "礦坑大逃亡遊戲畫面",
       zones: "深度",
       controls: "操作",
       moveKey: "左右移動",
@@ -757,7 +757,7 @@ export const zhTW = {
       points: "{score} 分",
     },
     share: {
-      text: "我在一路向下逃到 {depth} 公尺深，拿到 {score} 分！你能逃得更深嗎？",
+      text: "我在礦坑大逃亡逃到 {depth} 公尺深，拿到 {score} 分！你能逃得更深嗎？",
       cardAlt: "成績圖：下降 {depth} 公尺，總分 {score}",
     },
     card: {

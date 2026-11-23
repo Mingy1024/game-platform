@@ -604,10 +604,10 @@ export const zhCN: Dictionary = {
     },
   },
   mineDescent: {
-    title: "一路向下",
+    title: "矿坑大逃亡",
     summary: "矿坑要塌了！左右移动、挑岩板往下钻，避开镐头尖刺，看你能逃多深。",
     lead: "矿坑要塌了！带着地鼠矿工一路往地底钻，能逃多深就逃多深。",
-    metaDescription: "一路向下是一款无尽下降的小游戏：矿坑开始崩塌，地鼠矿工只能左右移动、挑岩板往地底逃生，避开镐头尖刺和碎裂的岩板，善用矿轨推车、木支架和发光水晶。下降越深、越惊险，分数越高。手机和电脑都能玩。",
+    metaDescription: "矿坑大逃亡是一款无尽下降的小游戏：矿坑开始崩塌，地鼠矿工只能左右移动、挑岩板往地底逃生，避开镐头尖刺和碎裂的岩板，善用矿轨推车、木支架和发光水晶。下降越深、越惊险，分数越高。手机和电脑都能玩。",
     tags: ["无尽模式", "单指可玩"],
     chip: "无尽模式 · 一局约 2 分钟",
     heroAlt: "戴着安全帽的地鼠矿工在崩塌的矿坑里往下钻",
@@ -618,7 +618,7 @@ export const zhCN: Dictionary = {
       bestDepth: "最深",
       bestScore: "最高分",
       depart: "开始逃生",
-      departAria: "开始游戏：一路向下",
+      departAria: "开始游戏：矿坑大逃亡",
       zonesTitle: "五段深度",
       fromMeters: "{count} 米起",
     },
@@ -741,7 +741,7 @@ export const zhCN: Dictionary = {
       back: "回到游戏介绍",
     },
     stage: {
-      gameLabel: "一路向下游戏画面",
+      gameLabel: "矿坑大逃亡游戏画面",
       zones: "深度",
       controls: "操作",
       moveKey: "左右移动",
@@ -755,7 +755,7 @@ export const zhCN: Dictionary = {
       points: "{score} 分",
     },
     share: {
-      text: "我在一路向下逃到 {depth} 米深，拿到 {score} 分！你能逃得更深吗？",
+      text: "我在《矿坑大逃亡》里下潜了 {depth} 米，拿到 {score} 分！你能逃得更深吗？",
       cardAlt: "成绩图：下降 {depth} 米，总分 {score}",
     },
     card: {

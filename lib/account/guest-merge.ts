@@ -48,7 +48,7 @@ export async function mergeGuest(d1: D1Database, guestId: string, accountId: str
            OR (excluded.score = office_escape_bests.score AND excluded.achieved_at < office_escape_bests.achieved_at)`,
       )
       .bind(accountId, guestId),
-    // 一路向下：最高分與最深深度各取高值、同值留先創下的
+    // 礦坑大逃亡：最高分與最深深度各取高值、同值留先創下的
     d1
       .prepare(
         `INSERT INTO mine_descent_bests (player_id, mode, score, achieved_at)

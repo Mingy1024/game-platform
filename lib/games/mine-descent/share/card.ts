@@ -5,7 +5,7 @@ import { CARD_ASSETS, CARD_FONT_FILES, CARD_SIZE, type CardNode } from "../../pr
 import type { DecodedRun } from "../share-code";
 
 /**
- * 一路向下的成績圖（1080×1350）。分享面板、下載和社群預覽用的都是這一張。
+ * 礦坑大逃亡的成績圖（1080×1350）。分享面板、下載和社群預覽用的都是這一張。
  * 只產生版面（satori 的元素樹），實際繪製成 PNG 在伺服器端（server/utils/og-image.ts）。
  * 字型是只含成績圖用字的子集，文字表有變動時要重新執行 scripts/fetch-share-fonts.mjs。
  */

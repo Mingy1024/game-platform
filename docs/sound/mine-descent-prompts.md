@@ -1,4 +1,4 @@
-# 一路向下音效
+# 礦坑大逃亡音效
 
 2026-11-23 用本機的 Stable Audio 3 Small-SFX 生成（steps 8、cfg 1.0），15 種各 3 版。生成與匯出的腳本在 `C:\Users\user\Documents\Codex\2026-11-16\bj\outputs\StableAudio3`：
 

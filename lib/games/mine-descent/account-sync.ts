@@ -28,7 +28,7 @@ import {
 import { forgetPendingMemory, removeConfirmed } from "./sync-state";
 
 /**
- * 一路向下的紀錄跟著帳號走、訪客也能上榜。只在瀏覽器端執行，由 app/plugins/account-sync.client.ts 啟動。
+ * 礦坑大逃亡的紀錄跟著帳號走、訪客也能上榜。只在瀏覽器端執行，由 app/plugins/account-sync.client.ts 啟動。
  * 改這個檔案前先看 docs/dev/sync-checklist.md 和 docs/plans/mine-descent.md（共用狀態、請求結果、登入狀態的檢查表）。
  *
  * 和精準停車最大的差別：伺服器只取高分、沒有累計次數，所以重送一定是冪等的，

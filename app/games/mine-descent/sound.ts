@@ -6,7 +6,7 @@ type Loop = { source: AudioBufferSourceNode; gain: GainNode };
 const SMOOTH = 0.08;
 
 /**
- * 一路向下的音效播放（Web Audio），結構和精準停車、下班逃離辦公室的聲音類別相同：
+ * 礦坑大逃亡的音效播放（Web Audio），結構和精準停車、下班逃離辦公室的聲音類別相同：
  * - 遊戲畫面掛上時才建立並載入音檔，介紹頁不載入（M7）。
  * - 瀏覽器不支援或音檔載入失敗（或根本還沒有音檔）時，所有方法都安靜地什麼都不做（M8）。
  * - 暫停、切分頁時整個 AudioContext 暫停，繼續後恢復（M7）。

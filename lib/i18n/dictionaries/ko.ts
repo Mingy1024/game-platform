@@ -604,10 +604,10 @@ export const ko: Dictionary = {
     },
   },
   mineDescent: {
-    title: "끝없이 아래로",
+    title: "광산 대탈출",
     summary: "광산이 무너진다! 좌우로 움직여 바위 발판을 골라 내려가고, 곡괭이 가시를 피하며 얼마나 깊이 도망칠 수 있는지 도전하세요.",
     lead: "광산이 무너진다! 두더지 광부를 지하로 이끌어 최대한 깊이 도망치세요.",
-    metaDescription: "끝없이 아래로는 끝이 없는 하강 게임입니다. 무너지기 시작한 광산에서 두더지 광부는 좌우로만 움직일 수 있어요. 바위 발판을 골라 지하로 도망치고, 곡괭이 가시와 갈라지는 바위를 피하며, 광차·나무 지지대·빛나는 수정을 활용하세요. 깊고 아슬아슬할수록 점수가 높아집니다. 휴대폰과 컴퓨터에서 모두 즐길 수 있어요.",
+    metaDescription: "광산 대탈출은 끝이 없는 하강 게임입니다. 무너지기 시작한 광산에서 두더지 광부는 좌우로만 움직일 수 있어요. 바위 발판을 골라 지하로 도망치고, 곡괭이 가시와 갈라지는 바위를 피하며, 광차·나무 지지대·빛나는 수정을 활용하세요. 깊고 아슬아슬할수록 점수가 높아집니다. 휴대폰과 컴퓨터에서 모두 즐길 수 있어요.",
     tags: ["무한 모드", "한 손 조작"],
     chip: "무한 모드 · 한 판 약 2분",
     heroAlt: "안전모를 쓴 두더지 광부가 무너지는 광산을 파고 내려가는 모습",
@@ -618,7 +618,7 @@ export const ko: Dictionary = {
       bestDepth: "최고 깊이",
       bestScore: "최고 점수",
       depart: "탈출 시작",
-      departAria: "게임 시작: 끝없이 아래로",
+      departAria: "게임 시작: 광산 대탈출",
       zonesTitle: "다섯 구간",
       fromMeters: "{count} m부터",
     },
@@ -741,7 +741,7 @@ export const ko: Dictionary = {
       back: "게임 소개로",
     },
     stage: {
-      gameLabel: "끝없이 아래로 게임 화면",
+      gameLabel: "광산 대탈출 게임 화면",
       zones: "깊이",
       controls: "조작",
       moveKey: "좌우 이동",
@@ -755,7 +755,7 @@ export const ko: Dictionary = {
       points: "{score}점",
     },
     share: {
-      text: "끝없이 아래로에서 {depth} m까지 내려가 {score}점을 받았어요! 더 깊이 갈 수 있나요?",
+      text: "광산 대탈출에서 {depth} m까지 내려가 {score}점을 받았어요! 더 깊이 갈 수 있나요?",
       cardAlt: "성적 이미지: {depth} m 하강, 총점 {score}",
     },
     card: {

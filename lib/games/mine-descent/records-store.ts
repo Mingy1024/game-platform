@@ -108,7 +108,7 @@ export function adoptAccountRecords(account: Records) {
   replaceRecords(mergeRecords(account, loadRecords()));
 }
 
-/** 清掉這台裝置的一路向下紀錄和還沒上傳的部分（登出、刪除帳號、刪除訪客時，第 16 題） */
+/** 清掉這台裝置的礦坑大逃亡紀錄和還沒上傳的部分（登出、刪除帳號、刪除訪客時，第 16 題） */
 export function clearLocalRecords() {
   const store = getStore() as Storage | null;
   writeRecords(emptyRecords(), store);

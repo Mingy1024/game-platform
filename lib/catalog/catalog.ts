@@ -57,7 +57,7 @@ const manifests: GameManifest[] = [
   {
     id: "game-mine-descent",
     slug: "mine-descent",
-    title: "一路向下",
+    title: "礦坑大逃亡",
     summary: "礦坑要塌了！左右移動、挑岩板往下鑽，避開鎬頭尖刺，看你能逃多深。",
     categories: ["reflex", "casual"],
     tags: ["無盡模式", "單指可玩"],

@@ -1,4 +1,4 @@
-# 一路向下：實作計畫
+# 礦坑大逃亡：實作計畫
 
 - 設計稿：https://claude.ai/artifact/9F4C7yS1DiKcNCZkxnZNeL（v3）
 - 音效選片頁：https://claude.ai/artifact/HFibCnrzDpDiiP8xQFwiCT

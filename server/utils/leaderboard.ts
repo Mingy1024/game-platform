@@ -23,7 +23,7 @@ import { periodOf as minePeriodOf, type Scope as MineScope, type TopResponse as 
  * achieved_at 是 Prisma 寫入的 ISO 字串（固定 +00:00、毫秒三位），字串順序就是時間順序。
  */
 /** 一款遊戲的最佳紀錄表。allMode 是「歷史最佳」那一種的 mode 值（date_key 一律是空字串） */
-export type Board = { table: string; allMode: string; /** 沒有 date_key 欄位，榜的名稱（scope）就是 mode（一路向下） */ byScope?: boolean };
+export type Board = { table: string; allMode: string; /** 沒有 date_key 欄位，榜的名稱（scope）就是 mode（礦坑大逃亡） */ byScope?: boolean };
 export const PRECISE_STOP_BOARD: Board = { table: "precise_stop_bests", allMode: "free" };
 export const OFFICE_ESCAPE_BOARD: Board = { table: "office_escape_bests", allMode: "all" };
 export const MINE_DESCENT_BOARD: Board = { table: "mine_descent_bests", allMode: "", byScope: true };
@@ -128,7 +128,7 @@ export async function readOfficeTop(db: D1Database, scope: OfficeScope, now: num
 export const readOfficeMine = (db: D1Database, scope: OfficeScope, playerId: string, now: number): Promise<MineResponse> =>
   readBoardMine(db, OFFICE_ESCAPE_BOARD, scope, officePeriodOf(scope, now), playerId);
 
-/** 一路向下的前 100 名與自己的名次：同一套查詢，換成它自己的表（scope 就是 mode：score／depth） */
+/** 礦坑大逃亡的前 100 名與自己的名次：同一套查詢，換成它自己的表（scope 就是 mode：score／depth） */
 export async function readMineTop(db: D1Database, scope: MineScope, now: number): Promise<MineTopResponse> {
   const period = minePeriodOf(scope, now);
   return { scope, period, ...(await readBoardTop(db, MINE_DESCENT_BOARD, scope, period)) };

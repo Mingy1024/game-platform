@@ -605,10 +605,10 @@ export const pt: Dictionary = {
     },
   },
   mineDescent: {
-    title: "Sempre Para Baixo",
+    title: "Grande Fuga da Mina",
     summary: "A mina está desabando! Mova-se para os lados, escolha as lajes para descer, desvie das pontas de picareta e veja até que profundidade consegue fugir.",
     lead: "A mina está desabando! Guie a toupeira mineradora direto para o fundo e vá o mais longe que puder.",
-    metaDescription: "Sempre Para Baixo é um jogo de descida sem fim. A mina começou a desabar e a toupeira mineradora só pode andar para a esquerda e para a direita, escolhendo lajes para fugir para o subsolo, desviando de pontas de picareta e rochas rachadas e aproveitando vagonetes, escoras de madeira e cristais brilhantes. Quanto mais fundo e mais arriscado, maior a pontuação. Joga-se no celular e no computador.",
+    metaDescription: "Grande Fuga da Mina é um jogo de descida sem fim. A mina começou a desabar e a toupeira mineradora só pode andar para a esquerda e para a direita, escolhendo lajes para fugir para o subsolo, desviando de pontas de picareta e rochas rachadas e aproveitando vagonetes, escoras de madeira e cristais brilhantes. Quanto mais fundo e mais arriscado, maior a pontuação. Joga-se no celular e no computador.",
     tags: ["Modo infinito", "Um dedo só"],
     chip: "Modo infinito · cerca de 2 min por partida",
     heroAlt: "Toupeira mineradora de capacete cavando para baixo numa mina que desaba",
@@ -619,7 +619,7 @@ export const pt: Dictionary = {
       bestDepth: "Mais fundo",
       bestScore: "Melhor pontuação",
       depart: "Começar a fuga",
-      departAria: "Iniciar o jogo: Sempre Para Baixo",
+      departAria: "Iniciar o jogo: Grande Fuga da Mina",
       zonesTitle: "Cinco profundidades",
       fromMeters: "a partir de {count} m",
     },
@@ -742,7 +742,7 @@ export const pt: Dictionary = {
       back: "Voltar à apresentação",
     },
     stage: {
-      gameLabel: "Tela do jogo Sempre Para Baixo",
+      gameLabel: "Tela do jogo Grande Fuga da Mina",
       zones: "Profundidade",
       controls: "Controles",
       moveKey: "Mover",
@@ -756,7 +756,7 @@ export const pt: Dictionary = {
       points: "{score} pts",
     },
     share: {
-      text: "Desci {depth} m em Sempre Para Baixo e fiz {score} pontos! Consegue descer mais?",
+      text: "Desci {depth} m no jogo Grande Fuga da Mina e fiz {score} pontos! Consegue descer mais?",
       cardAlt: "Imagem do resultado: {depth} m, total {score}",
     },
     card: {

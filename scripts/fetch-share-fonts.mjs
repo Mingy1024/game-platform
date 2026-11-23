@@ -31,7 +31,7 @@ function cardText(locale, d) {
     ...Object.values(office.final.parts),
     ...Object.values(office.card),
   ];
-  // 一路向下的成績圖：標題、三項得分名稱、邀請文案與深度那一行
+  // 礦坑大逃亡的成績圖：標題、三項得分名稱、邀請文案與深度那一行
   const mine = d.mineDescent;
   const mineText = [mine.title, mine.hud.unit, ...Object.values(mine.final.parts), ...Object.values(mine.card)];
   return [

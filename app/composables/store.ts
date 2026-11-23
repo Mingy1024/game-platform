@@ -76,7 +76,7 @@ export function useEscapeRecords() {
   return useExternalStore<EscapeRecords>(subscribeEscapeRecords, readEscapeRecords, EMPTY_ESCAPE_RECORDS);
 }
 
-/** 一路向下的本機紀錄（登入時是帳號的紀錄）。掛上時順便重送還沒存到帳號的部分 */
+/** 礦坑大逃亡的本機紀錄（登入時是帳號的紀錄）。掛上時順便重送還沒存到帳號的部分 */
 export function useMineRecords() {
   onMounted(retryMineSync);
   return useExternalStore<MineRecords>(subscribeMineRecords, readMineRecords, EMPTY_MINE_RECORDS);

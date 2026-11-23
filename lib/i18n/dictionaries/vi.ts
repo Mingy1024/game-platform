@@ -604,10 +604,10 @@ export const vi: Dictionary = {
     },
   },
   mineDescent: {
-    title: "Xuống Mãi",
+    title: "Thoát Khỏi Mỏ Sập",
     summary: "Mỏ sắp sập! Di chuyển trái phải, chọn tấm đá để rơi xuống, tránh gai cuốc chim và xem bạn thoát được sâu đến đâu.",
     lead: "Mỏ sắp sập! Dẫn chú chuột chũi thợ mỏ chui thẳng xuống lòng đất, càng sâu càng tốt.",
-    metaDescription: "Xuống Mãi là trò chơi rơi xuống không điểm dừng. Mỏ bắt đầu sập, chú chuột chũi thợ mỏ chỉ di chuyển được sang trái và phải, chọn tấm đá để thoát xuống lòng đất, né gai cuốc chim và đá nứt, tận dụng xe goòng, giá đỡ gỗ và tinh thể phát sáng. Càng sâu, càng sát nút thì điểm càng cao. Chơi được trên điện thoại và máy tính.",
+    metaDescription: "Thoát Khỏi Mỏ Sập là trò chơi mà bạn phải tìm đường xuống sâu hết mức có thể. Mỏ bắt đầu sập, chú chuột chũi thợ mỏ chỉ di chuyển được sang trái và phải, chọn tấm đá để thoát xuống lòng đất, né gai cuốc chim và đá nứt, tận dụng xe goòng, giá đỡ gỗ và tinh thể phát sáng. Càng xuống sâu và càng né hiểm trong gang tấc, bạn càng ghi được nhiều điểm. Chơi được trên điện thoại và máy tính.",
     tags: ["Vô tận", "Một ngón tay"],
     chip: "Vô tận · khoảng 2 phút một ván",
     heroAlt: "Chuột chũi thợ mỏ đội mũ bảo hộ đào xuống trong mỏ đang sập",
@@ -618,7 +618,7 @@ export const vi: Dictionary = {
       bestDepth: "Sâu nhất",
       bestScore: "Điểm cao nhất",
       depart: "Bắt đầu thoát",
-      departAria: "Bắt đầu trò chơi: Xuống Mãi",
+      departAria: "Bắt đầu trò chơi: Thoát Khỏi Mỏ Sập",
       zonesTitle: "Năm tầng sâu",
       fromMeters: "từ {count} m",
     },
@@ -741,7 +741,7 @@ export const vi: Dictionary = {
       back: "Về trang giới thiệu",
     },
     stage: {
-      gameLabel: "Màn hình trò chơi Xuống Mãi",
+      gameLabel: "Màn hình trò chơi Thoát Khỏi Mỏ Sập",
       zones: "Độ sâu",
       controls: "Điều khiển",
       moveKey: "Di chuyển",
@@ -755,7 +755,7 @@ export const vi: Dictionary = {
       points: "{score} điểm",
     },
     share: {
-      text: "Tôi đã xuống sâu {depth} m trong Xuống Mãi và được {score} điểm! Bạn xuống sâu hơn được không?",
+      text: "Mình đã xuống tới độ sâu {depth} m trong Thoát Khỏi Mỏ Sập và ghi được {score} điểm! Bạn xuống sâu hơn được không?",
       cardAlt: "Ảnh kết quả: xuống {depth} m, tổng {score} điểm",
     },
     card: {

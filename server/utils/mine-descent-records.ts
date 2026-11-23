@@ -3,7 +3,7 @@ import { UnauthorizedError } from "@/lib/account/player";
 import { dedupeBests, type AccountRecords, type SyncBody } from "@/lib/games/mine-descent/account-records";
 
 /**
- * 一路向下的帳號紀錄：讀取、合併本機送來的紀錄（P2、P3）。
+ * 礦坑大逃亡的帳號紀錄：讀取、合併本機送來的紀錄（P2、P3）。
  * 只取高值、沒有累計次數，所以整批重送結果不變。D1 沒有交易，每一步都寫成可以重複執行、
  * 彼此搶先也不會出錯的條件更新。
  */

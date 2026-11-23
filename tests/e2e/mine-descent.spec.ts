@@ -1,7 +1,7 @@
 import { expect, hydratedPage, randomIp, test, type Browser, type BrowserContext, type Page } from "./fixtures";
 
 /**
- * 一路向下（驗收清單 docs/acceptance/mine-descent.md）。
+ * 礦坑大逃亡（驗收清單 docs/acceptance/mine-descent.md）。
  * 遊戲掛勾（只在開發版）：window.__mineDescent.session（MineSession）、.scene.fx、window.__mineDescentSound。
  */
 const GAME = "/games/mine-descent";
@@ -88,7 +88,7 @@ test.describe("目錄、介紹頁與整頁切換", () => {
     await page.goto("/games");
     await expect(page.locator(`a[href="${GAME}"]`).first()).toBeAttached();
     await page.goto(GAME);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("一路向下");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("礦坑大逃亡");
     await expect(page.getByTestId("departure-board")).toBeVisible();
     await expect(page.getByTestId("zone")).toHaveCount(5);
     await expect(page.getByTestId("records-card")).toBeVisible();
@@ -436,13 +436,13 @@ test.describe("聲音與特效", () => {
 
 test.describe("多語系與版面", () => {
   for (const [prefix, title] of [
-    ["", "一路向下"],
-    ["/zh-cn", "一路向下"],
-    ["/en", "Down We Go"],
-    ["/ja", "ひたすら下へ"],
-    ["/ko", "끝없이 아래로"],
-    ["/vi", "Xuống Mãi"],
-    ["/pt", "Sempre Para Baixo"],
+    ["", "礦坑大逃亡"],
+    ["/zh-cn", "矿坑大逃亡"],
+    ["/en", "Great Mine Escape"],
+    ["/ja", "鉱山大脱出"],
+    ["/ko", "광산 대탈출"],
+    ["/vi", "Thoát Khỏi Mỏ Sập"],
+    ["/pt", "Grande Fuga da Mina"],
   ] as const) {
     test(`K1 K3 ${prefix || "/"} 介紹頁有標題、語言標示正確`, async ({ page }) => {
       await page.goto(`${prefix}${GAME}`);

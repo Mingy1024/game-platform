@@ -2,7 +2,7 @@ import { guestInfo } from "@/lib/account/player";
 import { FLAGS } from "@/lib/flags";
 
 /**
- * 取得帳號（或訪客）裡的一路向下紀錄（P2）。沒有身分回 401。
+ * 取得帳號（或訪客）裡的礦坑大逃亡紀錄（P2）。沒有身分回 401。
  * ?player=<前端以為的身分>：和目前的不同時回 409 account_mismatch（另一個分頁換了帳號）。
  * 回應：{ score, depth }（最高分與最深的公尺數，沒玩過是 null）；訪客另外帶 guest。GET 沒有任何寫入副作用。
  */
