@@ -1,5 +1,5 @@
 /**
- * 一路向下（礦坑版）的數值設定。移動、計分、特效上限都集中在這裡，
+ * 礦坑大逃亡（礦坑版）的數值設定。移動、計分、特效上限都集中在這裡，
  * 對應 docs/acceptance/mine-descent.md 的 B、C、D、G 組。
  * 純邏輯，不依賴 Phaser 與 DOM（驗收 Q2）。
  */
@@ -8,8 +8,14 @@
 export const STEP = 1 / 120;
 export const TICKS_PER_SECOND = 120;
 
-/** 場地：寬 6 m、高 8 m（直式 3:4）。座標 y 向下，0 是畫面頂端 */
+/** 場地：寬 6 m、高 8 m（直式 3:4）。座標 y 向下，0 是畫面頂端。更長的螢幕見下面的 VIEW */
 export const FIELD = { width: 6, height: 8 } as const;
+/**
+ * 畫面實際看得到的高度（公尺）：預設就是場地高 8 m（3:4）；手機螢幕比 3:4 更長時，
+ * 遊戲框會填滿整個螢幕，多出來的高度往下延伸，讓玩家看到更遠的岩板，不留空白。
+ * 上限 13 m（約 6:13）；再長的螢幕只留一點邊。
+ */
+export const VIEW = { min: FIELD.height, max: 13 } as const;
 /** 岩板每一層的間距（公尺）。捲動速度用「層／秒」表示 */
 export const LAYER = 1.6;
 /** 岩板厚度（公尺），只影響繪製與擦身判定 */

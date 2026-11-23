@@ -1,9 +1,9 @@
 import { createRng } from "../precise-stop/rng";
 import { makeRow, zoneIndex, type PlatformSpec } from "./course";
-import { CEILING, FIELD, HEALTH, LAYER, PLATFORM, PLAYER, SCORE, SPEED_RAMP, STEP, ZONES, type Kind } from "./config";
+import { CEILING, FIELD, HEALTH, LAYER, PLATFORM, PLAYER, SCORE, SPEED_RAMP, STEP, VIEW, ZONES, type Kind } from "./config";
 
 /**
- * 一路向下的模擬（B、C、D 組）：固定步長，相同種子加上相同操作一定得到相同結果（B12）。
+ * 礦坑大逃亡的模擬（B、C、D 組）：固定步長，相同種子加上相同操作一定得到相同結果（B12）。
  * 座標：x 往右、y 往下，單位公尺；岩板以每秒 speed 公尺往上捲，玩家站在上面或落下。
  * 純邏輯，不碰 Phaser、DOM、時間或隨機（種子由外面給）。
  */
@@ -65,6 +65,8 @@ export type Sim = {
   nextId: number;
   nextRow: number;
   lastRowY: number;
+  /** 畫面看得到的高度（公尺）：決定往下預先排幾層岩板，以及掉出畫面底部的界線 */
+  viewHeight: number;
   lastAnchor: PlatformSpec | null;
   zone: number;
   parts: { depth: number; graze: number; crystal: number };
@@ -87,7 +89,9 @@ export function scrollLayersPerSecond(depth: number): number {
 
 export const ceilingY = (depth: number) => CEILING.base + Math.min(CEILING.max, depth * CEILING.perMeter);
 
-export function createSim(seed: number): Sim {
+export const clampView = (height: number) => (Number.isFinite(height) ? Math.min(VIEW.max, Math.max(VIEW.min, height)) : VIEW.min);
+
+export function createSim(seed: number, viewHeight: number = FIELD.height): Sim {
   const start: Platform = { id: 0, kind: "rock", x: FIELD.width / 2, y: PLAYER.startY, w: 3, dir: 1, state: "idle", timer: 0, spent: false, vy: 0 };
   const sim: Sim = {
     seed: seed >>> 0,
@@ -112,6 +116,7 @@ export function createSim(seed: number): Sim {
     nextId: 1,
     nextRow: 1,
     lastRowY: PLAYER.startY,
+    viewHeight: clampView(viewHeight),
     lastAnchor: { kind: "rock", x: start.x, w: start.w, dir: 1 },
     zone: 0,
     parts: { depth: 0, graze: 0, crystal: 0 },
@@ -132,7 +137,7 @@ export const totalScore = (sim: Sim) => sim.parts.depth + sim.parts.graze + sim.
 
 /** 畫面下方還有空位就補上新的一層 */
 function fillRows(sim: Sim) {
-  while (sim.lastRowY < FIELD.height + LAYER) {
+  while (sim.lastRowY < sim.viewHeight + LAYER) {
     const y = sim.lastRowY + LAYER;
     const row = makeRow(sim.seed, sim.nextRow, depthOf(sim) + Math.max(0, y - PLAYER.startY), sim.lastAnchor);
     for (const spec of row.platforms) {
@@ -243,7 +248,7 @@ export function step(sim: Sim, axis: -1 | 0 | 1): void {
       platform.y -= speed * dt;
     }
   }
-  sim.platforms = sim.platforms.filter((platform) => platform.y > -1 && platform.y < FIELD.height + LAYER * 3);
+  sim.platforms = sim.platforms.filter((platform) => platform.y > -1 && platform.y < sim.viewHeight + LAYER * 3);
   fillRows(sim);
 
   // 倍率先到期，再算這一步的深度分（到期的那一步不再套用倍率）
@@ -345,7 +350,7 @@ export function step(sim: Sim, axis: -1 | 0 | 1): void {
     graze(sim, "ceiling", p.x, headY);
   }
 
-  if (p.y > FIELD.height + 0.8) finish(sim, "fall");
+  if (p.y > sim.viewHeight + 0.8) finish(sim, "fall");
 }
 
 /** 把累積的事件交給呼叫的地方（畫面、音效），並清空 */

@@ -21,14 +21,15 @@ import {
 } from "./art";
 
 /**
- * 一路向下的畫面層。只負責「畫」：讀取 MineSession 的狀態，把背景、岩板、地鼠、崩塌線和特效畫出來；
+ * 礦坑大逃亡的畫面層。只負責「畫」：讀取 MineSession 的狀態，把背景、岩板、地鼠、崩塌線和特效畫出來；
  * 同時是遊戲的時鐘（每一格呼叫 session.update）。物理、判定、計分都在 lib/games/mine-descent。
  *
  * 座標：場地 6×8 公尺，畫布 780×1040，每公尺 130 像素（設計稿的 2 倍）。
  */
 export const PPM = 130;
 const W = FIELD.width * PPM;
-const H = FIELD.height * PPM;
+/** 預設（3:4）的畫布高度；實際高度跟著 session.viewHeight */
+const H0 = FIELD.height * PPM;
 
 export type SceneOptions = {
   parent: HTMLElement;
@@ -96,6 +97,7 @@ class MineScene extends Phaser.Scene {
   private reduced = false;
   readonly fx: FxCounters = { dust: 0, sparks: 0, rocks: 0, alive: 0, maxAlive: 0, shakes: 0 };
 
+  private viewH = H0;
   private bg!: Phaser.GameObjects.TileSprite;
   private bgNext?: Phaser.GameObjects.TileSprite;
   private bgZone = 0;
@@ -126,17 +128,18 @@ class MineScene extends Phaser.Scene {
     this.session = data.session;
     this.images = data.images;
     this.reduced = data.reducedMotion;
+    this.viewH = data.session.viewHeight * PPM;
   }
 
   create() {
     for (const [key, image] of this.images) if (!this.textures.exists(key)) this.textures.addImage(key, image);
     this.makeTextures();
 
-    this.bg = this.add.tileSprite(0, 0, W, H, "bg-0").setOrigin(0, 0);
-    this.walls = this.add.tileSprite(0, 0, W, H, "walls-0").setOrigin(0, 0);
+    this.bg = this.add.tileSprite(0, 0, W, this.viewH, "bg-0").setOrigin(0, 0);
+    this.walls = this.add.tileSprite(0, 0, W, this.viewH, "walls-0").setOrigin(0, 0);
     this.motes = this.add.particles(0, 0, "dot", {
       x: { min: 40, max: W - 40 },
-      y: H + 10,
+      y: this.viewH + 10,
       lifespan: 6000,
       speedY: { min: -60, max: -25 },
       speedX: { min: -8, max: 8 },
@@ -159,7 +162,7 @@ class MineScene extends Phaser.Scene {
 
     this.beam = this.add.tileSprite(0, 0, W, 64, "beam").setOrigin(0, 0).setDepth(8);
     this.ceilingGfx = this.add.graphics().setDepth(7);
-    this.vignette = this.add.image(W / 2, H / 2, "vignette").setDisplaySize(W, H).setDepth(9).setAlpha(0);
+    this.vignette = this.add.image(W / 2, this.viewH / 2, "vignette").setDisplaySize(W, this.viewH).setDepth(9).setAlpha(0);
 
     this.options.onReady();
     // 其他段的背景在背景載入（進入該段之前就會好）
@@ -247,7 +250,21 @@ class MineScene extends Phaser.Scene {
   }
 
   // ---- 每一格 ----
+  /** 遊戲框的長寬比改變（手機轉向、網址列收合）：畫布高度、背景、暈影跟著變 */
+  private syncView() {
+    const height = this.session.viewHeight * PPM;
+    if (Math.abs(height - this.viewH) < 0.5) return;
+    this.viewH = height;
+    this.scale.setGameSize(W, height);
+    this.bg.setSize(W, height);
+    this.walls.setSize(W, height);
+    this.bgNext?.setSize(W, height);
+    this.vignette.setPosition(W / 2, height / 2).setDisplaySize(W, height);
+    this.motes.setPosition(0, height - H0);
+  }
+
   update(time: number, deltaMs: number) {
+    this.syncView();
     const session = this.session;
     const events = session.update(deltaMs);
     if (events.length > 0) {
@@ -275,7 +292,7 @@ class MineScene extends Phaser.Scene {
       if (this.reduced) this.bg.setTexture(key);
       else {
         this.bgNext?.destroy();
-        const next = this.add.tileSprite(0, 0, W, H, key).setOrigin(0, 0).setAlpha(0).setDepth(0);
+        const next = this.add.tileSprite(0, 0, W, this.viewH, key).setOrigin(0, 0).setAlpha(0).setDepth(0);
         this.bgNext = next;
         this.tweens.add({
           targets: next,
@@ -314,7 +331,7 @@ class MineScene extends Phaser.Scene {
     const seen = new Set<number>();
     for (const platform of platforms) {
       seen.add(platform.id);
-      if (platform.y * PPM > H + 140 || platform.y * PPM < -140) {
+      if (platform.y * PPM > this.viewH + 140 || platform.y * PPM < -140) {
         this.sprites.get(platform.id)?.setVisible(false);
         continue;
       }
@@ -487,7 +504,7 @@ export function createScene(options: SceneOptions): SceneHandle {
         type: Phaser.AUTO,
         parent: options.parent,
         width: W,
-        height: H,
+        height: options.session.viewHeight * PPM,
         backgroundColor: "#1c1410",
         banner: false,
         audio: { noAudio: true },

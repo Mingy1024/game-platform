@@ -125,6 +125,13 @@ async function exit() {
   else close();
 }
 
+/** 遊戲框比 3:4 更長時（直式手機），多出的高度往下延伸成遊戲畫面；長寬比寫回 session，場景與模擬都跟著變 */
+function syncView() {
+  const el = canvasEl.value;
+  if (!el || el.clientWidth === 0) return;
+  session.value.setViewHeight((FIELD.width * el.clientHeight) / el.clientWidth);
+}
+
 // ---- 場景（Phaser）：這時才載入；按「重試」時重新建立。場景是遊戲的時鐘，每一格呼叫 session.update ----
 function onEvents(events: SimEvent[]) {
   const t = props.text.hud;
@@ -132,17 +139,17 @@ function onEvents(events: SimEvent[]) {
     if (event.type === "land") sound.play(soundFor(event) ?? "land.mp3", { gain: landGain(event.vy) });
     else if (event.type === "graze") {
       sound.play(soundFor(event)!, { rate: grazeRate(event.mult) });
-      popup(`${t.graze} +${event.points}`, "good", (event.x / FIELD.width) * 100, (event.y / FIELD.height) * 100 - 6);
+      popup(`${t.graze} +${event.points}`, "good", (event.x / FIELD.width) * 100, (event.y / session.value.viewHeight) * 100 - 6);
       slowMotion();
     } else if (event.type === "hurt") {
       sound.play("hurt.mp3");
-      popup(t.hurt, "bad", (event.x / FIELD.width) * 100, (event.y / FIELD.height) * 100 - 8);
+      popup(t.hurt, "bad", (event.x / FIELD.width) * 100, (event.y / session.value.viewHeight) * 100 - 8);
     } else if (event.type === "crystal") {
       sound.play("crystal-pickup.mp3");
-      popup(fmt(t.crystal, { points: event.points }), "good", (event.x / FIELD.width) * 100, (event.y / FIELD.height) * 100 - 8);
+      popup(fmt(t.crystal, { points: event.points }), "good", (event.x / FIELD.width) * 100, (event.y / session.value.viewHeight) * 100 - 8);
     } else if (event.type === "bounce") {
       sound.play("wood-bounce.mp3");
-      popup(t.bounce, "info", (event.x / FIELD.width) * 100, (event.y / FIELD.height) * 100 - 8);
+      popup(t.bounce, "info", (event.x / FIELD.width) * 100, (event.y / session.value.viewHeight) * 100 - 8);
     } else if (event.type === "heal") popup(t.heal, "good", 22, 84);
     else {
       const name = soundFor(event);
@@ -192,6 +199,7 @@ onMounted(() =>
       let handle: SceneHandle | null = null;
       let failed = false;
       status.value = "loading";
+      syncView();
       import("~/games/mine-descent/scene")
         .then(({ createScene }) => {
           if (cancelled) return;
@@ -216,7 +224,10 @@ onMounted(() =>
           console.error(error);
           if (!cancelled) status.value = "error";
         });
-      const observer = new ResizeObserver(() => handle?.refresh());
+      const observer = new ResizeObserver(() => {
+        syncView();
+        handle?.refresh();
+      });
       observer.observe(parent);
       onCleanup(() => {
         cancelled = true;
@@ -472,7 +483,7 @@ const barButton =
         </button>
       </div>
 
-      <div class="ps-layout min-h-0 flex-1">
+      <div class="ps-layout ps-fill-layout min-h-0 flex-1">
         <section :aria-label="text.stage.controls" class="ps-side ps-side-left rounded-2xl bg-[#1b2030] p-4 text-sm">
           <h2 class="text-lg font-extrabold">{{ text.stage.controls }}</h2>
           <dl class="mt-2 flex flex-col gap-2">
@@ -485,7 +496,7 @@ const barButton =
 
         <div
           ref="frame"
-          class="ps-frame"
+          class="ps-frame ps-fill"
           data-testid="game-frame"
           role="application"
           :aria-label="text.stage.gameLabel"

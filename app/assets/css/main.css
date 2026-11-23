@@ -196,6 +196,28 @@ html[data-playing] body > :not([data-game-stage]) {
   -webkit-touch-callout: none;
 }
 
+/*
+ * 礦坑大逃亡的直式手機版：遊戲框填滿頁首以下的整個高度（上限約 6:13，再長就留一點邊），
+ * 多出來的高度由遊戲往下延伸；寬度仍是整個螢幕寬（比 3:4 更扁的平板則維持 3:4）。
+ * 桌機的左右欄版面（下面 min-width: 1024px 那段）不套用。
+ */
+@media (max-width: 1023px), (max-height: 559px) {
+  .ps-frame.ps-fill {
+    aspect-ratio: auto;
+    height: min(calc(100dvh - 3.5rem), calc(100vw * 13 / 6));
+    width: min(100vw, calc((100dvh - 3.5rem) * 0.75));
+  }
+  /* 框已經占滿高度，下方的操作說明改成只給讀屏軟體（畫面上已有進場的觸控提示） */
+  .ps-fill-layout > .ps-below {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
 .ps-canvas canvas {
   display: block;
   width: 100% !important;

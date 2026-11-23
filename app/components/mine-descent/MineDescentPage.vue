@@ -9,7 +9,7 @@ const card = "rounded-[18px] border border-line bg-card p-5";
 const cardTitle = "text-xl font-extrabold text-ink";
 
 /**
- * 一路向下的介紹頁。按下出發看板的「開始逃生」後，整頁換成遊戲畫面（網址不變）。
+ * 礦坑大逃亡的介紹頁。按下出發看板的「開始逃生」後，整頁換成遊戲畫面（網址不變）。
  * banner 插槽：從朋友的成績連結進來時，顯示對方分數的那一行。
  */
 const { locale } = defineProps<{ locale: Locale }>();
@@ -61,8 +61,8 @@ useHead({ link: [{ rel: "preload", as: "image", href: HERO, fetchpriority: "high
       <slot name="banner" />
 
       <div class="mt-4 flex flex-col gap-4 lg:flex-row lg:items-stretch lg:gap-6">
-        <div class="relative h-[220px] shrink-0 overflow-hidden rounded-[18px] bg-canvas sm:h-[300px] lg:h-auto lg:min-h-[560px] lg:w-[420px]">
-          <img :src="HERO" :alt="text.heroAlt" fetchpriority="high" class="absolute inset-0 size-full object-cover object-[50%_52%]">
+        <div class="relative aspect-square w-full max-w-[460px] shrink-0 self-center overflow-hidden rounded-[18px] bg-canvas lg:aspect-auto lg:min-h-[560px] lg:w-[420px] lg:max-w-none lg:self-auto">
+          <img :src="HERO" :alt="text.heroAlt" fetchpriority="high" class="absolute inset-0 size-full object-cover object-[50%_43%] lg:object-[50%_52%]">
           <span class="absolute bottom-3.5 left-3.5 rounded-full bg-canvas/80 px-3 py-1 text-sm font-bold text-white">{{ text.chip }}</span>
         </div>
         <div class="flex min-w-0 flex-1 flex-col gap-4">

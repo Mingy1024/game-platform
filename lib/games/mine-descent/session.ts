@@ -1,6 +1,6 @@
 import { autopilotAxis } from "./autopilot";
-import { OVER_DELAY_SECONDS, PLAYER, STEP } from "./config";
-import { ceilingY, createSim, depthOf, drainEvents, randomSeed, step, totalScore, type OverReason, type Sim, type SimEvent } from "./sim";
+import { FIELD, OVER_DELAY_SECONDS, PLAYER, STEP } from "./config";
+import { ceilingY, clampView, createSim, depthOf, drainEvents, randomSeed, step, totalScore, type OverReason, type Sim, type SimEvent } from "./sim";
 
 /**
  * 一局的流程（F 組）：準備 → 進行 → 暫停 → 失敗動畫（dying）→ 結算。
@@ -47,11 +47,22 @@ export class MineSession {
   private acc = 0;
   private dyingFor = 0;
   private pending: SimEvent[] = [];
+  private view: number = FIELD.height;
 
   constructor(
     private readonly seedOf: () => number = randomSeed,
   ) {
     this.sim = createSim(this.seedOf());
+  }
+
+  /** 畫面看得到的高度（公尺）。遊戲框的長寬比決定；重新開始後仍沿用 */
+  get viewHeight() {
+    return this.view;
+  }
+
+  setViewHeight(height: number) {
+    this.view = clampView(height);
+    this.sim.viewHeight = this.view;
   }
 
   start() {
@@ -60,7 +71,7 @@ export class MineSession {
 
   /** 重新開始：新的一局（自由模式每局隨機種子）直接進行中 */
   restart() {
-    this.sim = createSim(this.seedOf());
+    this.sim = createSim(this.seedOf(), this.view);
     this.axis = 0;
     this.acc = 0;
     this.dyingFor = 0;

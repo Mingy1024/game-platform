@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { autopilotAxis } from "../autopilot";
-import { CEILING, FIELD, HEALTH, LAYER, MIX, PLATFORM, PLAYER, SCORE, SPEED_RAMP, STEP, ZONES } from "../config";
+import { CEILING, FIELD, HEALTH, LAYER, MIX, PLATFORM, PLAYER, SCORE, SPEED_RAMP, STEP, VIEW, ZONES } from "../config";
 import { makeRow, zoneIndex, type PlatformSpec } from "../course";
 import { MineSession } from "../session";
-import { ceilingY, createSim, depthOf, scrollLayersPerSecond, step, totalScore, type Platform, type Sim } from "../sim";
+import { ceilingY, clampView, createSim, depthOf, scrollLayersPerSecond, step, totalScore, type Platform, type Sim } from "../sim";
 
 /** 清空岩板，只放測試要的；玩家站在指定岩板上 */
 function setup(kind: Platform["kind"] = "rock", x = 3, w = 3, y = 5): { sim: Sim; platform: Platform } {
@@ -438,5 +438,40 @@ describe("F 流程與自動駕駛", () => {
   });
   it("F4 autopilotAxis 回傳 -1、0、1", () => {
     expect([-1, 0, 1]).toContain(autopilotAxis(createSim(1)));
+  });
+});
+
+describe("G8 畫面高度（直式手機把多出來的高度往下延伸）", () => {
+  it("預設就是 8 m（3:4），和延伸前完全一樣；超出範圍或不是數字會夾回 8～13 m", () => {
+    expect(createSim(1).viewHeight).toBe(FIELD.height);
+    expect(clampView(5)).toBe(VIEW.min);
+    expect(clampView(99)).toBe(VIEW.max);
+    expect(clampView(Number.NaN)).toBe(VIEW.min);
+    expect(clampView(11.5)).toBe(11.5);
+  });
+  it("畫面越高，往下預先排的岩板越多，而且每一層的內容和 3:4 時一樣（同一個種子同一條路）", () => {
+    const short = createSim(7);
+    const tall = createSim(7, 12);
+    expect(Math.max(...tall.platforms.map((item) => item.y))).toBeGreaterThan(Math.max(...short.platforms.map((item) => item.y)) + 3);
+    for (const platform of short.platforms) {
+      const same = tall.platforms.find((item) => item.id === platform.id);
+      expect(same).toMatchObject({ kind: platform.kind, x: platform.x, w: platform.w, y: platform.y });
+    }
+  });
+  it("掉出畫面底部的界線跟著畫面高度走；session 重新開始後仍沿用", () => {
+    const session = new MineSession(() => 3);
+    session.setViewHeight(12);
+    expect(session.sim.viewHeight).toBe(12);
+    session.restart();
+    expect(session.sim.viewHeight).toBe(12);
+    const sim = createSim(1, 12);
+    sim.platforms = [];
+    sim.player.ground = null;
+    sim.player.y = 8.9;
+    step(sim, 0);
+    expect(sim.over).toBeNull();
+    sim.player.y = 12.9;
+    step(sim, 0);
+    expect(sim.over).toBe("fall");
   });
 });
