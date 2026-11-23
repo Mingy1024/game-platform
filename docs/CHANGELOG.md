@@ -6,7 +6,7 @@
 - 加入背景音樂「崩塌追逐」（Stable Audio 3 Small-Music 生成，約 55 秒無縫循環）；右上新增音符鈕、暫停選單新增「音樂」開關，和音效各自獨立。
 - 新遊戲「一路向下」（Phaser 4）：礦坑崩塌的無盡下降，地鼠礦工往地底逃；體力 6 格、六種岩板（一般、鎬頭尖刺、碎裂、礦軌推車、木支架、發光水晶）、頂端崩塌線、五段深度場景、連續驚險倍率、七種語言、成績分享。
 - 全站排行兩張榜（最深、最高分）與帳號紀錄同步；新增 `mine_descent_bests`（migration 0006），`mergeGuest` 併三款遊戲。
-- 美術（地鼠 10 種姿勢、背景、岩板）全部程式產生；音效 15 種用本機 Stable Audio 3 Small-SFX 生成（3 版待使用者選）。
+- 美術（地鼠 10 種姿勢、背景、岩板）全部程式產生；音效 15 種用本機 Stable Audio 3 Small-SFX 生成（每種 3 版，使用者已選定）。
 - 驗收標準 `docs/acceptance/mine-descent.md`、音效提示詞 `docs/sound/mine-descent-prompts.md`、實作計畫 `docs/plans/mine-descent.md`。
 
 ## 2026-11-23
