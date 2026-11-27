@@ -156,4 +156,4 @@ PK `(player_id, mode)`；`mode` 為 `score`（最高分）／`depth`（最深公
 
 - 正式建置用 `server/cloudflare-entry.ts` 取代 Nitro 預設入口，升級 nitropack 後要確認 `dist/presets/cloudflare/runtime/cloudflare-module.mjs` 還在（`npm run preview` 會失敗）。
 - `*.workers.dev` 網域沒有 Cache API，排行榜邊緣快取要綁自己的網域才會生效。
-- `wrangler.jsonc` 的 `database_id` 目前是全零佔位，第一次部署前要用 `wrangler d1 create` 建立後填入（待確認是否已處理）。
+- `wrangler.jsonc` 的 `database_id` 已填入正式 D1 的 ID（2026-11-28 建立，database_name 為 game-platform）。

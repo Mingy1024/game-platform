@@ -13,7 +13,7 @@
 
 ## 二、測試站（`*.workers.dev`）
 
-- [ ] 建立 D1：`wrangler d1 create game-platform`，把 ID 填進 `wrangler.jsonc` 的 `database_id`（目前是全零佔位）
+- [x] 建立 D1（2026-11-28 完成，ID 已填入）：`wrangler d1 create game-platform`，把 ID 填進 `wrangler.jsonc` 的 `database_id`（目前是全零佔位）
 - [ ] 套 migration：`npm run db:migrate:remote`
 - [ ] 設 secret：`wrangler secret put GOOGLE_CLIENT_ID`、`wrangler secret put GOOGLE_CLIENT_SECRET`
 - [ ] Google Cloud Console：OAuth 用戶端加上 workers.dev 的授權導向網址

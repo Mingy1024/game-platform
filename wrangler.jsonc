@@ -21,8 +21,8 @@
     {
       "binding": "DB",
       "database_name": "game-platform",
-      // 正式的 ID 在第一次部署前用 wrangler d1 create 建立後填入；本機開發用不到
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // 正式的 D1（2026-11-28 用 wrangler d1 create 建立）；本機開發用不到，用 .wrangler/state 的本機資料庫
+      "database_id": "cff59267-cb41-4966-91d1-b6da29ea4ddf",
       "migrations_dir": "migrations"
     }
   ],

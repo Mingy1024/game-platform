@@ -48,7 +48,7 @@
 
 ## Cloudflare 設定（`wrangler.jsonc`）
 
-- `DB`：D1。本機開發和 `npm run preview` 用 `.wrangler/state` 裡的本機資料庫；正式的 `database_id` 在第一次部署前用 `wrangler d1 create` 建立後填入。
+- `DB`：D1。本機開發和 `npm run preview` 用 `.wrangler/state` 裡的本機資料庫；正式的 `database_id` 已填入（用 `wrangler d1 create game-platform` 建立）。
 - `NICK_LIMITER`：改暱稱的限流（同一個人 1 分鐘 5 次）。
 - `RECORDS_LIMITER`：精準停車紀錄同步的限流（同一個人 1 分鐘 30 次）。
 - `GUEST_LIMITER`：建立排行榜訪客的限流（同一個 IP 1 分鐘 3 個）。
