@@ -72,7 +72,7 @@ useHead({ link: [{ rel: "preload", as: "image", href: HERO, fetchpriority: "high
               {{ category.name }}
             </NuxtLink>
           </li>
-          <li class="empty:hidden"><PlayCountChip /></li>
+          <li class="empty:hidden"><PlayCount slug="precise-stop" :locale="locale" /></li>
         </ul>
       </header>
 

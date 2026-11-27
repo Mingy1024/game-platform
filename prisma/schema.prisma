@@ -150,3 +150,30 @@ model MineDescentBest {
   @@index([mode, score(sort: Desc)])
   @@map("mine_descent_bests")
 }
+
+/// 各遊戲的累計遊玩次數（所有玩家加總，介紹頁顯示）。只存遊戲代號與總數，不存玩家、IP、時間。
+/// 由 play_count_batches 的觸發器加一（migrations/0007，手寫），程式不直接改這張表。
+model PlayCount {
+  /// 遊戲的 slug（lib/catalog）
+  game  String @id
+  /// 玩完（出現結算畫面）的總局數
+  count Int
+
+  @@map("play_counts")
+}
+
+/// 遊玩次數的擋重複紀錄：前端每局產生一個代碼，同一個代碼只加一次（docs/dev/sync-checklist.md 第 3 節）。
+/// INSERT OR IGNORE 寫進來時，觸發器在同一個 SQL 動作裡把 play_counts 加一；重複的代碼被忽略、觸發器不會跑。
+/// 不存玩家；每日排程清掉 2 天前的紀錄（前端不重送，2 天足夠）。
+model PlayCountBatch {
+  /// 前端產生的隨機代碼（一局一個）
+  runId     String   @id @map("run_id")
+  /// 遊戲的 slug
+  game      String
+  /// 收到的時間（清理用）
+  createdAt DateTime @map("created_at")
+
+  /// 每日清理用
+  @@index([createdAt])
+  @@map("play_count_batches")
+}

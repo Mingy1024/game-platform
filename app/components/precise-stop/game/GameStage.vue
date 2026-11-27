@@ -5,6 +5,7 @@ import { GameSound } from "~/games/precise-stop/sound";
 import { FX } from "@/lib/games/precise-stop/config";
 import type { SaveOutcome } from "@/lib/games/precise-stop/records";
 import { recordRun } from "@/lib/games/precise-stop/records-store";
+import { reportPlay } from "@/lib/play-count/client";
 import { dailyRoute, freeRoute, taiwanDateKey, type Mode } from "@/lib/games/precise-stop/route";
 import { GameSession, type SessionEvent, type Snapshot } from "@/lib/games/precise-stop/session";
 import { judgementSound } from "@/lib/games/precise-stop/sound-mix";
@@ -266,6 +267,8 @@ watch(
             perfectStops: finished.filter((result) => result.judgement === "perfect").length,
           });
           outcome.value = saved;
+          // 累計遊玩次數：final 事件一局只有一次
+          reportPlay("precise-stop");
           sound.finale(saved.isNewRecord, reduced.value);
         }
       }),

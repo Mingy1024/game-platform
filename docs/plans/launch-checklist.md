@@ -30,6 +30,7 @@
 - [ ] Google Console：OAuth 用戶端加上正式網域的授權導向網址
 - [ ] 重新建置並部署：`SITE_URL=https://<正式網域>`、`ADS_MODE=off`，**不要設 `SITE_NOINDEX`**（`SITE_URL`、`SITE_NOINDEX`、`ADS_MODE` 都是建置時寫死的；`ADS_MODE` 預設是 `mock`，沒設 `off` 會顯示「廣告」示意框）
 - [ ] 確認 `/robots.txt` 是 `Allow: /`、頁面沒有 noindex、canonical 與 og:image 用正式網域
+- [ ] 要打開累計遊玩次數時：先 `npm run db:migrate:remote` 套 migration 0007，再用 `FEATURE_PLAY_COUNT=1` 建置部署（順序不能反，不然 API 會 500）
 - [ ] 決定測試期間的資料要不要清（D1 同一個資料庫，帳號與紀錄會保留；cookie 綁網域，登入與 `gs_guest` 訪客身分不會跟過去）
 - [ ] 測試站處理：下架，或保留 noindex
 
@@ -38,6 +39,6 @@
 - [ ] 韓文、越南文等語言請母語者確認（驗收 K6／K7 標「母語者確認待辦」）
 - [x] 廣告：正式上線先關掉（2026-11-28 決定，建置用 `ADS_MODE=off`，隱私頁維持「目前沒有第三方廣告」）。之後要接真廣告（例如 AdSense）時：需要廣告帳號與網站審核、`AdSlot.vue` 補 live 模式、歐盟先問同意、更新隱私頁與七種語言文字
 - [ ] 測試站目前是 `ADS_MODE=mock` 建置，會顯示示意框；要讓測試站也看不到的話，下次部署加 `ADS_MODE=off`
-- [ ] 累計發車次數（`FEATURE_PLAY_COUNT`，後端未接）
+- [x] 累計遊玩次數：已實作（2026-11-28），開關預設關閉；要打開見第三段
 - [x] 下班逃離辦公室、礦坑大逃亡：計畫已移到 archive（2026-11-28）
 - [ ] 深海打撈員：設計稿階段，不影響上線

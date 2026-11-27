@@ -75,7 +75,7 @@ wrangler.jsonc            Cloudflare 設定（D1、限流、排程、靜態資�
 - **訪客**：cookie `gs_guest`，與 Google 共用 `sessions` 表，以 `players.kind = 'guest'` 區分；只在排行榜開啟時建立。登入時併進帳號（`mergeGuest`，單一 D1 batch）。
 - **CSRF**：會改資料的 API 由 `guarded()` 檢查 `Origin` 等於本站；cookie 為 `SameSite=Lax`、`HttpOnly`、https 時加 `Secure`。
 - **功能開關**：`FEATURE_LOGIN` 關閉時所有帳號 API 回 404 `not_found`；排行榜與訪客 API 另外需要 `FEATURE_LEADERBOARD`。
-- **限流**（`wrangler.jsonc` 的 `ratelimits`，各資料中心分開計數）：`NICK_LIMITER` 每人每分鐘 5 次、`RECORDS_LIMITER` 30 次、`GUEST_LIMITER` 每 IP 每分鐘 3 個訪客。正式環境沒有 binding 或出錯時回 503，不默默放行；本機開發沒有 binding 時不限制。
+- **限流**（`wrangler.jsonc` 的 `ratelimits`，各資料中心分開計數）：`NICK_LIMITER` 每人每分鐘 5 次、`RECORDS_LIMITER` 30 次、`GUEST_LIMITER` 每 IP 每分鐘 3 個訪客、`PLAYS_LIMITER` 每 IP 每分鐘回報 10 局遊玩次數。正式環境沒有 binding 或出錯時回 503，不默默放行；本機開發沒有 binding 時不限制。
 
 ## API 路由總覽
 
@@ -101,6 +101,8 @@ wrangler.jsonc            Cloudflare 設定（D1、限流、排程、靜態資�
 | POST `/api/games/mine-descent/records/sync` | `…/records/sync.post.ts` | Google／訪客／建立訪客 | 合併本機最佳（取高值，重送冪等） |
 | GET `/api/games/mine-descent/leaderboard?scope=score\|depth` | `…/leaderboard/index.get.ts` | 無 | 前 100 名，邊緣快取 60 秒 |
 | GET `/api/games/mine-descent/leaderboard/me` | `…/leaderboard/me.get.ts` | Google／訪客 | 自己的名次 |
+| GET `/api/play-count/<slug>` | `server/api/play-count/[slug].get.ts` | 無 | 累計遊玩次數 `{ count }`（只讀；`FEATURE_PLAY_COUNT` 關閉時 404） |
+| POST `/api/play-count/<slug>` | `…/[slug].post.ts` | 無（檢查 Origin） | 玩完一局 +1，內容 `{ runId }`；同一個代碼只加一次 |
 
 ### 回應格式
 
@@ -144,9 +146,15 @@ PK `(player_id, mode, date_key)`；`mode` 為 `daily`／`all`，`date_key` 為�
 ### `mine_descent_bests`
 PK `(player_id, mode)`；`mode` 為 `score`（最高分）／`depth`（最深公尺）；`score`（那一種的數值）、`achieved_at`。索引 `(mode, score DESC)`。**沒有日期、累計次數與同步批次表**：只取高值，重送一定冪等（見 `docs/plans/archive/mine-descent.md`）。訪客併進帳號時 `mergeGuest` 一起併這張表。
 
+### `play_counts`
+PK `game`（遊戲 slug）、`count`。各遊戲累計遊玩次數（所有玩家加總）。**只存遊戲代號與總數，不存玩家、IP、時間**；程式不直接改，由下面的觸發器加一（見 `docs/plans/play-count.md`）。
+
+### `play_count_batches`
+PK `run_id`（前端每局產生的隨機代碼）、`game`、`created_at`，索引 `created_at`。**由觸發器 `play_count_batches_apply`（migrations/0007 末尾）在新增列時，於同一個 SQL 動作內把 `play_counts` 加一**；寫入用 `INSERT OR IGNORE`，重複的代碼不新增列、觸發器不跑。前端不重送，所以每日排程清掉 2 天前的代碼。
+
 ## 排程
 
-`wrangler.jsonc` `triggers.crons = ["0 19 * * *"]`（台灣時間凌晨 3 點）→ `server/plugins/session-cleanup.ts`：刪過期 session、刪 90 天沒玩的訪客（`PURGE_GUESTS_SQL`，看 `last_played_at`，沒有則看 `created_at`）。
+`wrangler.jsonc` `triggers.crons = ["0 19 * * *"]`（台灣時間凌晨 3 點）→ `server/plugins/session-cleanup.ts`：刪過期 session、刪 90 天沒玩的訪客（`PURGE_GUESTS_SQL`，看 `last_played_at`，沒有則看 `created_at`）、刪 2 天前的遊玩次數代碼（`PURGE_PLAY_BATCHES_SQL`）。
 
 ## 建置時決定的值
 

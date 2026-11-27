@@ -16,7 +16,6 @@ export const vi: Dictionary = {
     language: "Ngôn ngữ",
     languageSwitch: "Đổi ngôn ngữ. Hiện tại: {name}",
     close: "Đóng",
-    reserved: "Sắp có",
   },
   footer: {
     label: "Thông tin trang",
@@ -39,6 +38,7 @@ export const vi: Dictionary = {
     label: "Quảng cáo",
     mock: "Vị trí quảng cáo mẫu",
   },
+  playCount: "Đã được chơi {count} lần",
   breadcrumb: {
     label: "Đường dẫn",
     home: "Trang chủ",
@@ -75,7 +75,6 @@ export const vi: Dictionary = {
     tags: ["5 ga mỗi ván", "Chơi một ngón"],
     chip: "5 ga · khoảng 2 phút",
     heroAlt: "Đoàn tàu màu cam đang vào ga",
-    playCount: "Đã khởi hành {count} lượt",
     modes: {
       daily: "Thử thách hôm nay",
       dailyDesc: "Chỉ trong {date}. Mọi người chung một tuyến.",
@@ -340,7 +339,6 @@ export const vi: Dictionary = {
     tags: ["4 chặng mỗi ván", "Chơi bằng một ngón tay"],
     chip: "4 chặng · khoảng 1 phút",
     heroAlt: "Nhân viên đeo ba lô chạy dọc hành lang văn phòng",
-    playCount: "Đã tan ca {count} lần",
     board: {
       title: "Máy chấm công",
       subtitle: "Chuông 18:00 · sếp điểm danh 18:01:30",
@@ -611,7 +609,6 @@ export const vi: Dictionary = {
     tags: ["Vô tận", "Một ngón tay"],
     chip: "Vô tận · khoảng 2 phút một ván",
     heroAlt: "Chuột chũi thợ mỏ đội mũ bảo hộ đào xuống trong mỏ đang sập",
-    playCount: "Đã có {count} lượt thoát",
     board: {
       title: "Bảng xuất phát",
       subtitle: "Vạch sập trên đầu cứ ép xuống. Trụ được càng sâu, điểm càng cao.",

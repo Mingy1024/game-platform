@@ -154,20 +154,37 @@ test("L1 廣告只有一個版位，在怎麼玩和判定與計分之間，沒�
 });
 
 // 登入已經做好，改由環境變數 FEATURE_LOGIN 控制，測試在 tests/e2e/account.spec.ts；全站排行在 tests/e2e/leaderboard.spec.ts
-test("L2 累計發車次數預設關閉；全站排行預設打開（T22）", async ({ page }) => {
+// 累計遊玩次數：E2E 的 dev server 打開了 FEATURE_PLAY_COUNT（playwright.config.ts），次數用 page.route 換成固定值
+const PLAY_COUNT_API = "**/api/play-count/precise-stop";
+const mockPlayCount = (page: import("@playwright/test").Page, status: number, body: unknown) =>
+  page.route(PLAY_COUNT_API, (route) =>
+    route.request().method() === "GET" ? route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) }) : route.continue(),
+  );
+
+test("L2 累計遊玩次數未滿 100 次、讀取失敗都不顯示；全站排行預設打開（T22）", async ({ page }) => {
+  await mockPlayCount(page, 200, { count: 99 });
   await page.goto(GAME);
   await expect(page.getByTestId("records-card")).toBeVisible();
-  await expect(page.getByTestId("play-count")).toHaveCount(0);
   await expect(page.getByTestId("rank-tab")).toBeVisible();
   await expect(page.getByTestId("rank-tab")).not.toContainText("預留");
+  await page.waitForTimeout(500);
+  await expect(page.getByTestId("play-count")).toHaveCount(0);
+
+  await page.unroute(PLAY_COUNT_API);
+  await mockPlayCount(page, 500, { error: "server" });
+  await page.reload();
+  await page.waitForTimeout(500);
+  await expect(page.getByTestId("play-count")).toHaveCount(0);
 });
 
-test("L3 開關打開時累計發車次數版位會出現", async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem("game-station:flags", "playCount");
-  });
+test("L3 累計遊玩次數達 100 次時顯示，文字不帶遊戲主題", async ({ page }) => {
+  await mockPlayCount(page, 200, { count: 12345 });
   await page.goto(GAME);
-  await expect(page.getByTestId("play-count")).toBeVisible();
+  await expect(page.getByTestId("play-count")).toHaveText("已被玩 12,345 次");
+  await page.unroute(PLAY_COUNT_API);
+  await mockPlayCount(page, 200, { count: 100 });
+  await page.reload();
+  await expect(page.getByTestId("play-count")).toHaveText("已被玩 100 次");
 });
 
 test("N1 各種寬度都沒有橫向捲軸", async ({ page }) => {

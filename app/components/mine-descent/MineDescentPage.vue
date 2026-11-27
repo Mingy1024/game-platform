@@ -54,7 +54,7 @@ useHead({ link: [{ rel: "preload", as: "image", href: HERO, fetchpriority: "high
               {{ category.name }}
             </NuxtLink>
           </li>
-          <li class="empty:hidden"><MinePlayCount /></li>
+          <li class="empty:hidden"><PlayCount slug="mine-descent" :locale="locale" /></li>
         </ul>
       </header>
 

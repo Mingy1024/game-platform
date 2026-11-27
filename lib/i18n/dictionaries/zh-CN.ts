@@ -16,7 +16,6 @@ export const zhCN: Dictionary = {
     language: "语言",
     languageSwitch: "切换语言，当前是{name}",
     close: "关闭",
-    reserved: "预留",
   },
   footer: {
     label: "网站信息",
@@ -39,6 +38,7 @@ export const zhCN: Dictionary = {
     label: "广告",
     mock: "模拟广告位",
   },
+  playCount: "已被玩 {count} 次",
   breadcrumb: {
     label: "面包屑",
     home: "首页",
@@ -75,7 +75,6 @@ export const zhCN: Dictionary = {
     tags: ["一局 5 站", "单指可玩"],
     chip: "一局 5 站 · 约 2 分钟",
     heroAlt: "橙色列车驶进站台",
-    playCount: "累计发车 {count} 次",
     modes: {
       daily: "今日挑战",
       dailyDesc: "{date} 限定，大家同一条路线",
@@ -340,7 +339,6 @@ export const zhCN: Dictionary = {
     tags: ["一局 4 段", "单指可玩"],
     chip: "一局 4 段 · 约 1 分钟",
     heroAlt: "背着背包的上班族在办公室走廊奔跑",
-    playCount: "累计下班 {count} 次",
     board: {
       title: "打卡钟",
       subtitle: "18:00 下班铃响 · 主管 18:01:30 点名",
@@ -611,7 +609,6 @@ export const zhCN: Dictionary = {
     tags: ["无尽模式", "单指可玩"],
     chip: "无尽模式 · 一局约 2 分钟",
     heroAlt: "戴着安全帽的地鼠矿工在崩塌的矿坑里往下钻",
-    playCount: "累计逃生 {count} 次",
     board: {
       title: "出发看板",
       subtitle: "头顶的崩塌线会一直往下压。撑得越深，分数越高。",

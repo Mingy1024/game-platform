@@ -33,6 +33,8 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       env: {
         FEATURE_LOGIN: "1",
+        // 累計遊玩次數的 API 與回報（tests/e2e/play-count.spec.ts）；次數未滿 100 不顯示，其他測試的畫面不受影響
+        FEATURE_PLAY_COUNT: "1",
         GOOGLE_OAUTH_TEST_BASE_URL: "http://localhost:3999",
         GOOGLE_CLIENT_ID: "e2e-client.apps.googleusercontent.com",
         GOOGLE_CLIENT_SECRET: "e2e-secret",

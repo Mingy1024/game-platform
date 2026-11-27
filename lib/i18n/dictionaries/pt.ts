@@ -17,7 +17,6 @@ export const pt: Dictionary = {
     language: "Idioma",
     languageSwitch: "Mudar idioma. Atual: {name}",
     close: "Fechar",
-    reserved: "Em breve",
   },
   footer: {
     label: "Informações do site",
@@ -40,6 +39,7 @@ export const pt: Dictionary = {
     label: "Anúncio",
     mock: "Espaço de anúncio (exemplo)",
   },
+  playCount: "Jogado {count} vezes",
   breadcrumb: {
     label: "Caminho",
     home: "Início",
@@ -76,7 +76,6 @@ export const pt: Dictionary = {
     tags: ["5 estações", "Um dedo só"],
     chip: "5 estações · cerca de 2 min",
     heroAlt: "Trem laranja chegando à plataforma",
-    playCount: "{count} partidas até agora",
     modes: {
       daily: "Desafio de hoje",
       dailyDesc: "Só em {date}. A mesma rota para todos.",
@@ -341,7 +340,6 @@ export const pt: Dictionary = {
     tags: ["4 trechos por partida", "Jogue com um dedo"],
     chip: "4 trechos · cerca de 1 minuto",
     heroAlt: "Um funcionário de mochila correndo pelo corredor do escritório",
-    playCount: "Ponto batido {count} vezes",
     board: {
       title: "Relógio de ponto",
       subtitle: "Sino às 18:00 · chamada do chefe às 18:01:30",
@@ -612,7 +610,6 @@ export const pt: Dictionary = {
     tags: ["Modo infinito", "Um dedo só"],
     chip: "Modo infinito · cerca de 2 min por partida",
     heroAlt: "Toupeira mineradora de capacete cavando para baixo numa mina que desaba",
-    playCount: "{count} fugas até agora",
     board: {
       title: "Quadro de partida",
       subtitle: "A linha de desabamento sobre a cabeça não para de descer. Quanto mais fundo aguentar, maior a pontuação.",

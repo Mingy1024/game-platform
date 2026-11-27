@@ -793,8 +793,13 @@ test.describe("補充：操作、特效與錯誤處理", () => {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Clock-Out Escape");
   });
 
-  test("L2 累計遊玩次數預設不顯示", async ({ page }) => {
+  test("L2 累計遊玩次數未滿 100 次不顯示", async ({ page }) => {
+    // 本機 D1 的次數會跨次累積，固定成 99
+    await page.route("**/api/play-count/office-escape", (route) =>
+      route.request().method() === "GET" ? route.fulfill({ json: { count: 99 } }) : route.continue(),
+    );
     await page.goto(GAME);
+    await page.waitForTimeout(500);
     await expect(page.getByTestId("play-count")).toHaveCount(0);
   });
 

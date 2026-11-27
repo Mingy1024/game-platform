@@ -16,7 +16,6 @@ export const en: Dictionary = {
     language: "Language",
     languageSwitch: "Change language. Current: {name}",
     close: "Close",
-    reserved: "Soon",
   },
   footer: {
     label: "Site information",
@@ -39,6 +38,7 @@ export const en: Dictionary = {
     label: "Advertisement",
     mock: "Sample ad slot",
   },
+  playCount: "Played {count} times",
   breadcrumb: {
     label: "Breadcrumb",
     home: "Home",
@@ -75,7 +75,6 @@ export const en: Dictionary = {
     tags: ["5 stations", "One finger"],
     chip: "5 stations · about 2 min",
     heroAlt: "An orange train pulling into a platform",
-    playCount: "{count} departures so far",
     modes: {
       daily: "Today's Challenge",
       dailyDesc: "{date} only. Same route for everyone.",
@@ -340,7 +339,6 @@ export const en: Dictionary = {
     tags: ["4 sections per run", "One-finger play"],
     chip: "4 sections · about 1 minute",
     heroAlt: "An office worker with a backpack running down an office corridor",
-    playCount: "Clocked out {count} times",
     board: {
       title: "Time clock",
       subtitle: "Bell at 6:00 PM · roll call at 6:01:30 PM",
@@ -611,7 +609,6 @@ export const en: Dictionary = {
     tags: ["Endless", "One finger"],
     chip: "Endless · about 2 min a run",
     heroAlt: "A mole miner in a hard hat digging down through a collapsing mine",
-    playCount: "{count} escapes so far",
     board: {
       title: "Departure board",
       subtitle: "The collapse line keeps pressing down. The deeper you last, the higher your score.",

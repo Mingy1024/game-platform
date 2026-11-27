@@ -64,10 +64,12 @@ export function noStore<T>(event: H3Event, body: T): T {
 export async function guarded<T>(
   event: H3Event,
   handler: () => Promise<T>,
-  { checkOrigin = true, leaderboard = false } = {},
+  { checkOrigin = true, leaderboard = false, playCount = false } = {},
 ): Promise<T | { error: string }> {
-  // 登入功能關閉時，帳號 API 一律當作不存在；排行榜和訪客的 API 另外要排行榜開關
-  if (!FLAGS.login || (leaderboard && !FLAGS.leaderboard)) return jsonError(event, 404, "not_found");
+  // 登入功能關閉時，帳號 API 一律當作不存在；排行榜和訪客的 API 另外要排行榜開關。
+  // 遊玩次數不看登入（沒有帳號關聯），只看自己的開關 FEATURE_PLAY_COUNT
+  const enabled = playCount ? FLAGS.playCount : FLAGS.login && (!leaderboard || FLAGS.leaderboard);
+  if (!enabled) return jsonError(event, 404, "not_found");
   if (checkOrigin && !sameOrigin(event)) return jsonError(event, 403, "origin");
   try {
     return await handler();

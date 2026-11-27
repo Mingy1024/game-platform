@@ -495,9 +495,28 @@ test.describe("多語系與版面", () => {
     }
   });
 
-  test("L2 累計遊玩次數預設不顯示", async ({ page }) => {
+  test("L2 累計遊玩次數未滿 100 次不顯示", async ({ page }) => {
+    // 本機 D1 的次數會跨次累積，固定成 99
+    await page.route("**/api/play-count/mine-descent", (route) =>
+      route.request().method() === "GET" ? route.fulfill({ json: { count: 99 } }) : route.continue(),
+    );
     await page.goto(GAME);
+    await page.waitForTimeout(500);
     await expect(page.getByTestId("play-count")).toHaveCount(0);
+  });
+
+  test("玩完一局只回報一次遊玩次數（docs/plans/play-count.md）", async ({ page }) => {
+    const posts: string[] = [];
+    page.on("request", (request) => {
+      if (request.method() === "POST" && request.url().includes("/api/play-count/")) posts.push(request.url());
+    });
+    await enter(page);
+    await playToFinal(page, 10, 5);
+    await expect.poll(() => posts.length, { timeout: 10_000 }).toBe(1);
+    expect(posts[0]).toContain("/api/play-count/mine-descent");
+    // 結算畫面停著不會再送
+    await page.waitForTimeout(1500);
+    expect(posts).toHaveLength(1);
   });
 });
 

@@ -1,6 +1,13 @@
 # 更新日誌
 
-依 git 紀錄整理，新的在前。所有項目皆已合併進 `main`、尚未部署到正式環境。
+依 git 紀錄整理，新的在前。所有項目皆已合併進 `main`。2026-11-28 起測試站部署在 `game-platform.mingyo2410.workers.dev`（`SITE_NOINDEX=1`），正式網域尚未上線。
+
+## 2026-11-28（上線準備、累計遊玩次數）
+- 新功能：累計遊玩次數。玩完一局回報一次（帶隨機代碼，同一局只加一次），介紹頁在次數達 100 時顯示「已被玩 N 次」；新增 `play_counts`、`play_count_batches`（migration 0007）與 `/api/play-count/<slug>`、限流 `PLAYS_LIMITER`。三個各遊戲的版位元件合併成共用的 `PlayCount`，文字改成不帶主題的同一句，拿掉「預留」標籤。開關 `FEATURE_PLAY_COUNT` 仍預設關閉。
+- 新增 `SITE_NOINDEX`：測試站全站 `noindex`、`/robots.txt` 禁止爬取。
+- 建立正式 D1 並套用 migration 0001–0006；部署 workers.dev 測試站並驗收；上線清單 `docs/plans/launch-checklist.md`。
+- 廣告決定正式上線先關閉（`ADS_MODE=off`）。
+- 下班逃離辦公室、礦坑大逃亡的實作計畫移到 `docs/plans/archive/`。
 
 ## 2026-11-23（礦坑大逃亡）
 - 修正：直式手機遊戲畫面底部的黑塊改成遊戲畫面（場地高度依螢幕長寬比往下延伸，8～13 m）；介紹卡的封面重新裁切，完整露出地鼠。

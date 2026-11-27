@@ -6,6 +6,7 @@ import type { Popup } from "./MineHud.vue";
 import { FIELD, FX } from "@/lib/games/mine-descent/config";
 import type { SaveOutcome } from "@/lib/games/mine-descent/records";
 import { recordRun } from "@/lib/games/mine-descent/records-store";
+import { reportPlay } from "@/lib/play-count/client";
 import { MineSession, type Snapshot } from "@/lib/games/mine-descent/session";
 import type { SimEvent } from "@/lib/games/mine-descent/sim";
 import { grazeRate, landGain, soundFor } from "@/lib/games/mine-descent/sound-mix";
@@ -183,6 +184,8 @@ function onFrame() {
   if (next.phase !== lastPhase) {
     if (next.phase === "over" && next.result) {
       outcome.value = recordRun({ depth: next.result.depth, total: next.result.total });
+      // 累計遊玩次數：這一局結束時送一次（phase 只在變成 over 的那一格進來）
+      reportPlay("mine-descent");
       sound.finale(outcome.value.newScore || outcome.value.newDepth, reduced.value);
     }
     lastPhase = next.phase;

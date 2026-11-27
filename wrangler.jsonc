@@ -44,6 +44,12 @@
       "name": "GUEST_LIMITER",
       "namespace_id": "1003",
       "simple": { "limit": 3, "period": 60 }
+    },
+    {
+      // 回報玩完一局（累計遊玩次數）：同一個 IP 1 分鐘內最多 10 次（docs/plans/play-count.md）
+      "name": "PLAYS_LIMITER",
+      "namespace_id": "1004",
+      "simple": { "limit": 10, "period": 60 }
     }
   ]
 }

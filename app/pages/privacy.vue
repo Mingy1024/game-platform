@@ -90,8 +90,15 @@ const link = "font-bold text-sign underline underline-offset-2";
         <p>未滿 13 歲請在家長同意後再登入。</p>
       </ProseSection>
     </template>
-    <ProseSection title="遊玩次數統計">
-      <p>熱門榜需要統計每款遊戲被玩了幾次。這項功能尚未啟用；啟用時，這裡會補上實際收集的欄位與保存期間。</p>
+    <!-- 累計遊玩次數的開關打開時才換成實際的說明（docs/plans/play-count.md） -->
+    <ProseSection v-if="FLAGS.playCount" title="遊玩次數統計">
+      <p>
+        每款遊戲的介紹頁會顯示「已被玩幾次」。你每玩完一局，瀏覽器會送出一個這一局專用的隨機代碼，本站把這款遊戲的總次數加一。資料庫只存每款遊戲的總次數，不存你的帳號、訪客代號、IP
+        或玩的時間；隨機代碼只用來避免同一局被算兩次，2 天後刪除。
+      </p>
+    </ProseSection>
+    <ProseSection v-else title="遊玩次數統計">
+      <p>統計每款遊戲被玩了幾次的功能尚未啟用；啟用時，這裡會補上實際收集的欄位與保存期間。</p>
     </ProseSection>
     <ProseSection title="廣告與第三方服務">
       <p>

@@ -16,7 +16,6 @@ export const ko: Dictionary = {
     language: "언어",
     languageSwitch: "언어 변경. 현재: {name}",
     close: "닫기",
-    reserved: "준비 중",
   },
   footer: {
     label: "사이트 정보",
@@ -39,6 +38,7 @@ export const ko: Dictionary = {
     label: "광고",
     mock: "광고 자리 (샘플)",
   },
+  playCount: "{count}회 플레이됨",
   breadcrumb: {
     label: "현재 위치",
     home: "홈",
@@ -75,7 +75,6 @@ export const ko: Dictionary = {
     tags: ["한 판 5개 역", "한 손가락으로"],
     chip: "한 판 5개 역 · 약 2분",
     heroAlt: "승강장으로 들어오는 주황색 열차",
-    playCount: "누적 출발 {count}회",
     modes: {
       daily: "오늘의 도전",
       dailyDesc: "{date} 한정. 모두 같은 노선",
@@ -340,7 +339,6 @@ export const ko: Dictionary = {
     tags: ["한 판 4구간", "손가락 하나로 가능"],
     chip: "한 판 4구간 · 약 1분",
     heroAlt: "배낭을 멘 직장인이 사무실 복도를 달리는 모습",
-    playCount: "누적 퇴근 {count}회",
     board: {
       title: "출퇴근 기록기",
       subtitle: "18:00 퇴근 종 · 상사 점호 18:01:30",
@@ -611,7 +609,6 @@ export const ko: Dictionary = {
     tags: ["무한 모드", "한 손 조작"],
     chip: "무한 모드 · 한 판 약 2분",
     heroAlt: "안전모를 쓴 두더지 광부가 무너지는 광산을 파고 내려가는 모습",
-    playCount: "누적 탈출 {count}회",
     board: {
       title: "출발 보드",
       subtitle: "머리 위 붕괴선은 계속 내려옵니다. 깊이 버틸수록 점수가 높아요.",

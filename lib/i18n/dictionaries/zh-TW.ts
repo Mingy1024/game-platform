@@ -18,7 +18,6 @@ export const zhTW = {
     language: "語言",
     languageSwitch: "切換語言，目前是{name}",
     close: "關閉",
-    reserved: "預留",
   },
   footer: {
     label: "網站資訊",
@@ -41,6 +40,8 @@ export const zhTW = {
     label: "廣告",
     mock: "模擬廣告版位",
   },
+  /** 遊戲介紹頁的累計遊玩次數（所有玩家加總），三款遊戲共用 */
+  playCount: "已被玩 {count} 次",
   breadcrumb: {
     label: "麵包屑",
     home: "首頁",
@@ -77,7 +78,6 @@ export const zhTW = {
     tags: ["一局 5 站", "單指可玩"],
     chip: "一局 5 站 · 約 2 分鐘",
     heroAlt: "橘色列車駛進月台",
-    playCount: "累計發車 {count} 次",
     modes: {
       daily: "今日挑戰",
       dailyDesc: "{date} 限定，大家同一條路線",
@@ -342,7 +342,6 @@ export const zhTW = {
     tags: ["一局 4 段", "單指可玩"],
     chip: "一局 4 段 · 約 1 分鐘",
     heroAlt: "背著背包的上班族在辦公室走廊奔跑",
-    playCount: "累計下班 {count} 次",
     board: {
       title: "打卡鐘",
       subtitle: "18:00 下班鈴響 · 主管 18:01:30 點名",
@@ -613,7 +612,6 @@ export const zhTW = {
     tags: ["無盡模式", "單指可玩"],
     chip: "無盡模式 · 一局約 2 分鐘",
     heroAlt: "戴著安全帽的地鼠礦工在崩塌的礦坑裡往下鑽",
-    playCount: "累計逃生 {count} 次",
     board: {
       title: "出發看板",
       subtitle: "頭頂的崩塌線會一直往下壓。撐得越深，分數越高。",

@@ -18,7 +18,7 @@
 | `ADS_MODE` | `mock` 顯示版位示意、`off` 關閉 | 選填 | `mock` | 建置時 |
 | `FEATURE_LOGIN` | Google 登入；`0` 關閉 | 選填 | 打開 | 建置時 |
 | `FEATURE_LEADERBOARD` | 全站排行（含訪客）；`0` 關閉，需要登入也打開才出現 | 選填 | 打開 | 建置時 |
-| `FEATURE_PLAY_COUNT` | 累計發車次數版位；`1` 才顯示 | 選填 | 關閉 | 建置時 |
+| `FEATURE_PLAY_COUNT` | 累計遊玩次數；`1` 才回報與顯示（次數達 100 才顯示） | 選填 | 關閉 | 建置時 |
 | `GOOGLE_CLIENT_ID`／`GOOGLE_CLIENT_SECRET` | Google OAuth 用戶端 | 登入功能必填 | 無 | 執行時（伺服器端）；正式站用 `wrangler secret put` |
 | `GOOGLE_OAUTH_TEST_BASE_URL` | 指到假的 Google（E2E 專用） | 僅測試 | 無 | 執行時；正式站絕對不要設 |
 | `DATABASE_URL` | `.env.example` 的殘留佔位，D1 不使用 | 不適用 | — | — |

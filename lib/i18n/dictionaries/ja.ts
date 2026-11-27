@@ -16,7 +16,6 @@ export const ja: Dictionary = {
     language: "言語",
     languageSwitch: "言語を切り替える（現在：{name}）",
     close: "閉じる",
-    reserved: "準備中",
   },
   footer: {
     label: "サイト情報",
@@ -39,6 +38,7 @@ export const ja: Dictionary = {
     label: "広告",
     mock: "広告枠（サンプル）",
   },
+  playCount: "{count} 回プレイされました",
   breadcrumb: {
     label: "パンくずリスト",
     home: "ホーム",
@@ -75,7 +75,6 @@ export const ja: Dictionary = {
     tags: ["1 回 5 駅", "指 1 本で遊べる"],
     chip: "1 回 5 駅 · 約 2 分",
     heroAlt: "ホームに入ってくるオレンジ色の列車",
-    playCount: "累計発車 {count} 回",
     modes: {
       daily: "今日のチャレンジ",
       dailyDesc: "{date} 限定。全員が同じ路線",
@@ -340,7 +339,6 @@ export const ja: Dictionary = {
     tags: ["1回4区間", "指1本で遊べる"],
     chip: "1回4区間 · 約1分",
     heroAlt: "リュックを背負った会社員がオフィスの廊下を走る様子",
-    playCount: "累計退勤 {count} 回",
     board: {
       title: "タイムカード",
       subtitle: "18:00 チャイム · 上司の点呼は 18:01:30",
@@ -611,7 +609,6 @@ export const ja: Dictionary = {
     tags: ["エンドレス", "片手で遊べる"],
     chip: "エンドレス · 1回 約2分",
     heroAlt: "ヘルメットをかぶったモグラの鉱夫が崩れる坑道を掘り進む",
-    playCount: "累計脱出 {count} 回",
     board: {
       title: "出発ボード",
       subtitle: "頭上の崩落ラインは下がり続けます。深くまで粘るほど高得点。",

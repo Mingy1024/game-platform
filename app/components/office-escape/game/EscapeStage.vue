@@ -4,6 +4,7 @@ import { GAME, type GameContext, type GameText } from "~/games/office-escape/sha
 import { OfficeSound } from "~/games/office-escape/sound";
 import type { Popup } from "./EscapeHud.vue";
 import { recordRun } from "@/lib/games/office-escape/records-store";
+import { reportPlay } from "@/lib/play-count/client";
 import type { SaveOutcome } from "@/lib/games/office-escape/records";
 import { randomSeed, taiwanDateKey } from "@/lib/games/office-escape/route";
 import { recordSeen } from "@/lib/games/office-escape/seen";
@@ -237,6 +238,8 @@ watch(
           const result = event.result;
           sound.play(endingSound(result.ending, result.hidden));
           outcome.value = recordRun({ dateKey: taiwanDateKey(), total: result.total });
+          // 累計遊玩次數：final 事件一局只有一次
+          reportPlay("office-escape");
           newLines.value = recordSeen(current.sim.seen);
           sound.finale(outcome.value.isNewRecord, reduced.value);
         }
