@@ -8,9 +8,9 @@
 ## 一、部署前檢查
 
 - [ ] **跑測試前先清掉部署用的環境變數**：`Remove-Item Env:SITE_URL, Env:SITE_NOINDEX -ErrorAction SilentlyContinue`（PowerShell 的 `$env:` 會留在同一個視窗，dev server 繼承後 og:image 會指到線上網站，成績圖測試會回 403；2026-11-28 發生過，清掉後重跑通過）
-- [ ] Windows Node 執行 `npm run typecheck`、`npm run lint`、`npm test`、`npm run test:e2e` 全過（WSL 缺 rolldown 原生套件，見記憶檔）。2026-11-28 e2e 只有上述 5 項失敗，清環境變數後重跑通過；typecheck、lint、單元測試還沒確認
-- [ ] `npm run build` 後確認輸出的頁面有 `noindex, nofollow`，且 `/robots.txt` 是 `Disallow: /`（`SITE_NOINDEX=1` 建置）
-- [ ] 確認 `prisma/schema.prisma` 與 `migrations/0001`–`0006` 一致（2026-11-24 已核對）
+- [x] Windows Node 執行 `npm run typecheck`、`npm run lint`、`npm test`、`npm run test:e2e` 全過（WSL 缺 rolldown 原生套件，見記憶檔）。2026-11-28 e2e 只有上述 5 項失敗，清環境變數後重跑通過；typecheck、lint、單元測試也都通過（2026-11-28）
+- [x] `npm run build` 後確認輸出的頁面有 `noindex, nofollow`，且 `/robots.txt` 是 `Disallow: /`（`SITE_NOINDEX=1` 建置；2026-11-28 線上實測 noindex 與 `Disallow: /` 正確）
+- [x] 確認 `prisma/schema.prisma` 與 `migrations/0001`–`0006` 一致（2026-11-24 已核對）
 - [ ] 確認 `GOOGLE_OAUTH_TEST_BASE_URL` 沒有設在正式環境
 
 ## 二、測試站（`*.workers.dev`）
