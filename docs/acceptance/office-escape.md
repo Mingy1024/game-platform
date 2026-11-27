@@ -250,7 +250,7 @@
 | P13 | 刪除帳號後，D1 裡這個玩家的 office_escape_bests 資料都刪掉 | E | 通過｜單元 P13（ON DELETE CASCADE） |
 | P14 | /me「最佳紀錄」加上下班逃離辦公室：今日、歷史最佳兩個數字，今天沒玩顯示「—」；整塊點了進介紹頁；不顯示累計次數 | E＋S | 通過｜E2E P6 P7 T13（/me 的 me-bests-office-escape） |
 | P15 | 精準停車的同步、/me 與既有 E2E 不受影響；訪客併進帳號（T13）時兩款遊戲的紀錄都併 | E | 通過｜單元 T13（兩款都併）；精準停車既有測試見 Q1 |
-| P16 | 同步邏輯寫程式前，先照 docs/dev/sync-checklist.md 填完第 1、2、7 節的表，放在 docs/plans/ 的計畫檔；每一列對應至少一個測試 | C | 通過｜docs/plans/office-escape.md（第 1、2、7 節的表） |
+| P16 | 同步邏輯寫程式前，先照 docs/dev/sync-checklist.md 填完第 1、2、7 節的表，放在 docs/plans/ 的計畫檔；每一列對應至少一個測試 | C | 通過｜docs/plans/archive/office-escape.md（第 1、2、7 節的表） |
 
 ## T. 排行榜與訪客
 

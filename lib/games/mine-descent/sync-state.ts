@@ -2,7 +2,7 @@ import { dedupeBests, isAcceptable, type BestEntry } from "./account-records";
 
 /**
  * 還沒存到帳號的最佳紀錄（待上傳）。伺服器只取高分，所以不需要批次代碼、不需要追蹤「送出去的是哪一批」：
- * 重送同樣的紀錄一定是冪等的（docs/plans/mine-descent.md 的檢查表）。
+ * 重送同樣的紀錄一定是冪等的（docs/plans/archive/mine-descent.md 的檢查表）。
  *
  * 共用狀態與寫入者（docs/dev/sync-checklist.md 第 1 節）：
  * - pending（PENDING_KEY）：只在同步的 Web Lock 裡「讀→改→寫」（收 inbox、送出成功後移除已確認的、登出清空）。

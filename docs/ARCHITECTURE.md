@@ -139,10 +139,10 @@ PK `(player_id, mode, date_key)`；`mode` 為 `daily`／`free`，`date_key` 為�
 PK `(player_id, sync_id)`、`perfect_delta`、`created_at`。**由觸發器 `precise_stop_sync_batches_apply`（migrations/0002 末尾）在新增列時，於同一個 SQL 動作內把 `perfect_delta` 加進 `precise_stop_stats`**，所以「批次已記錄」等於「次數已加過」。批次紀錄永久保留（前端可能隔很久才重送），刪帳號時一起刪。
 
 ### `office_escape_bests`
-PK `(player_id, mode, date_key)`；`mode` 為 `daily`／`all`，`date_key` 為台灣日期（`all` 為空字串）；`score`、`achieved_at`。索引 `(mode, date_key, score DESC)`。**沒有累計次數、也沒有同步批次表**：只取高分，所以重送一定冪等（見 `docs/plans/office-escape.md`）。訪客併進帳號時 `mergeGuest` 一起併這張表。
+PK `(player_id, mode, date_key)`；`mode` 為 `daily`／`all`，`date_key` 為台灣日期（`all` 為空字串）；`score`、`achieved_at`。索引 `(mode, date_key, score DESC)`。**沒有累計次數、也沒有同步批次表**：只取高分，所以重送一定冪等（見 `docs/plans/archive/office-escape.md`）。訪客併進帳號時 `mergeGuest` 一起併這張表。
 
 ### `mine_descent_bests`
-PK `(player_id, mode)`；`mode` 為 `score`（最高分）／`depth`（最深公尺）；`score`（那一種的數值）、`achieved_at`。索引 `(mode, score DESC)`。**沒有日期、累計次數與同步批次表**：只取高值，重送一定冪等（見 `docs/plans/mine-descent.md`）。訪客併進帳號時 `mergeGuest` 一起併這張表。
+PK `(player_id, mode)`；`mode` 為 `score`（最高分）／`depth`（最深公尺）；`score`（那一種的數值）、`achieved_at`。索引 `(mode, score DESC)`。**沒有日期、累計次數與同步批次表**：只取高值，重送一定冪等（見 `docs/plans/archive/mine-descent.md`）。訪客併進帳號時 `mergeGuest` 一起併這張表。
 
 ## 排程
 

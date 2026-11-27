@@ -4,7 +4,7 @@
 - 音效選片頁：https://claude.ai/artifact/HFibCnrzDpDiiP8xQFwiCT
 - 驗收標準：docs/acceptance/mine-descent.md
 - 開始日期：2026-11-23
-- 狀態：實作與驗收完成（2026-11-23），等使用者確認；確認後移到 docs/plans/archive/
+- 狀態：已完成並歸檔（2026-11-28，使用者確認）
 
 ## 做法
 

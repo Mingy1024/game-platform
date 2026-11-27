@@ -1,7 +1,7 @@
 # 礦坑大逃亡：驗收標準
 
 - 設計稿：https://claude.ai/artifact/9F4C7yS1DiKcNCZkxnZNeL（v3）
-- 實作計畫：docs/plans/mine-descent.md
+- 實作計畫：docs/plans/archive/mine-descent.md
 - 最近一次驗收：2026-11-23（共 111 條：通過 102、部分通過 7、無法驗證 2；見各列。末尾列的是需要人工確認的項目）
 
 ## 怎麼使用
