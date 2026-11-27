@@ -10,10 +10,10 @@
       "Bash(npx playwright test *)",
       "Bash(git status)",
       "Bash(git diff *)",
-      "Bash(git log *)"
+      "Bash(git log *)",
+      "Bash(git push *)"
     ],
     "ask": [
-      "Bash(git push *)",
       "Bash(npm run cf:deploy)",
       "Bash(npm run db:migrate:remote)",
       "Bash(npx wrangler deploy *)",
