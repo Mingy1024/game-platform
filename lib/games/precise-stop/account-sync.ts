@@ -106,8 +106,28 @@ const currentPlayer = () => {
   return me.status === "loggedIn" ? me.playerId : undefined;
 };
 
-/** 這一頁玩完過一局：還沒有身分的人從這之後才會送（建立訪客） */
-let playedHere = false;
+/**
+ * 這個分頁玩完過一局：還沒有身分的人從這之後才會送（建立訪客）。記在 sessionStorage：
+ * 重新整理後還在（離線完賽、重新整理、網路恢復時接得上），關掉分頁就沒了（docs/plans/sync-hardening.md #6）
+ */
+const PLAYED_KEY = "game-station:precise-stop:played-here";
+function readPlayedHere(): boolean {
+  try {
+    return typeof window !== "undefined" && window.sessionStorage.getItem(PLAYED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+let playedHere = readPlayedHere();
+function setPlayedHere(value: boolean) {
+  playedHere = value;
+  try {
+    if (value) window.sessionStorage.setItem(PLAYED_KEY, "1");
+    else window.sessionStorage.removeItem(PLAYED_KEY);
+  } catch {
+    // 不能儲存時只記在這一頁
+  }
+}
 
 /**
  * 現在要送給誰；不能送時是 null（登入狀態還不知道、排行榜關閉、歐盟地區沒同意）。
@@ -311,7 +331,7 @@ function kick() {
  */
 export function joinLeaderboard() {
   writeConsent("yes");
-  playedHere = true;
+  setPlayedHere(true);
   if (hasUnsyncedRecords()) void syncNow();
 }
 
@@ -341,14 +361,14 @@ export function startAccountSync() {
   // 登出、刪除帳號、刪除訪客：在登入狀態改變之前呼叫（me-store），清完才會有人用新的身分觸發同步
   subscribeSignOut(() => {
     epoch += 1;
-    playedHere = false;
+    setPlayedHere(false);
     markSignOut();
     clearLocalRecords();
   });
   // 這一頁玩完一局時。不聽其他分頁的寫入：同步過程本身也會寫入，會讓分頁之間互相觸發、一直重送
   // 登入狀態還不知道時 syncNow 會先讀一次（直接打開遊戲畫面的情況）
   subscribeRuns(() => {
-    playedHere = true;
+    setPlayedHere(true);
     if (hasUnsyncedRecords() && (loggedIn() || FLAGS.leaderboard)) void syncNow();
   });
   // 登入時沒併成功的訪客剛併進帳號：重新讀帳號紀錄
@@ -359,7 +379,9 @@ export function startAccountSync() {
   window.addEventListener("storage", (event) => {
     if (event.key !== SIGN_OUT_KEY) return;
     epoch += 1;
+    // forgetMemory 已經包含記憶體裡的 inbox；玩完過一局的記號也一起清（docs/plans/sync-hardening.md #8）
     forgetMemory();
+    setPlayedHere(false);
     expireSession();
     void refreshMe();
   });

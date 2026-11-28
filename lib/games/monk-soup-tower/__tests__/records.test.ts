@@ -10,12 +10,12 @@ import { dedupeBests, isAcceptable, overlay, parseAccountRecords, parseSyncBody,
 import { SCOPES, isScope, parseMine, parseTop, periodOf } from "../leaderboard";
 import { localBest } from "../leaderboard-client";
 import { gameMetadata, sharedBanner, sharedMetadata } from "../meta";
-import { applyRun, emptyRecords, loadRecords, mergeRecords, parseRecords, saveRun, SUMMIT_FLOOR, type Store } from "../records";
+import { applyRun, emptyRecords, loadRecords, mergeLocal, mergeRecords, parseRecords, saveRun, SUMMIT_FLOOR, type Store } from "../records";
 import { scoreOf } from "../scoring";
 import { shareable } from "../config";
 import { decodeRun, encodeRun } from "../share-code";
 import { AUDIO_READY, SOUND_FILES, sloshGain, soundFor, tickTimes } from "../sound-mix";
-import { addToInbox, loadPending, parsePending, prune, readInbox, removeConfirmed, removeInbox, resetPending, runEntries, savePending, withBests } from "../sync-state";
+import { addToInbox, dropForeignInflight, loadPending, markInflight, parsePending, prune, readInbox, removeConfirmed, removeInbox, resetPending, runEntries, savePending, withBests } from "../sync-state";
 
 const DAY = 86_400_000;
 const NOW = Date.UTC(2026, 10, 28, 4);
@@ -121,6 +121,34 @@ describe("P8 待上傳的狀態（冪等的取最佳）", () => {
     expect(removeConfirmed({ ...state, bests: sent }, sent).bests).toEqual([]);
     expect(prune({ guestSyncId: "guestsync01", bests: [{ ...sent[0]!, achievedAt: NOW + 3 * DAY }] }, NOW).bests).toEqual([]);
     expect(parsePending('{"guestSyncId":"x","bests":[]}')).toBeNull();
+  });
+});
+
+describe("同步強化（docs/plans/sync-hardening.md）", () => {
+  const e = (score: number, mode: "fixed" | "random" = "fixed", timeMs = 40_000) => ({ mode, score, timeMs, achievedAt: NOW });
+  it("#1 送給 A、沒確認的那一批：目標換成 B 時不再送；目標還是 A 時照常重送", () => {
+    const base = { guestSyncId: "guestsync01", bests: [e(800), e(300, "random")] };
+    const sent = markInflight(base, "A", base.bests);
+    expect(sent.inflight).toEqual({ owner: "A", bests: base.bests });
+    expect(dropForeignInflight(sent, "A")).toBe(sent);
+    const toB = dropForeignInflight(sent, "B");
+    expect(toB.bests).toEqual([]);
+    expect(toB.inflight).toBeNull();
+    // 送出期間又玩出更好的成績：那一筆不屬於送給 A 的那一批，照樣送給 B
+    const better = withBests(sent, [e(900)]);
+    expect(dropForeignInflight(better, "B").bests).toEqual([e(900)]);
+    // 存進瀏覽器、讀得回來
+    const store = memory();
+    savePending(store, sent);
+    expect(parsePending(store.getItem("game-station:monk-soup-tower:pending:v1"))?.inflight).toEqual(sent.inflight);
+    resetPending(store);
+    // 同一個 owner 之前沒確認的一起算
+    expect(markInflight(sent, "A", [e(850)]).inflight?.bests).toEqual([e(850), e(300, "random")]);
+  });
+  it("#7 結算時以磁碟與快取取最佳：另一個分頁剛存的紀錄不會被蓋掉", () => {
+    const disk = { ...emptyRecords(), random: { score: 500, timeMs: 1 }, floors: { fixed: null, random: 6 } };
+    const cache = { ...emptyRecords(), fixed: { score: 700, timeMs: 2 }, floors: { fixed: 3, random: 2 } };
+    expect(mergeLocal(disk, cache)).toEqual({ fixed: { score: 700, timeMs: 2 }, random: { score: 500, timeMs: 1 }, floors: { fixed: 3, random: 6 } });
   });
 });
 

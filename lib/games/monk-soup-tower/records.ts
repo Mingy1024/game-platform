@@ -124,5 +124,12 @@ export const mergeRecords = (account: AccountRecords, local: Records): Records =
   floors: { fixed: higher(null, local.floors.fixed), random: higher(null, local.floors.random) },
 });
 
+/** 兩份本機紀錄各取最佳（含最高到達層數）：結算時合併磁碟與這一頁的快取（docs/plans/sync-hardening.md #7） */
+export const mergeLocal = (a: Records, b: Records): Records => ({
+  fixed: bestOf(a.fixed, b.fixed),
+  random: bestOf(a.random, b.random),
+  floors: { fixed: higher(a.floors.fixed, b.floors.fixed), random: higher(a.floors.random, b.floors.random) },
+});
+
 export const isRecordMode = isMode;
 export const RECORDS_KEY = KEY;

@@ -2,7 +2,7 @@ import type { Player, PrismaClient } from "@/generated/prisma/client";
 import { Prisma } from "@/generated/prisma/client";
 import { randomId, randomInt } from "./crypto";
 import { randomNick } from "./nick/nick";
-import { createSession, validateSession } from "./session";
+import { createSession, peekSession, validateSession } from "./session";
 
 /**
  * 排行榜的訪客（精準停車設計稿第 14.2 節，T8–T16）。
@@ -19,6 +19,12 @@ export async function validateGuest(db: PrismaClient, token: string, now = new D
   const result = await validateSession(db, token, now);
   if (!result || result.player.kind !== "guest") return null;
   return result;
+}
+
+/** 唯讀版的 validateGuest（GET 用，不寫資料庫） */
+export async function peekGuest(db: PrismaClient, token: string, now = new Date()) {
+  const result = await peekSession(db, token, now);
+  return result && result.player.kind === "guest" ? result : null;
 }
 
 const isUnique = (error: unknown) => error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";

@@ -86,8 +86,10 @@ export function collectInbox(): PendingState | null {
 export const savePendingState = writePending;
 
 export function recordRun(run: { depth: number; total: number }): SaveOutcome {
-  // 以顯示用的紀錄（記憶體）為基礎：寫不進瀏覽器時，上一局的新紀錄還在記憶體，下一局不會被磁碟上比較舊的蓋掉
-  const outcome = saveRun(run, getStore(), readRecords());
+  // 以「磁碟上的紀錄」與「這一頁的快取」取高為基礎：
+  // - 寫不進瀏覽器時，上一局的新紀錄還在記憶體，下一局不會被磁碟上比較舊的蓋掉
+  // - 另一個分頁剛存的紀錄也在磁碟上，不會被這一頁比較舊的快取蓋掉（docs/plans/sync-hardening.md #7）
+  const outcome = saveRun(run, getStore(), mergeRecords(loadRecords(), readRecords()));
   cache = outcome.records;
   // 這一局獨立存成一個 inbox key，不改共用的 pending
   addToInbox(getStore() as Storage | null, runEntries(run, Date.now()), randomId());

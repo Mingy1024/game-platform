@@ -1,7 +1,7 @@
 import { randomId } from "@/lib/account/crypto";
 import { shareable } from "./config";
 import type { AccountRecords } from "./types";
-import { emptyRecords, getStore, loadRecords, mergeRecords, saveRun, writeRecords, type Records, type RunRecord, type SaveOutcome } from "./records";
+import { emptyRecords, getStore, loadRecords, mergeLocal, mergeRecords, saveRun, writeRecords, type Records, type RunRecord, type SaveOutcome } from "./records";
 import {
   addToInbox,
   forgetPendingMemory,
@@ -88,8 +88,10 @@ export function collectInbox(): PendingState | null {
 export const savePendingState = writePending;
 
 export function recordRun(run: RunRecord): SaveOutcome {
-  // 以顯示用的紀錄（記憶體）為基礎：寫不進瀏覽器時，上一局的新紀錄還在記憶體，下一局不會被磁碟上比較舊的蓋掉
-  const outcome = saveRun(run, getStore(), readRecords());
+  // 以「磁碟上的紀錄」與「這一頁的快取」取最佳為基礎：
+  // - 寫不進瀏覽器時，上一局的新紀錄還在記憶體，下一局不會被磁碟上比較舊的蓋掉
+  // - 另一個分頁剛存的紀錄也在磁碟上，不會被這一頁比較舊的快取蓋掉（docs/plans/sync-hardening.md #7）
+  const outcome = saveRun(run, getStore(), mergeLocal(loadRecords(), readRecords()));
   cache = outcome.records;
   // 送達塔頂才有分數：這一局獨立存成一個 inbox key，不改共用的 pending（P11：摔下去、湯灑光不送）
   // 時間超出伺服器接受的範圍（1 秒～30 分鐘）的不送：不然會讓同一批其他模式的成績一起被拒（Codex 審查第 1 輪）

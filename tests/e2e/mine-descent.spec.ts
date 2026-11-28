@@ -61,7 +61,7 @@ async function enter(page: Page, path = GAME) {
 }
 
 /**
- * 自動駕駛玩到一定深度，再把體力壓到 1 格、關掉自動駕駛讓它被崩塌線撞死；停在結算。
+ * 自動駕駛玩到一定深度（或在那之前就倒下），再把體力壓到 1 格、關掉自動駕駛讓它被崩塌線撞死；停在結算。
  * （自動駕駛撐得很久，不這樣做每個測試都要等好幾分鐘）
  */
 async function playToFinal(page: Page, scale = 10, depth = 40) {
@@ -71,7 +71,16 @@ async function playToFinal(page: Page, scale = 10, depth = 40) {
     session.autopilot = true;
     session.timeScale = s;
   }, scale);
-  await expect.poll(async () => (await snap(page)).depth, { timeout: 120_000, intervals: [200] }).toBeGreaterThanOrEqual(depth);
+  // 體力扣了不會回來（2026-11-28 移除回血）：自動駕駛有時撐不到指定深度就倒下，這時直接等結算
+  await expect
+    .poll(
+      async () => {
+        const s = await snap(page);
+        return s.depth >= depth || s.phase === "dying" || s.phase === "over";
+      },
+      { timeout: 120_000, intervals: [200] },
+    )
+    .toBe(true);
   await page.evaluate(() => {
     const session = window.__mineDescent.session;
     session.autopilot = false;

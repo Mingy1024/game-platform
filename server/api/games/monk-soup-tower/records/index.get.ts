@@ -11,9 +11,10 @@ export default defineEventHandler((event) =>
     event,
     async () => {
       const db = useDb(event);
-      const google = await googlePlayer(event, db);
-      const player = google ?? (FLAGS.leaderboard ? await guestPlayer(event, db) : null);
-      if (!player) return jsonError(event, 401, "unauthorized");
+      // 唯讀的身分查詢：GET 不續期、不動 cookie（docs/plans/sync-hardening.md #4）
+      const identity = await readIdentity(event, db, FLAGS.leaderboard);
+      if (identity.kind === "none") return jsonError(event, 401, "unauthorized");
+      const player = identity.player;
       const expected = getQuery(event).player;
       if (typeof expected === "string" && expected !== player.id) return jsonError(event, 409, "account_mismatch");
       const records = await readMonkSoupTowerRecords(db, player.id);

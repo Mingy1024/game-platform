@@ -49,6 +49,17 @@ export async function validateSession(db: PrismaClient, token: string, now = new
   return { player: session.player, sessionId: id, renewedExpiresAt: renewed };
 }
 
+/**
+ * 唯讀版的 validateSession：只查有效的 session，不刪過期的、不續期、不更新最後使用時間。
+ * 給 GET 端點用（GET 不能有寫入副作用，docs/dev/sync-checklist.md 第 1 節）。
+ */
+export async function peekSession(db: PrismaClient, token: string, now = new Date()) {
+  if (!token || token.length > 100) return null;
+  const session = await db.session.findUnique({ where: { id: await sha256Hex(token) }, include: { player: true } });
+  if (!session || session.expiresAt <= now) return null;
+  return { player: session.player };
+}
+
 export async function deleteSession(db: PrismaClient, token: string) {
   if (!token) return;
   await db.session.deleteMany({ where: { id: await sha256Hex(token) } });

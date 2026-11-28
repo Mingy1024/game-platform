@@ -213,12 +213,30 @@ test("N2 N3 介紹頁可以點的東西至少 44 px，按鈕和連結都有名�
       if (!name) unnamed.push(element.outerHTML.slice(0, 120));
       // 段落裡的文字連結不算（WCAG 2.5.8 的行內例外）
       const inline = getComputedStyle(element).display === "inline";
-      if (!inline && (box.width < 44 || box.height < 44)) {
-        small.push(`${name} ${Math.round(box.width)}×${Math.round(box.height)}`);
+      // 點擊範圍包含不佔版面的透明擴大區（::before，例如麵包屑只有一個字的「홈」）
+      const hit = getComputedStyle(element, "::before");
+      const absolute = hit.position === "absolute" && hit.content !== "none";
+      const width = Math.max(box.width, absolute ? parseFloat(hit.width) || 0 : 0);
+      const height = Math.max(box.height, absolute ? parseFloat(hit.height) || 0 : 0);
+      if (!inline && (width < 44 || height < 44)) {
+        small.push(`${name} ${Math.round(width)}×${Math.round(height)}`);
       }
     }
     return { small, unnamed };
   });
   expect(report.unnamed).toEqual([]);
   expect(report.small).toEqual([]);
+});
+
+test("韓文：麵包屑「홈」和「/」之間沒有多餘空白、點擊範圍仍是 44 px；長句只在空格處斷行", async ({ page }) => {
+  await page.goto(`/ko${GAME}`);
+  const crumb = await page.evaluate(() => {
+    const link = document.querySelector("nav ol li a") as HTMLElement;
+    const slash = link.parentElement!.querySelector("span[aria-hidden]") as HTMLElement;
+    const hit = getComputedStyle(link, "::before");
+    return { gap: slash.getBoundingClientRect().left - link.getBoundingClientRect().right, hit: parseFloat(hit.width) };
+  });
+  expect(crumb.gap).toBeLessThan(10);
+  expect(crumb.hit).toBeGreaterThanOrEqual(44);
+  expect(await page.locator("main p").first().evaluate((el) => getComputedStyle(el).wordBreak)).toBe("keep-all");
 });

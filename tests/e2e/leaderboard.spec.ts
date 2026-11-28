@@ -220,6 +220,27 @@ test("T13 T24 登入時沒併成功：GET /api/me 不改資料，前端改用同
   await other.close();
 });
 
+test("sync-hardening #3 帶著 Google 與訪客 cookie 送出不合格的同步（400、409）：訪客不會先被併進帳號", async ({ page, context, browser }) => {
+  const other = await newBrowser(browser);
+  const guestId = (await postAsNew(other, [run(4200)], 1)).body!.guest!.playerId;
+  const cookie = (await guestCookie(other))!;
+  await login(page, context, "/me");
+  const account = ((await (await page.request.get("/api/me")).json()) as { playerId: string }).playerId;
+  await context.addCookies([{ ...cookie }]);
+  const post = (data: unknown) => page.request.post(`${RECORDS}/sync`, { headers: { Origin: ORIGIN }, data });
+  // 格式不對：400，訪客還在、cookie 還在
+  expect((await post({ syncId: `id-${unique()}`, playerId: account, bests: "bad", perfectDelta: 0 })).status()).toBe(400);
+  // playerId 不是目前的帳號：409，訪客還在
+  expect((await post({ syncId: `id-${unique()}`, playerId: "someone-else", bests: [], perfectDelta: 0 })).status()).toBe(409);
+  expect((await other.request.get(`${LB}/me?scope=daily&player=${guestId}`)).status()).toBe(200);
+  expect(await guestCookie(context)).toBeDefined();
+  // 合格的請求才併
+  expect((await post({ syncId: `id-${unique()}`, playerId: account, bests: [], perfectDelta: 0 })).status()).toBe(200);
+  expect(await guestCookie(context)).toBeUndefined();
+  expect((await other.request.get(`${LB}/me?scope=daily&player=${guestId}`)).status()).toBe(401);
+  await other.close();
+});
+
 test.describe("排行榜畫面", () => {
   test("T8 T12 T17 沒登入玩完一局：自動建立訪客上榜；榜上、你的名次、/me 都有訪客標籤；不能改暱稱", async ({ page, context }) => {
     await enterGame(page);

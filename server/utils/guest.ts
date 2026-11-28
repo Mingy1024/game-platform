@@ -1,10 +1,10 @@
 import { deleteCookie, getCookie, getRequestHeader, setCookie, type H3Event } from "h3";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { consentRequiredFor } from "@/lib/account/consent-region";
-import { GUEST_COOKIE, validateGuest } from "@/lib/account/guest";
+import { GUEST_COOKIE, peekGuest, validateGuest } from "@/lib/account/guest";
 import { mergeGuest } from "@/lib/account/guest-merge";
 import type { Player } from "@/lib/account/player";
-import { SESSION_COOKIE, validateSession } from "@/lib/account/session";
+import { SESSION_COOKIE, peekSession, validateSession } from "@/lib/account/session";
 
 /**
  * 伺服器端的身分：Google 登入（gs_session）、訪客（gs_guest）或都沒有（精準停車設計稿第 14.2 節）。
@@ -69,6 +69,20 @@ export async function resolveIdentity(event: H3Event, db: PrismaClient): Promise
   if (google) return { kind: "google", player: google };
   const guest = await guestPlayer(event, db);
   return guest ? { kind: "guest", player: guest } : { kind: "none" };
+}
+
+/**
+ * 唯讀的身分查詢：給紀錄 GET、名次 GET 用。不續期、不更新最後使用時間、不刪過期的 session、不動 cookie
+ * （GET 不能有寫入副作用；續期只在 /api/me 與 POST 端點做）。無效的 cookie 當作沒有身分。
+ */
+export async function readIdentity(event: H3Event, db: PrismaClient, withGuest: boolean): Promise<Identity> {
+  const token = getCookie(event, SESSION_COOKIE);
+  const google = token ? await peekSession(db, token) : null;
+  if (google && google.player.kind === "google") return { kind: "google", player: google.player };
+  if (!withGuest) return { kind: "none" };
+  const guestToken = getCookie(event, GUEST_COOKIE);
+  const guest = guestToken ? await peekGuest(db, guestToken) : null;
+  return guest ? { kind: "guest", player: guest.player } : { kind: "none" };
 }
 
 /**

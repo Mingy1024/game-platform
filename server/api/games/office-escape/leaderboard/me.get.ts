@@ -12,7 +12,8 @@ export default defineEventHandler((event) =>
     async () => {
       const { scope, player } = getQuery(event);
       if (!isScope(scope)) return jsonError(event, 400, "bad_request");
-      const identity = await resolveIdentity(event, useDb(event));
+      // 唯讀的身分查詢：GET 不續期、不動 cookie（docs/plans/sync-hardening.md #4）
+      const identity = await readIdentity(event, useDb(event), true);
       if (identity.kind === "none") return jsonError(event, 401, "unauthorized");
       if (typeof player === "string" && player !== identity.player.id) return jsonError(event, 409, "account_mismatch");
       return noStore(event, await readOfficeMine(useD1(event), scope, identity.player.id, Date.now()));

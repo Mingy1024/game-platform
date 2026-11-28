@@ -25,7 +25,7 @@ import {
   savePendingState,
   subscribeRuns,
 } from "./records-store";
-import { forgetPendingMemory, removeConfirmed } from "./sync-state";
+import { dropForeignInflight, forgetMemoryInbox, forgetPendingMemory, markInflight, removeConfirmed } from "./sync-state";
 
 /**
  * 和尚端湯上塔的紀錄跟著帳號走、訪客也能上榜。只在瀏覽器端執行，由 app/plugins/account-sync.client.ts 啟動。
@@ -80,8 +80,28 @@ const currentPlayer = () => {
   return me.status === "loggedIn" ? me.playerId : undefined;
 };
 
-/** 這一頁玩完過一局：還沒有身分的人從這之後才會送（建立訪客） */
-let playedHere = false;
+/**
+ * 這個分頁玩完過一局：還沒有身分的人從這之後才會送（建立訪客）。記在 sessionStorage：
+ * 重新整理後還在（離線完賽、重新整理、網路恢復時接得上），關掉分頁就沒了（docs/plans/sync-hardening.md #6）
+ */
+const PLAYED_KEY = "game-station:monk-soup-tower:played-here";
+function readPlayedHere(): boolean {
+  try {
+    return typeof window !== "undefined" && window.sessionStorage.getItem(PLAYED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+let playedHere = readPlayedHere();
+function setPlayedHere(value: boolean) {
+  playedHere = value;
+  try {
+    if (value) window.sessionStorage.setItem(PLAYED_KEY, "1");
+    else window.sessionStorage.removeItem(PLAYED_KEY);
+  } catch {
+    // 不能儲存時只記在這一頁
+  }
+}
 
 type Target = { kind: "google" | "guest" | "new"; owner?: string; consent?: true };
 
@@ -125,12 +145,27 @@ async function round(): Promise<{ result: SyncResult; more: boolean }> {
   const collected = collectInbox();
   // 寫不進瀏覽器：這一輪不送（records-store.ts 的 collectInbox）
   if (!collected) return { result: "failed", more: false };
-  const sending = collected.bests;
-  // 要送的 guestSyncId 一定要先存進瀏覽器才送：不然回應掉了、重送時會換一個代碼，建立出第二個訪客（T8）
-  if (sending.length > 0 && target.kind === "new" && !savePendingState(collected)) {
+  // 目標換了人：之前送給別人、還沒確認的那一批不再送（可能已經進了那個人的帳號，docs/plans/sync-hardening.md #1）
+  let state = owner ? dropForeignInflight(collected, owner) : collected;
+  if (state !== collected && !savePendingState(state)) {
     forgetPendingMemory();
     return { result: "failed", more: false };
   }
+  const sending = state.bests;
+  // 要送的 guestSyncId 一定要先存進瀏覽器才送：不然回應掉了、重送時會換一個代碼，建立出第二個訪客（T8）
+  if (sending.length > 0 && target.kind === "new" && !savePendingState(state)) {
+    forgetPendingMemory();
+    return { result: "failed", more: false };
+  }
+  // 送給既有身分前，先記下「這一批送給 owner」；伺服器明確沒寫入時（400、401、403、409）恢復原本的記錄
+  const previousInflight = state.inflight ?? null;
+  if (sending.length > 0 && owner) {
+    state = markInflight(state, owner, sending);
+    savePendingState(state);
+  }
+  const notWritten = () => {
+    if (sending.length > 0 && owner) savePendingState({ ...loadStoredPending(), inflight: previousInflight });
+  };
   // 訪客和還沒有身分的人：沒有要送的就不讀（只有 Google 帳號需要換裝置時拿回紀錄）
   if (sending.length === 0 && target.kind !== "google") return { result: "ok", more: false };
 
@@ -144,7 +179,7 @@ async function round(): Promise<{ result: SyncResult; more: boolean }> {
             credentials: "same-origin",
             // 附上這一頁以為登入的帳號：另一個分頁換了帳號時，伺服器回 409、什麼都不寫
             body: JSON.stringify({
-              syncId: collected.guestSyncId,
+              syncId: state.guestSyncId,
               playerId: owner ?? null,
               bests: sending,
               ...(target.consent ? { consent: true } : {}),
@@ -158,12 +193,14 @@ async function round(): Promise<{ result: SyncResult; more: boolean }> {
   if (stale()) return { result: "skipped", more: false };
   if (!response) return { result: "failed", more: false };
   if (response.status === 401) {
+    notWritten();
     // 伺服器在寫入前就拒絕了，pending 原封不動：Google 的 session 過期當作已登出、本機紀錄留著（P3）；訪客 cookie 無效當作沒有身分
     if (target.kind === "google") expireSession();
     else expireGuest();
     return { result: "unauthorized", more: false };
   }
   if (sending.length > 0 && response.status === 403) {
+    notWritten();
     const error = ((await response.json().catch(() => null)) as { error?: string } | null)?.error;
     if (stale()) return { result: "skipped", more: false };
     if (error === "consent_required") {
@@ -173,6 +210,7 @@ async function round(): Promise<{ result: SyncResult; more: boolean }> {
     return { result: "failed", more: false };
   }
   if (response.status === 409) {
+    notWritten();
     // 另一個分頁換了帳號，伺服器什麼都沒寫：重新讀取登入狀態，pending 留著送給新的身分
     epoch += 1;
     void refreshMe();
@@ -180,7 +218,7 @@ async function round(): Promise<{ result: SyncResult; more: boolean }> {
   }
   if (sending.length > 0 && response.status === 400) {
     // 格式或分數範圍不對（正常的前端不會送出）：丟掉這一批，不再重送壞資料
-    savePendingState(removeConfirmed(loadStoredPending(), sending));
+    savePendingState({ ...removeConfirmed(loadStoredPending(), sending), inflight: previousInflight });
     return { result: "failed", more: false };
   }
   const json = response.ok ? ((await response.json().catch(() => null)) as { guest?: GuestInfo } | null) : null;
@@ -195,7 +233,7 @@ async function round(): Promise<{ result: SyncResult; more: boolean }> {
   if (stale()) return { result: "skipped", more: false };
   if (!account) return { result: "failed", more: false };
   // 已確認：只移除分數不高於送出那筆的（送出期間新增的更高分留著）
-  if (sending.length > 0) savePendingState(removeConfirmed(loadStoredPending(), sending));
+  if (sending.length > 0) savePendingState({ ...removeConfirmed(loadStoredPending(), sending), inflight: null });
   // 伺服器建立（或找回）的訪客：記下來，之後的批次送給它
   if (guest) adoptGuest(guest);
   // 顯示用的狀態：帳號紀錄、還沒上傳的、本機（送出期間又玩完的局）各取高分
@@ -259,7 +297,7 @@ function kick() {
 /** 歐盟地區按「上榜」：記下選擇，馬上把成績送出去（建立訪客） */
 export function joinLeaderboard() {
   writeConsent("yes");
-  playedHere = true;
+  setPlayedHere(true);
   if (hasUnsyncedRecords()) void syncNow();
 }
 
@@ -290,13 +328,13 @@ export function startAccountSync() {
   // 登出、刪除帳號、刪除訪客：在登入狀態改變之前呼叫（me-store），清完才會有人用新的身分觸發同步
   subscribeSignOut(() => {
     epoch += 1;
-    playedHere = false;
+    setPlayedHere(false);
     markSignOut();
     clearLocalRecords();
   });
   // 這一頁玩完一局時。不聽其他分頁的寫入：同步過程本身也會寫入，會讓分頁之間互相觸發、一直重送
   subscribeRuns(() => {
-    playedHere = true;
+    setPlayedHere(true);
     if (hasUnsyncedRecords() && (loggedIn() || FLAGS.leaderboard)) void syncNow();
   });
   // 登入時沒併成功的訪客剛併進帳號：重新讀帳號紀錄
@@ -307,6 +345,9 @@ export function startAccountSync() {
     if (event.key !== SIGN_OUT_KEY) return;
     epoch += 1;
     forgetPendingMemory();
+    // 這一頁記憶體裡的候選、玩完過一局的記號也一起清（docs/plans/sync-hardening.md #8）
+    forgetMemoryInbox();
+    setPlayedHere(false);
     expireSession();
     void refreshMe();
   });

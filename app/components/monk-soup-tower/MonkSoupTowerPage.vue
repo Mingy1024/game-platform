@@ -34,14 +34,13 @@ const bands = [
 
 // 主視覺在第一屏：優先下載
 useHead({ link: [{ rel: "preload", as: "image", href: HERO, fetchpriority: "high" }] });
-/** 韓文只在空格處斷行（不然會斷在單字中間）；日文標題沒有空格又長，手機縮一級字才放得進一行（翻譯版面檢查） */
-const keepAll = locale === "ko" ? "[word-break:keep-all]" : "";
+/** 日文標題沒有空格又長，手機縮一級字才放得進一行（韓文斷行由全站的 :lang(ko) 處理） */
 const longTitle = !text.title.includes(" ") && [...text.title].length > 10;
 </script>
 
 <template>
   <MonkSoupTowerExperience :locale="locale">
-    <Container :class="`py-5 sm:py-8 ${keepAll}`">
+    <Container class="py-5 sm:py-8">
       <Breadcrumb
         :label="dict.breadcrumb.label"
         :items="[

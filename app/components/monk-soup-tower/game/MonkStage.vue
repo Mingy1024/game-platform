@@ -444,7 +444,7 @@ const keyHints = computed(() => [
 <template>
   <!-- 掛到 body 底下，蓋住整個網站（頁首、說明、廣告都由 CSS 隱藏） -->
   <Teleport to="body">
-    <div data-game-stage data-testid="game-stage" :data-phase="phase" :data-mode="mode" :data-reduced-motion="reduced" :class="`mst-stage fixed inset-0 z-50 flex items-center justify-center overflow-hidden ${locale === 'ko' ? '[word-break:keep-all]' : ''}`">
+    <div data-game-stage data-testid="game-stage" :data-phase="phase" :data-mode="mode" :data-reduced-motion="reduced" class="mst-stage fixed inset-0 z-50 flex items-center justify-center overflow-hidden">
       <div class="mst-backdrop" aria-hidden="true" />
       <div
         ref="frame"

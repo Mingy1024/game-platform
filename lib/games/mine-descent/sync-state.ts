@@ -13,7 +13,12 @@ import { dedupeBests, isAcceptable, type BestEntry } from "./account-records";
 export const PENDING_KEY = "game-station:mine-descent:pending:v1";
 export const INBOX_PREFIX = "game-station:mine-descent:run:";
 
-export type PendingState = { guestSyncId: string; bests: BestEntry[] };
+/**
+ * 送出中、還沒確認的那一批：送給誰（owner）、送了哪些。送出前寫入；成功或伺服器明確沒寫時恢復；
+ * 下一輪的目標換了人，這一批就不再送（可能已經進了 owner 的帳號，docs/plans/sync-hardening.md #1）。
+ */
+export type Inflight = { owner: string; bests: BestEntry[] };
+export type PendingState = { guestSyncId: string; bests: BestEntry[]; inflight?: Inflight | null };
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem" | "key" | "length">;
 
 const isEntry = (value: unknown): value is BestEntry => {
@@ -37,7 +42,12 @@ export function parsePending(raw: string | null): PendingState | null {
   try {
     const data = JSON.parse(raw) as Partial<PendingState>;
     if (typeof data.guestSyncId !== "string" || !/^[A-Za-z0-9_-]{8,64}$/.test(data.guestSyncId) || !Array.isArray(data.bests)) return null;
-    return { guestSyncId: data.guestSyncId, bests: dedupeBests(data.bests.filter(isEntry)) };
+    const inflight =
+      data.inflight && typeof data.inflight.owner === "string" && Array.isArray(data.inflight.bests)
+        ? { owner: data.inflight.owner, bests: dedupeBests(data.inflight.bests.filter(isEntry)) }
+        : null;
+    // 沒有送出中的批次時不帶 inflight（和這個欄位加上之前存的資料形狀相同）
+    return { guestSyncId: data.guestSyncId, bests: dedupeBests(data.bests.filter(isEntry)), ...(inflight ? { inflight } : {}) };
   } catch {
     return null;
   }
@@ -82,6 +92,19 @@ export function resetPending(store: Store | null) {
   }
 }
 
+/** 送出前：記下這一批送給 owner（同一個 owner 之前沒確認的一起算） */
+export function markInflight(state: PendingState, owner: string, sending: BestEntry[]): PendingState {
+  const previous = state.inflight?.owner === owner ? state.inflight.bests : [];
+  return { ...state, inflight: { owner, bests: dedupeBests([...previous, ...sending]) } };
+}
+
+/** 目標換了人：之前送給別人、沒確認的那一批不再送（從 pending 移除不比它好的項目） */
+export function dropForeignInflight(state: PendingState, owner: string): PendingState {
+  const inflight = state.inflight;
+  if (!inflight || inflight.owner === owner) return state;
+  return { ...removeConfirmed(state, inflight.bests), inflight: null };
+}
+
 export const forgetPendingMemory = () => {
   memory = null;
 };
@@ -117,6 +140,11 @@ export function runEntries(run: { depth: number; total: number }, now: number): 
  */
 let memoryInbox: BestEntry[] = [];
 const MEMORY_KEY = "memory:";
+
+/** 其他分頁登出時，這一頁記憶體裡的候選也清掉（docs/plans/sync-hardening.md #8） */
+export const forgetMemoryInbox = () => {
+  memoryInbox = [];
+};
 
 export function addToInbox(store: Store | null, entries: BestEntry[], id: string) {
   try {

@@ -19,7 +19,6 @@ export default defineEventHandler((event) =>
   guarded(event, async () => {
     const db = useDb(event);
     const google = await googlePlayer(event, db);
-    if (google && FLAGS.leaderboard && !(await absorbGuest(event, db, google.id))) return jsonError(event, 503, "unavailable");
     const guest = !google && FLAGS.leaderboard ? await guestPlayer(event, db) : null;
     const known = google ?? guest;
 
@@ -43,6 +42,9 @@ export default defineEventHandler((event) =>
     let target: Player;
     if (google) {
       if (body.playerId !== google.id) return jsonError(event, 409, "account_mismatch");
+      // 限流、格式、身分比對都通過了才把訪客併進帳號，併完才寫這一批（docs/plans/sync-hardening.md #3）。
+      // 併失敗回 503、這一批不寫：不然之後再併時會重複累加
+      if (FLAGS.leaderboard && !(await absorbGuest(event, db, google.id))) return jsonError(event, 503, "unavailable");
       target = google;
     } else if (guest) {
       if (body.playerId !== null && body.playerId !== guest.id) return jsonError(event, 409, "account_mismatch");
