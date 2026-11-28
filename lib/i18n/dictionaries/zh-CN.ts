@@ -654,7 +654,7 @@ export const zhCN: Dictionary = {
       steps: [
         { title: "左右移动", body: "手机按住画面左半边或右半边；电脑用 ← → 或 A／D" },
         { title: "挑岩板往下", body: "走出岩板边缘就会落下。避开尖刺和碎裂的岩板；矿轨推车会推你，木支架会把你弹起来" },
-        { title: "别被压扁", body: "头顶的崩塌线一直往下压，碰到扣 1 格体力；体力 6 格，站上一般岩板每秒回 1 格" },
+        { title: "别被压扁", body: "头顶的崩塌线一直往下压，碰到扣 1 格体力；体力 6 格，扣了不会回来" },
       ],
       keys: {
         touch: "手机",
@@ -702,7 +702,6 @@ export const zhCN: Dictionary = {
       hurt: "-1",
       crystal: "+{points}",
       bounce: "弹！",
-      heal: "+1",
       warning: "崩塌逼近！",
     },
     ready: {

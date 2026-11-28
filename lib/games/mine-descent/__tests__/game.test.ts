@@ -55,20 +55,14 @@ describe("B2 重力與落地", () => {
   });
 });
 
-describe("B3 一般岩板回血", () => {
-  it("扣到 4 格後站在一般岩板上每 1 秒回 1 格、最多 6 格", () => {
-    const { sim } = setup("rock", 3, 3, 7.9);
-    sim.player.hp = 4;
-    run(sim, 1.02);
-    expect(sim.player.hp).toBe(5);
-    run(sim, 3);
-    expect(sim.player.hp).toBe(HEALTH.max);
-  });
-  it("其他岩板上不回血", () => {
-    const { sim } = setup("cart", 3, 3, 6);
-    sim.player.hp = 4;
-    run(sim, 2);
-    expect(sim.player.hp).toBe(4);
+describe("B3 沒有回血", () => {
+  it("扣到 4 格後站在一般岩板或推車上都不會回血", () => {
+    for (const kind of ["rock", "cart"] as const) {
+      const { sim } = setup(kind, 3, 3, kind === "rock" ? 7.9 : 6);
+      sim.player.hp = 4;
+      run(sim, 3);
+      expect(sim.player.hp).toBe(4);
+    }
   });
 });
 

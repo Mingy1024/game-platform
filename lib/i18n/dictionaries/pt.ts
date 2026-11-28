@@ -655,7 +655,7 @@ export const pt: Dictionary = {
       steps: [
         { title: "Mova para os lados", body: "No celular, segure a metade esquerda ou direita da tela. No computador, use ← → ou A／D" },
         { title: "Escolha uma laje e desça", body: "Saia da borda da laje para cair. Evite pontas e rochas rachadas; o vagonete empurra e a escora de madeira faz você quicar" },
-        { title: "Não seja esmagada", body: "A linha de desabamento desce sem parar e tira 1 de vida ao encostar. São 6 de vida, e na rocha comum recupera 1 por segundo" },
+        { title: "Não seja esmagada", body: "A linha de desabamento desce sem parar e tira 1 de vida ao encostar. São 6 de vida, e a vida perdida não volta" },
       ],
       keys: {
         touch: "Celular",
@@ -703,7 +703,6 @@ export const pt: Dictionary = {
       hurt: "-1",
       crystal: "+{points}",
       bounce: "Boing!",
-      heal: "+1",
       warning: "O desabamento se aproxima!",
     },
     ready: {

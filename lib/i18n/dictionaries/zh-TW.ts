@@ -657,7 +657,7 @@ export const zhTW = {
       steps: [
         { title: "左右移動", body: "手機按住畫面左半邊或右半邊；電腦用 ← → 或 A／D" },
         { title: "挑岩板往下", body: "走出岩板邊緣就會落下。避開尖刺和碎裂的岩板；礦軌推車會推你，木支架會把你彈起來" },
-        { title: "別被壓扁", body: "頭頂的崩塌線一直往下壓，碰到扣 1 格體力；體力 6 格，站上一般岩板每秒回 1 格" },
+        { title: "別被壓扁", body: "頭頂的崩塌線一直往下壓，碰到扣 1 格體力；體力 6 格，扣了不會回來" },
       ],
       keys: {
         touch: "手機",
@@ -705,7 +705,6 @@ export const zhTW = {
       hurt: "-1",
       crystal: "+{points}",
       bounce: "彈！",
-      heal: "+1",
       warning: "崩塌逼近！",
     },
     ready: {

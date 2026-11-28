@@ -654,7 +654,7 @@ export const en: Dictionary = {
       steps: [
         { title: "Move left and right", body: "On a phone, hold the left or right half of the screen. On a computer, use ← → or A / D" },
         { title: "Pick a slab and drop", body: "Walk off the edge to fall. Avoid spikes and cracking rock; mine carts push you and wooden braces bounce you up" },
-        { title: "Do not get crushed", body: "The collapse line keeps pressing down and costs 1 health when it touches you. You have 6 health and regain 1 per second on plain rock" },
+        { title: "Do not get crushed", body: "The collapse line keeps pressing down and costs 1 health when it touches you. You have 6 health, and lost health does not come back" },
       ],
       keys: {
         touch: "Phone",
@@ -702,7 +702,6 @@ export const en: Dictionary = {
       hurt: "-1",
       crystal: "+{points}",
       bounce: "Boing!",
-      heal: "+1",
       warning: "Collapse closing in!",
     },
     ready: {

@@ -654,7 +654,7 @@ export const vi: Dictionary = {
       steps: [
         { title: "Di chuyển trái phải", body: "Trên điện thoại, giữ nửa trái hoặc nửa phải màn hình. Trên máy tính, dùng ← → hoặc A／D" },
         { title: "Chọn tấm đá để rơi", body: "Bước ra khỏi mép tấm đá là rơi. Tránh gai và đá nứt; xe goòng sẽ đẩy bạn, giá đỡ gỗ sẽ nảy bạn lên" },
-        { title: "Đừng bị đè bẹp", body: "Vạch sập trên đầu cứ ép xuống, chạm vào là mất 1 máu. Có 6 máu, đứng trên đá thường hồi 1 máu mỗi giây" },
+        { title: "Đừng bị đè bẹp", body: "Vạch sập trên đầu cứ ép xuống, chạm vào là mất 1 máu. Có 6 máu và máu đã mất sẽ không hồi lại" },
       ],
       keys: {
         touch: "Điện thoại",
@@ -702,7 +702,6 @@ export const vi: Dictionary = {
       hurt: "-1",
       crystal: "+{points}",
       bounce: "Nảy!",
-      heal: "+1",
       warning: "Sắp sập tới nơi!",
     },
     ready: {

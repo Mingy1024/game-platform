@@ -654,7 +654,7 @@ export const ja: Dictionary = {
       steps: [
         { title: "左右に動く", body: "スマホは画面の左半分か右半分を押し続けます。パソコンは ← → か A／D" },
         { title: "足場を選んで下へ", body: "足場の端から出ると落ちます。トゲと割れる岩は避け、トロッコは押し流し、木の支柱は跳ね上げます" },
-        { title: "つぶされない", body: "頭上の崩落ラインは下がり続け、触れるとHPが1減ります。HPは6、普通の岩の上なら毎秒1回復します" },
+        { title: "つぶされない", body: "頭上の崩落ラインは下がり続け、触れるとHPが1減ります。HPは6で、減ったら回復しません" },
       ],
       keys: {
         touch: "スマホ",
@@ -702,7 +702,6 @@ export const ja: Dictionary = {
       hurt: "-1",
       crystal: "+{points}",
       bounce: "ぼよん！",
-      heal: "+1",
       warning: "崩落が迫る！",
     },
     ready: {

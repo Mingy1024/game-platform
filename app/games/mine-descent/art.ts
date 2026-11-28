@@ -97,20 +97,57 @@ function crack(x: number, y: number, w: number, p: Palette): string {
   return o;
 }
 
-function cart(x: number, y: number, w: number, p: Palette): string {
+/** 礦軌推車的軌道（固定在岩板貼圖上）；車身、輪子、箭頭另外做貼圖，場景裡才能動 */
+function cartRail(x: number, y: number, w: number, p: Palette): string {
   const H = PLATFORM_H;
   let o = `<rect x="${x - 8}" y="${y + H - 3}" width="${w + 16}" height="6" fill="${p.iron}" ${st(3)}/>`;
   for (let sx = Math.floor(x - 4); sx < x + w + 4; sx += 22) o += `<rect x="${sx}" y="${y + H + 2}" width="9" height="8" fill="${p.wood}" ${st(2)}/>`;
-  o += `<polygon points="${pts([x + 2, y - 8], [x + w - 2, y - 8], [x + w - 14, y + H - 9], [x + 14, y + H - 9])}" fill="${p.cart}" ${st(3.5)}/>`;
+  return o;
+}
+
+function cartBody(x: number, y: number, w: number, p: Palette): string {
+  const H = PLATFORM_H;
+  let o = `<polygon points="${pts([x + 2, y - 8], [x + w - 2, y - 8], [x + w - 14, y + H - 9], [x + 14, y + H - 9])}" fill="${p.cart}" ${st(3.5)}/>`;
   o += `<rect x="${x}" y="${y - 12}" width="${w}" height="6" rx="2" fill="${p.iron}" ${st(3)}/>`;
   for (const [ox, oy, s] of [[x + 16, -20, 9], [x + 34, -26, 11], [x + 54, -20, 9], [x + 72, -23, 10]] as const) {
     if (ox < x + w - 8) o += `<polygon points="${pts([ox - s, y - 12], [ox - s * 0.6, y + oy], [ox + s * 0.5, y + oy - 3], [ox + s, y - 12])}" fill="${p.ore}" ${st(2.5)}/>`;
   }
-  for (const cx of [x + 26, x + w - 26]) {
-    o += `<circle cx="${cx}" cy="${y + H - 3}" r="8" fill="${p.iron}" ${st(3)}/><circle cx="${cx}" cy="${y + H - 3}" r="2.5" fill="${INK}"/>`;
-  }
-  o += `<g fill="${p.hazard}" stroke="${INK}" stroke-width="2"><polygon points="${pts([x + w + 4, y - 6], [x + w + 14, y], [x + w + 4, y + 6])}"/><polygon points="${pts([x + w + 16, y - 6], [x + w + 26, y], [x + w + 16, y + 6])}"/></g>`;
   return o;
+}
+
+/** 推車輪子的中心到車身左右邊緣的距離、輪子半徑（設計稿像素） */
+export const CART_WHEEL_INSET = 26;
+export const CART_WHEEL_R = 8;
+/** 推車車身前板（放箭頭的地方）：中心的 y（相對岩板上緣）、高度、左右內縮 */
+export const CART_PANEL = { cy: 4.5, h: 12, inset: 16 } as const;
+
+/** 推車車身貼圖：和岩板貼圖同尺寸、同原點，直接疊上去 */
+export function cartBodySvg(widthM: number, p: Palette = PLATFORM_PALETTE): { svg: string; width: number; height: number } {
+  const margin = 30;
+  const w = widthM * ART_PPM;
+  const totalW = w + margin * 2;
+  const totalH = PLATFORM_TOP + PLATFORM_H + PLATFORM_BOTTOM;
+  return { svg: svg(totalW * 2, totalH * 2, totalW, totalH, cartBody(margin, PLATFORM_TOP, w, p), "cart"), width: totalW * 2, height: totalH * 2 };
+}
+
+/** 推車輪子（有輻條，轉起來看得出來） */
+export function cartWheelSvg(p: Palette = PLATFORM_PALETTE): string {
+  const r = CART_WHEEL_R;
+  const c = r + 2;
+  let o = `<circle cx="${c}" cy="${c}" r="${r}" fill="${p.iron}" ${st(3)}/>`;
+  o += `<line x1="${c - r + 2}" y1="${c}" x2="${c + r - 2}" y2="${c}" stroke="${INK}" stroke-width="1.8"/><line x1="${c}" y1="${c - r + 2}" x2="${c}" y2="${c + r - 2}" stroke="${INK}" stroke-width="1.8"/>`;
+  o += `<circle cx="${c}" cy="${c}" r="2.5" fill="${INK}"/><circle cx="${c + r * 0.45}" cy="${c - r * 0.45}" r="1.4" fill="#e8eef3"/>`;
+  return svg(c * 4, c * 4, c * 2, c * 2, o, "wheel");
+}
+
+/** 推車前板上的箭頭（一格一個 V 形，往右；往左的另外一張）。可以橫向重複捲動 */
+export function cartArrowSvg(dir: 1 | -1, p: Palette = PLATFORM_PALETTE): string {
+  const size = 14;
+  const h = CART_PANEL.h;
+  const a = dir === 1 ? [[3, 1], [9, h / 2], [3, h - 1]] : [[11, 1], [5, h / 2], [11, h - 1]];
+  const o = `<polyline points="${pts(...(a as [number, number][]))}" fill="none" stroke="${INK}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`
+    + `<polyline points="${pts(...(a as [number, number][]))}" fill="none" stroke="${p.hazard}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+  return svg(size * 2, h * 2, size, h, o, dir === 1 ? "arrow-right" : "arrow-left");
 }
 
 function brace(x: number, y: number, w: number, p: Palette): string {
@@ -150,7 +187,7 @@ export function platformSvg(kind: Kind | "crystalSpent", widthM: number, p: Pale
   switch (kind) {
     case "spike": body = pickSpikes(x, y, w, p); break;
     case "crack": body = crack(x, y, w, p); break;
-    case "cart": body = cart(x, y, w, p); break;
+    case "cart": body = cartRail(x, y, w, p); break;
     case "wood": body = brace(x, y, w, p); break;
     case "crystal": body = crystal(x, y, w, p, false); break;
     case "crystalSpent": body = crystal(x, y, w, p, true); break;

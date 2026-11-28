@@ -5,6 +5,12 @@ import { ceilingY, type Platform, type SimEvent } from "@/lib/games/mine-descent
 import {
   ART_PPM,
   backgroundSvg,
+  CART_PANEL,
+  CART_WHEEL_INSET,
+  CART_WHEEL_R,
+  cartArrowSvg,
+  cartBodySvg,
+  cartWheelSvg,
   ceilingSvg,
   INK,
   MOLE_DISPLAY_H,
@@ -63,6 +69,20 @@ export type SceneHandle = {
 const WIDTH_KEYS = Array.from({ length: 13 }, (_, i) => 12 + i).concat(30);
 const KINDS: (Kind | "crystalSpent")[] = ["rock", "spike", "crack", "cart", "wood", "crystal", "crystalSpent"];
 const platformKey = (kind: Kind | "crystalSpent", w: number) => `plat-${kind}-${Math.round(w * 10)}`;
+const cartBodyKey = (w: number) => `cart-body-${Math.round(w * 10)}`;
+/** 設計稿像素 → 場景像素 */
+const ART = PPM / ART_PPM;
+
+/** 一台推車可以動的部分（軌道畫在岩板貼圖上不動） */
+type CartParts = {
+  body: Phaser.GameObjects.Image;
+  wheels: [Phaser.GameObjects.Image, Phaser.GameObjects.Image];
+  arrow: Phaser.GameObjects.TileSprite;
+  /** 上一格地鼠是不是站在這台車上、這次上車的時間（算衝一下的動作） */
+  riding: boolean;
+  boardedAt: number;
+  sparkTimer: number;
+};
 
 function loadImage(svg: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -82,8 +102,10 @@ async function prepare(): Promise<Map<string, HTMLImageElement>> {
     for (const key of WIDTH_KEYS) {
       if (key === 30 && kind !== "rock") continue;
       jobs.push([platformKey(kind, key / 10), platformSvg(kind, key / 10, PLATFORM_PALETTE).svg]);
+      if (kind === "cart" && key !== 30) jobs.push([cartBodyKey(key / 10), cartBodySvg(key / 10, PLATFORM_PALETTE).svg]);
     }
   }
+  jobs.push(["cart-wheel", cartWheelSvg()], ["cart-arrow-1", cartArrowSvg(1)], ["cart-arrow--1", cartArrowSvg(-1)]);
   const images = await Promise.all(jobs.map(async ([key, svg]) => [key, await loadImage(svg)] as const));
   return new Map(images);
 }
@@ -106,6 +128,9 @@ class MineScene extends Phaser.Scene {
   private beam!: Phaser.GameObjects.TileSprite;
   private vignette!: Phaser.GameObjects.Image;
   private sprites = new Map<number, Phaser.GameObjects.Image>();
+  private carts = new Map<number, CartParts>();
+  /** 地鼠站的推車這一格的上下晃動（像素），讓地鼠跟著車身一起抖 */
+  private rideBob = 0;
   private mole!: Phaser.GameObjects.Image;
   private dust!: Phaser.GameObjects.Particles.ParticleEmitter;
   private sparks!: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -275,7 +300,7 @@ class MineScene extends Phaser.Scene {
     const p = sim.player;
 
     this.drawBackground(sim.scrolled, sim.zone);
-    this.drawPlatforms(sim.platforms, time);
+    this.drawPlatforms(sim.platforms, time, deltaMs);
     this.drawMole(time);
     this.drawCeiling(sim.scrolled, time, deltaMs);
     this.options.onFrame();
@@ -327,7 +352,8 @@ class MineScene extends Phaser.Scene {
     return sprite;
   }
 
-  private drawPlatforms(platforms: Platform[], time: number) {
+  private drawPlatforms(platforms: Platform[], time: number, deltaMs: number) {
+    this.rideBob = 0;
     const seen = new Set<number>();
     for (const platform of platforms) {
       seen.add(platform.id);
@@ -343,11 +369,88 @@ class MineScene extends Phaser.Scene {
       sprite.setVisible(true).setPosition(x, y);
       if (platform.state === "falling") sprite.setAngle(platform.vy * 6).setAlpha(clamp(1 - platform.vy / 14, 0.2, 1));
       else sprite.setAngle(0).setAlpha(1);
+      if (platform.kind === "cart") this.drawCart(platform, x, y, sprite.alpha, time, deltaMs);
     }
     for (const [id, sprite] of this.sprites) {
+      if (!seen.has(id) || !sprite.visible) {
+        const cart = this.carts.get(id);
+        if (cart) {
+          cart.body.destroy();
+          cart.wheels[0].destroy();
+          cart.wheels[1].destroy();
+          cart.arrow.destroy();
+          this.carts.delete(id);
+        }
+      }
       if (!seen.has(id)) {
         sprite.destroy();
         this.sprites.delete(id);
+      }
+    }
+  }
+
+  /**
+   * 推車：車身、輪子、箭頭疊在軌道上。地鼠站上去時車身往推的方向衝一下、上下顛、
+   * 輪子轉、輪子底下冒火花、箭頭加速捲動；沒人站時箭頭慢慢往推的方向捲，一看就知道往哪推。
+   */
+  private drawCart(platform: Platform, x: number, y: number, alpha: number, time: number, deltaMs: number) {
+    const w = Math.round(platform.w * 10) / 10;
+    const bodyKey = cartBodyKey(w);
+    if (!this.textures.exists(bodyKey)) return;
+    let cart = this.carts.get(platform.id);
+    if (!cart) {
+      const panelW = (w * ART_PPM - CART_PANEL.inset * 2) * ART;
+      cart = {
+        body: this.add.image(0, 0, bodyKey).setOrigin(0.5, (PLATFORM_TOP * 2) / platformHeight()).setDepth(3),
+        wheels: [this.add.image(0, 0, "cart-wheel").setDepth(3.5), this.add.image(0, 0, "cart-wheel").setDepth(3.5)],
+        arrow: this.add.tileSprite(0, 0, panelW, CART_PANEL.h * ART, `cart-arrow-${platform.dir}`).setDepth(3.6),
+        riding: false,
+        boardedAt: -1e9,
+        sparkTimer: 0,
+      };
+      this.carts.set(platform.id, cart);
+    }
+    const p = this.session.sim.player;
+    const riding = p.ground === platform.id && this.session.phase === "playing";
+    if (riding && !cart.riding) cart.boardedAt = time;
+    cart.riding = riding;
+    const dir = platform.dir;
+    const dt = deltaMs / 1000;
+    const motion = !this.reduced;
+
+    // 車身：上車瞬間往前衝 10 像素再彈回，坐著時上下顛、微微前傾
+    let dx = 0;
+    let bob = 0;
+    let tilt = 0;
+    if (riding && motion) {
+      const since = time - cart.boardedAt;
+      dx = dir * 10 * Math.exp(-since / 160) * Math.cos(since / 60);
+      bob = Math.abs(Math.sin(time / 55)) * -2.5;
+      tilt = dir * 2 + Math.sin(time / 40) * 0.8;
+      this.rideBob = bob;
+    }
+    cart.body.setPosition(x + dx, y + bob).setAngle(tilt).setAlpha(alpha).setVisible(true);
+
+    // 輪子：站上去時往推的方向轉（每秒約 2 圈）
+    const wheelY = y + (PLATFORM_H - 3) * ART;
+    const wheelOffset = ((w * ART_PPM) / 2 - CART_WHEEL_INSET) * ART;
+    const spin = riding && motion ? dir * 760 * dt : 0;
+    cart.wheels.forEach((wheel, i) => {
+      wheel.setPosition(x + dx + (i === 0 ? -wheelOffset : wheelOffset), wheelY + bob * 0.3).setAlpha(alpha).setVisible(true);
+      wheel.angle += spin;
+    });
+
+    // 箭頭：在車身前板上，往推的方向捲動（不會超出車身，貼著畫面邊也不會被切）
+    cart.arrow.setPosition(x + dx, y + CART_PANEL.cy * ART + bob).setAngle(tilt).setAlpha(alpha).setVisible(true);
+    if (motion) cart.arrow.tilePositionX -= dir * (riding ? 150 : 36) * dt;
+
+    // 火花：坐著時輪子和軌道摩擦
+    if (riding && motion) {
+      cart.sparkTimer -= deltaMs;
+      if (cart.sparkTimer <= 0) {
+        cart.sparkTimer = 110;
+        const back = -dir * wheelOffset;
+        this.burst(this.sparks, x + dx + back, wheelY + CART_WHEEL_R * ART, 2, "sparks");
       }
     }
   }
@@ -375,7 +478,7 @@ class MineScene extends Phaser.Scene {
     const pose = this.pose(time);
     const key = `pose-${pose}`;
     if (this.mole.texture.key !== key) this.mole.setTexture(key);
-    this.mole.setPosition(p.x * PPM, p.y * PPM + 3);
+    this.mole.setPosition(p.x * PPM, p.y * PPM + 3 + this.rideBob);
     this.mole.setFlipX(p.face === -1);
     // 無敵時閃爍（減少動態效果時不閃）
     const blink = p.invuln > 0 && !this.reduced && Math.floor(time / 70) % 2 === 0;

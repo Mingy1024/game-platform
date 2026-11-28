@@ -151,8 +151,7 @@ function onEvents(events: SimEvent[]) {
     } else if (event.type === "bounce") {
       sound.play("wood-bounce.mp3");
       popup(t.bounce, "info", (event.x / FIELD.width) * 100, (event.y / session.value.viewHeight) * 100 - 8);
-    } else if (event.type === "heal") popup(t.heal, "good", 22, 84);
-    else {
+    } else {
       const name = soundFor(event);
       if (name) sound.play(name);
     }

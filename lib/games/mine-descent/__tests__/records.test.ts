@@ -191,7 +191,6 @@ describe("M 音效混音", () => {
     expect(soundFor({ type: "graze", source: "edge", points: 50, mult: 1, x: 0, y: 0 })).toBe("near-miss.mp3");
     expect(soundFor({ type: "graze", source: "edge", points: 60, mult: 1.2, x: 0, y: 0 })).toBe("combo-up.mp3");
     expect(soundFor({ type: "over", reason: "hp" })).toBe("game-over.mp3");
-    expect(soundFor({ type: "heal" })).toBeNull();
     expect(grazeRate(1)).toBe(1);
     expect(grazeRate(2)).toBeGreaterThan(grazeRate(1.2));
     expect(grazeRate(9)).toBe(1.4);

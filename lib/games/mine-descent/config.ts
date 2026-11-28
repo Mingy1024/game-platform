@@ -38,8 +38,6 @@ export const PLAYER = {
 
 export const HEALTH = {
   max: 6,
-  /** 站在一般岩板上每幾秒回 1 格（B6） */
-  regenSeconds: 1,
   /** 扣血後的無敵秒數（B7） */
   invulnSeconds: 0.8,
   /** 踩到尖刺後的小跳速度 m/s（B8） */

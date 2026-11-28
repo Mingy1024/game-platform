@@ -28,7 +28,6 @@ export type OverReason = "hp" | "fall";
 export type SimEvent =
   | { type: "land"; kind: Kind; x: number; y: number; vy: number }
   | { type: "hurt"; cause: "spike" | "ceiling"; x: number; y: number }
-  | { type: "heal" }
   | { type: "bounce"; x: number; y: number }
   | { type: "crystal"; points: number; x: number; y: number }
   | { type: "graze"; source: "edge" | "ceiling"; points: number; mult: number; x: number; y: number }
@@ -47,7 +46,6 @@ export type Player = {
   hp: number;
   invuln: number;
   face: -1 | 1;
-  regen: number;
   /** 被崩塌線壓到後的保護時間（這段時間不會再被撞一次） */
   squeeze: number;
   /** 被崩塌線壓到時腳下那塊岩板：它還在往上頂，壓下去之後不能馬上又站回去 */
@@ -108,7 +106,6 @@ export function createSim(seed: number, viewHeight: number = FIELD.height): Sim 
       hp: HEALTH.max,
       invuln: 0,
       face: 1,
-      regen: 0,
       squeeze: 0,
       squeezeSkip: null,
       ceilCooldown: 0,
@@ -160,7 +157,6 @@ function hurt(sim: Sim, cause: "spike" | "ceiling") {
   if (p.invuln > 0) return;
   p.hp -= 1;
   p.invuln = HEALTH.invulnSeconds;
-  p.regen = 0;
   sim.mult = 1;
   sim.multTimer = 0;
   sim.grazeCount = 0;
@@ -191,7 +187,6 @@ function land(sim: Sim, platform: Platform, impactVy: number) {
   p.y = platform.y;
   p.vy = 0;
   p.ground = platform.id;
-  p.regen = 0;
   sim.events.push({ type: "land", kind: platform.kind, x: p.x, y: p.y, vy: impactVy });
   if (platform.kind !== "spike") {
     const edge = platform.w / 2 - Math.abs(p.x - platform.x);
@@ -310,16 +305,6 @@ export function step(sim: Sim, axis: -1 | 0 | 1): void {
   if (ground) {
     p.y = ground.y;
     p.vy = 0;
-    if (ground.kind === "rock") {
-      if (p.hp < HEALTH.max) {
-        p.regen += dt;
-        if (p.regen >= HEALTH.regenSeconds) {
-          p.regen = 0;
-          p.hp++;
-          sim.events.push({ type: "heal" });
-        }
-      } else p.regen = 0;
-    } else p.regen = 0;
   } else {
     const prevY = p.y;
     p.vy = Math.min(PLAYER.maxFall, p.vy + PLAYER.gravity * dt);
