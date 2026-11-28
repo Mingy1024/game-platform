@@ -1,0 +1,126 @@
+<title>和尚端湯上塔音效選片</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 版面：單欄清單，最上方背景音樂 5 選 1，下面依遊戲時刻分組的音效，每種 3 版 */
+:root{--bg:#e4ece8;--panel:#f6f9f7;--fg:#23302d;--muted:#55645f;--line:#c3d0cb;--accent:#a8372c;--accent-fg:#fff;--ok:#1f6b45;--okbg:#dcefe3;--font:'Chiron GoRound TC','Noto Sans TC',system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17201e;--panel:#202b28;--fg:#e8f0ec;--muted:#a9b8b2;--line:#34443f;--accent:#f0805f;--accent-fg:#17201e;--ok:#8fdcae;--okbg:#1d3a2b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17201e;--panel:#202b28;--fg:#e8f0ec;--muted:#a9b8b2;--line:#34443f;--accent:#f0805f;--accent-fg:#17201e;--ok:#8fdcae;--okbg:#1d3a2b;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));line-height:1.6}
+.wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1{margin:0;font-size:30px;font-weight:900;text-wrap:balance}
+.sub{margin:6px 0 0;color:var(--muted);font-size:15px}
+.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding-block:10px;border-bottom:1px solid var(--line);z-index:5}
+.count{font-weight:900;font-size:17px;font-variant-numeric:tabular-nums}
+.count b{color:var(--accent)}
+.bar .hint{color:var(--muted);font-size:14px}
+h2{margin:0 0 12px;font-size:19px;font-weight:900}
+.list{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.card.done{border-color:var(--ok)}
+.head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline}
+.name{font-size:18px;font-weight:900}
+.file{font-size:13px;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+.use{margin:0;color:var(--muted);font-size:14px}
+.takes{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.take{display:flex;gap:8px;align-items:stretch}
+.play{flex:none;min-width:48px;min-height:48px;border-radius:12px;border:2px solid var(--accent);background:transparent;color:var(--accent);font-size:20px;cursor:pointer;font-family:inherit}
+.play[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.pick{flex:1;min-height:48px;border-radius:12px;border:2px solid var(--line);background:transparent;color:var(--fg);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;padding:0 10px}
+.pick[aria-checked="true"]{border-color:var(--ok);background:var(--okbg);color:var(--ok)}
+.redo{align-self:flex-start;min-height:44px;border-radius:10px;border:1px dashed var(--line);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;font-size:14px;padding:0 14px}
+.redo[aria-checked="true"]{border-style:solid;border-color:var(--accent);color:var(--accent);font-weight:700}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.note{color:var(--muted);font-size:14px}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@400;700;900&display=swap">
+<div class="wrap">
+<header>
+<h1>和尚端湯上塔音效選片</h1>
+<p class="sub">最上方是 5 首背景音樂（可無縫循環，5 選 1），下面是 13 種音效，每種 3 版。按 ▶ 試聽，合適就按「選這首／選這版」；都不滿意選「重新生成」，我再生一輪。</p>
+</header>
+<div class="bar"><span class="count">已選 <b id="n">0</b> / 14</span><span class="hint" id="hint">選擇會自動儲存，我會直接讀取。</span></div>
+<main id="main"></main>
+<p class="note">背景音樂由本機 Stable Audio 3 Small-Music 生成（MP3，已做首尾交叉淡化以便循環）。音效為 32 kHz 單聲道 WAV，由 Small-SFX 生成，兩個循環音（畫線、湯晃動）也做了交叉淡化。最後會依你的選擇裁切、壓成 MP3 接進遊戲，音量由程式統一調整。</p>
+</div>
+<script>
+var GROUPS=[
+ {t:'畫線與走路',items:[
+  ['brush-loop','畫線（循環）','手指拖曳畫線時，音量隨畫線速度'],
+  ['step-wood','腳步','和尚每走一步踩在木地板上'],
+  ['step-slip','踩到滑區','踩到雨水水窪或灑出的湯漬']]},
+ {t:'湯的聲音',items:[
+  ['slosh-loop','湯在碗裡晃（循環）','走路時持續播放，音量隨湯晃動的程度'],
+  ['spill','灑湯','湯從碗邊灑出來'],
+  ['sizzle','燙到塔','緊接在灑湯後面，熱湯落在木頭上'],
+  ['soup-cold','湯涼掉','溫度降到 50℃ 以下']]},
+ {t:'過層與結果',items:[
+  ['floor-clear','過一層','走到樓梯口，木魚聲'],
+  ['summit-bell','送到塔頂','塔頂鐘聲'],
+  ['fall','摔下去','踩空翻出迴廊、碗掉在地上'],
+  ['new-record','破紀錄','結算刷新最佳分數']]},
+ {t:'介面',items:[
+  ['score-tick','分數跑動','結算分數跑動時連續播放'],
+  ['ui-click','按鈕','出發、重畫、暫停選單、結算按鈕']]}
+];
+var BGMS=[
+ ['temple-tiptoe','寺廟躡腳','古箏與琵琶撥弦、竹笛、輕木魚與小鈴，小心翼翼又帶點喜感','90 BPM・85 秒'],
+ ['mountain-mist','山霧清晨','古琴與箏的慢句、空靈竹笛、風鈴，寧靜開闊但不催眠','80 BPM・96 秒'],
+ ['soup-shuffle','端湯小碎步','撥奏弦樂、琵琶、木魚與小鑼，鬼鬼祟祟的卡通喜劇感','104 BPM・74 秒'],
+ ['pagoda-climb','登塔','二胡主旋律、古箏琶音、輕太鼓，明亮有幹勁的冒險感','112 BPM・69 秒'],
+ ['tea-house-lofi','茶屋 lo-fi','古箏琵琶樂句配電鋼琴與慵懶鼓點，輕鬆舒服','84 BPM・91 秒']
+];
+var picks={}, db=null, cur=null, curBtn=null, audio=new Audio();
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function stop(){try{audio.pause()}catch(e){} if(curBtn){curBtn.setAttribute('aria-pressed','false');curBtn.textContent='▶'} cur=null;curBtn=null}
+audio.addEventListener('ended',stop);
+function play(btn,src){
+  if(cur===src){stop();return}
+  stop(); cur=src; curBtn=btn; audio.src=src; audio.currentTime=0; audio.loop=(src.indexOf('bgm/')===0||src.indexOf('-loop-')>0);
+  btn.setAttribute('aria-pressed','true'); btn.textContent='■';
+  audio.play().catch(function(){stop()});
+}
+function save(name,take){
+  picks[name]=take; render();
+  if(db){ db.doc('picks/'+name).set({take:take}).catch(function(){ document.getElementById('hint').textContent='儲存失敗，請再按一次。' }); }
+  else { document.getElementById('hint').textContent='目前無法儲存，請把選擇直接告訴我。'; }
+}
+function render(){
+  var h='', n=0, bp=picks['bgm'];
+  if(bp!==undefined) n++;
+  h+='<section><h2>背景音樂（5 選 1）</h2><div class="list">';
+  BGMS.forEach(function(b,i){
+    var k=i+1, src='bgm/'+b[0]+'.mp3', sel=(bp===k);
+    h+='<div class="card'+(sel?' done':'')+'"><div class="head"><span class="name">'+esc(b[1])+'</span><span class="file">'+esc(b[3])+'</span></div><p class="use">'+esc(b[2])+'</p><div class="take"><button class="play" data-src="'+src+'" aria-pressed="'+(cur===src)+'" aria-label="試聽 '+esc(b[1])+'">▶</button><button class="pick" role="radio" data-name="bgm" data-take="'+k+'" aria-checked="'+sel+'">'+(sel?'已選這首':'選這首')+'</button></div></div>';
+  });
+  h+='<button class="redo" role="radio" data-name="bgm" data-take="0" aria-checked="'+(bp===0)+'">'+(bp===0?'已標記：背景音樂重新生成':'背景音樂都不滿意，重新生成')+'</button></div></section>';
+  GROUPS.forEach(function(g){
+    h+='<section><h2>'+esc(g.t)+'</h2><div class="list">';
+    g.items.forEach(function(it){
+      var id=it[0], p=picks[id], done=(p>=1&&p<=3); if(p!==undefined) n++;
+      h+='<div class="card'+(done?' done':'')+'"><div class="head"><span class="name">'+esc(it[1])+'</span><span class="file">'+id+'</span></div><p class="use">'+esc(it[2])+'</p><div class="takes">';
+      for(var t=1;t<=3;t++){
+        var src='sfx/'+id+'-'+t+'.wav';
+        h+='<div class="take"><button class="play" data-src="'+src+'" aria-pressed="'+(cur===src)+'" aria-label="試聽'+esc(it[1])+'第 '+t+' 版">▶</button><button class="pick" role="radio" data-name="'+id+'" data-take="'+t+'" aria-checked="'+(p===t)+'">'+(p===t?'已選第 '+t+' 版':'選第 '+t+' 版')+'</button></div>';
+      }
+      h+='</div><button class="redo" role="radio" data-name="'+id+'" data-take="0" aria-checked="'+(p===0)+'">'+(p===0?'已標記：重新生成':'都不滿意，重新生成')+'</button></div>';
+    });
+    h+='</div></section>';
+  });
+  document.getElementById('main').innerHTML=h; document.getElementById('n').textContent=n;
+}
+document.getElementById('main').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b) return;
+  if(b.classList.contains('play')) play(b,b.getAttribute('data-src'));
+  else save(b.getAttribute('data-name'),parseInt(b.getAttribute('data-take'),10));
+});
+render();
+(window.claude&&window.claude.use?window.claude.use('db'):Promise.resolve(null)).then(function(d){
+  if(!d){ document.getElementById('hint').textContent='目前無法儲存，請把選擇直接告訴我。'; return; }
+  db=d;
+  db.collection('picks').onSnapshot(function(snap){
+    var m={}; snap.docs.forEach(function(x){var v=x.data(); if(v&&typeof v.take==='number') m[x.id]=v.take});
+    picks=m; render();
+  },function(){});
+});
+</script>
