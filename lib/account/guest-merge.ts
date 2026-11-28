@@ -58,6 +58,18 @@ export async function mergeGuest(d1: D1Database, guestId: string, accountId: str
            OR (excluded.score = mine_descent_bests.score AND excluded.achieved_at < mine_descent_bests.achieved_at)`,
       )
       .bind(accountId, guestId),
+    // 和尚端湯上塔：兩種模式各取最佳（分數高、同分時間短、再同先創下的）
+    d1
+      .prepare(
+        `INSERT INTO monk_soup_tower_bests (player_id, mode, score, time_ms, achieved_at)
+         SELECT ?1, mode, score, time_ms, achieved_at FROM monk_soup_tower_bests WHERE player_id = ?2 AND ${isGuest}
+         ON CONFLICT (player_id, mode) DO UPDATE SET score = excluded.score, time_ms = excluded.time_ms, achieved_at = excluded.achieved_at
+         WHERE excluded.score > monk_soup_tower_bests.score
+           OR (excluded.score = monk_soup_tower_bests.score AND excluded.time_ms < monk_soup_tower_bests.time_ms)
+           OR (excluded.score = monk_soup_tower_bests.score AND excluded.time_ms = monk_soup_tower_bests.time_ms
+               AND excluded.achieved_at < monk_soup_tower_bests.achieved_at)`,
+      )
+      .bind(accountId, guestId),
     d1.prepare("DELETE FROM players WHERE id = ?1 AND kind = 'guest'").bind(guestId),
   ]);
 }

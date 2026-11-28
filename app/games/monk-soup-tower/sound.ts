@@ -1,0 +1,244 @@
+import { AUDIO_READY, COUNT_UP_MS, MUSIC_GAIN, MUSIC_URL, SIZZLE_DELAY, SOUND_BASE, SOUND_FILES, SOUND_GAIN, brushGain, sloshGain, tickTimes, type LoopName, type OneShot, type SoundFile } from "@/lib/games/monk-soup-tower/sound-mix";
+
+type Loop = { source: AudioBufferSourceNode; gain: GainNode };
+
+/** 平滑時間常數（秒）：音量改變時不會喀一聲 */
+const SMOOTH = 0.08;
+
+/**
+ * 和尚端湯上塔的音效播放（Web Audio），結構和礦坑大逃亡的聲音類別相同：
+ * - 遊戲畫面掛上時才建立並載入音檔，介紹頁不載入（M3）。
+ * - 瀏覽器不支援、音檔載入失敗、還沒交檔（AUDIO_READY = false）時，所有方法都安靜地什麼都不做（M4）。
+ * - 暫停、切分頁時整個 AudioContext 暫停，繼續後恢復（M3）。
+ * - 音效、背景音樂各自一條匯流排，互不影響（M1）。
+ * - 畫線沙沙聲和湯晃動聲是循環音，音量由 update 跟著畫線速度與 |θ| 調整（M2）。
+ */
+export class MonkSound {
+  /** 開發用：最近播放過的音效，給自動測試檢查 */
+  readonly log: { name: string; at: number }[] = [];
+  loaded = 0;
+  failed = 0;
+  musicLoaded = false;
+  musicFailed = false;
+
+  private ctx: AudioContext | null = null;
+  private master: GainNode | null = null;
+  private sfxBus: GainNode | null = null;
+  private musicBus: GainNode | null = null;
+  private buffers = new Map<SoundFile, AudioBuffer>();
+  private brush: Loop | null = null;
+  private slosh: Loop | null = null;
+  private music: Loop | null = null;
+  private muted: boolean;
+  private musicOn: boolean;
+  private active = true;
+  private disposed = false;
+  private scheduled: AudioBufferSourceNode[] = [];
+  /** 離開遊戲畫面時取消還在下載的音檔 */
+  private readonly abort = new AbortController();
+
+  constructor(muted: boolean, musicOn = true) {
+    this.muted = muted;
+    this.musicOn = musicOn;
+    const Context =
+      typeof window === "undefined"
+        ? undefined
+        : (window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext);
+    if (!Context) return;
+    try {
+      this.ctx = new Context();
+      this.master = this.ctx.createGain();
+      this.master.connect(this.ctx.destination);
+      this.sfxBus = this.ctx.createGain();
+      this.sfxBus.gain.value = muted ? 0 : 1;
+      this.sfxBus.connect(this.master);
+      this.musicBus = this.ctx.createGain();
+      this.musicBus.gain.value = musicOn ? MUSIC_GAIN : 0;
+      this.musicBus.connect(this.master);
+    } catch {
+      this.ctx = null;
+    }
+  }
+
+  get state() {
+    return {
+      supported: this.ctx !== null,
+      context: this.ctx?.state ?? "none",
+      muted: this.muted,
+      sfxGain: this.sfxBus?.gain.value ?? 0,
+      active: this.active,
+      loaded: this.loaded,
+      failed: this.failed,
+      ready: AUDIO_READY,
+      brushGain: this.brush?.gain.gain.value ?? 0,
+      sloshGain: this.slosh?.gain.gain.value ?? 0,
+      musicOn: this.musicOn,
+      musicLoaded: this.musicLoaded,
+      musicFailed: this.musicFailed,
+      musicGain: this.musicBus?.gain.value ?? 0,
+    };
+  }
+
+  /** 載入全部音檔；個別失敗只是少了那個聲音 */
+  async load(): Promise<void> {
+    const ctx = this.ctx;
+    if (!ctx || !AUDIO_READY) return;
+    await Promise.all(
+      SOUND_FILES.map(async (file) => {
+        try {
+          const response = await fetch(SOUND_BASE + file, { signal: this.abort.signal });
+          if (!response.ok) throw new Error(String(response.status));
+          const buffer = await ctx.decodeAudioData(await response.arrayBuffer());
+          if (this.disposed) return;
+          this.buffers.set(file, buffer);
+          this.loaded += 1;
+        } catch {
+          this.failed += 1;
+        }
+      }),
+    );
+    if (this.disposed) return;
+    this.brush = this.startLoop("brush-loop.wav");
+    this.slosh = this.startLoop("slosh-loop.wav");
+    // 背景音樂比較大，等音效好了再載入；失敗只是沒有音樂
+    await this.loadMusic();
+  }
+
+  private async loadMusic(): Promise<void> {
+    const ctx = this.ctx;
+    if (!ctx || !this.musicBus || !AUDIO_READY) return;
+    try {
+      const response = await fetch(MUSIC_URL, { signal: this.abort.signal });
+      if (!response.ok) throw new Error(String(response.status));
+      const buffer = await ctx.decodeAudioData(await response.arrayBuffer());
+      if (this.disposed) return;
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(1, ctx.currentTime + 1.5);
+      source.connect(gain).connect(this.musicBus);
+      source.start();
+      this.music = { source, gain };
+      this.musicLoaded = true;
+    } catch {
+      if (!this.disposed) this.musicFailed = true;
+    }
+  }
+
+  /** 音符鈕：只開關背景音樂，不影響音效 */
+  setMusicOn(on: boolean): void {
+    this.musicOn = on;
+    const ctx = this.ctx;
+    if (!ctx || !this.musicBus) return;
+    this.musicBus.gain.setTargetAtTime(on ? MUSIC_GAIN : 0, ctx.currentTime, 0.08);
+  }
+
+  setMuted(muted: boolean): void {
+    this.muted = muted;
+    const ctx = this.ctx;
+    if (!ctx || !this.sfxBus) return;
+    this.sfxBus.gain.setTargetAtTime(muted ? 0 : 1, ctx.currentTime, 0.02);
+  }
+
+  /** false：暫停、切分頁，所有聲音立即停止；true：恢復 */
+  setActive(active: boolean): void {
+    if (this.active === active) return;
+    this.active = active;
+    const ctx = this.ctx;
+    if (!ctx || this.disposed) return;
+    if (active) void ctx.resume().catch(() => {});
+    else void ctx.suspend().catch(() => {});
+  }
+
+  /** 玩家每次操作都試著解除自動播放限制 */
+  unlock(): void {
+    const ctx = this.ctx;
+    if (ctx && this.active && ctx.state === "suspended") void ctx.resume().catch(() => {});
+  }
+
+  /** 每一格呼叫：畫線時沙沙聲跟著手指速度（px／秒），走路時湯晃聲跟著 |θ|；不在對應的階段就收掉 */
+  update(drawingSpeed: number | null, tilt: number | null): void {
+    const ctx = this.ctx;
+    if (!ctx || this.disposed) return;
+    if (this.brush) this.brush.gain.gain.setTargetAtTime(drawingSpeed === null ? 0 : brushGain(drawingSpeed) * SOUND_GAIN["brush-loop.wav"], ctx.currentTime, SMOOTH);
+    if (this.slosh) this.slosh.gain.gain.setTargetAtTime(tilt === null ? 0 : sloshGain(tilt) * SOUND_GAIN["slosh-loop.wav"], ctx.currentTime, SMOOTH);
+  }
+
+  /** 灑湯：潑灑聲，緊接著燙到塔的滋聲 */
+  spill(): void {
+    this.play("spill.mp3");
+    this.play("sizzle.mp3", { delay: SIZZLE_DELAY });
+  }
+
+  play(name: OneShot | "sizzle.mp3", options: { delay?: number; rate?: number; gain?: number } = {}): void {
+    const ctx = this.ctx;
+    const buffer = this.buffers.get(name);
+    this.log.push({ name, at: Math.round(performance.now()) });
+    if (this.log.length > 100) this.log.shift();
+    if (!ctx || !buffer || !this.sfxBus || this.disposed) return;
+    const delay = options.delay ?? 0;
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.playbackRate.value = options.rate ?? 1;
+    const gain = ctx.createGain();
+    gain.gain.value = SOUND_GAIN[name] * (options.gain ?? 1);
+    source.connect(gain).connect(this.sfxBus);
+    source.start(ctx.currentTime + delay);
+    if (delay > 0) {
+      this.scheduled.push(source);
+      source.onended = () => {
+        this.scheduled = this.scheduled.filter((item) => item !== source);
+      };
+    }
+  }
+
+  /** 結算：總分跑動時連續播跑分音，破紀錄時最後再加一聲 */
+  finale(newRecord: boolean, reducedMotion: boolean): void {
+    const times = reducedMotion ? [0] : tickTimes();
+    for (const time of times) this.play("score-tick.mp3", { delay: time });
+    if (newRecord) this.play("new-record.mp3", { delay: reducedMotion ? 0.1 : COUNT_UP_MS / 1000 });
+  }
+
+  cancelScheduled(): void {
+    for (const source of this.scheduled) {
+      try {
+        source.stop();
+      } catch {
+        // 已經結束
+      }
+    }
+    this.scheduled = [];
+  }
+
+  dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.abort.abort();
+    this.cancelScheduled();
+    for (const loop of [this.brush, this.slosh, this.music]) {
+      try {
+        loop?.source.stop();
+      } catch {
+        // 已經停止
+      }
+    }
+    const ctx = this.ctx;
+    if (ctx) window.setTimeout(() => void ctx.close().catch(() => {}), 250);
+  }
+
+  private startLoop(name: LoopName): Loop | null {
+    const ctx = this.ctx;
+    const buffer = this.buffers.get(name);
+    if (!ctx || !buffer || !this.sfxBus) return null;
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    const gain = ctx.createGain();
+    gain.gain.value = 0;
+    source.connect(gain).connect(this.sfxBus);
+    source.start();
+    return { source, gain };
+  }
+}

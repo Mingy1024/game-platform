@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { deleteAccount, logout } from "@/lib/account/me-store";
 import { hasUnsyncedRecords as mineUnsynced, syncNow as syncMine } from "@/lib/games/mine-descent/account-sync";
+import { hasUnsyncedRecords as monkUnsynced, syncNow as syncMonk } from "@/lib/games/monk-soup-tower/account-sync";
 import { hasUnsyncedRecords as escapeUnsynced, syncNow as syncEscape } from "@/lib/games/office-escape/account-sync";
 import { hasUnsyncedRecords as preciseUnsynced, syncNow as syncPrecise } from "@/lib/games/precise-stop/account-sync";
 
 /** 各款遊戲有沒有還沒存到帳號的紀錄；登出前每款都要先試著送出 */
-const hasUnsyncedRecords = () => preciseUnsynced() || escapeUnsynced() || mineUnsynced();
-const syncNow = () => Promise.all([syncPrecise(), syncEscape(), syncMine()]);
+const hasUnsyncedRecords = () => preciseUnsynced() || escapeUnsynced() || mineUnsynced() || monkUnsynced();
+const syncNow = () => Promise.all([syncPrecise(), syncEscape(), syncMine(), syncMonk()]);
 
 /**
  * 我的紀錄頁最下面的登出與刪除帳號。

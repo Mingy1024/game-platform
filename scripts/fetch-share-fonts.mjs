@@ -34,9 +34,13 @@ function cardText(locale, d) {
   // 礦坑大逃亡的成績圖：標題、三項得分名稱、邀請文案與深度那一行
   const mine = d.mineDescent;
   const mineText = [mine.title, mine.hud.unit, ...Object.values(mine.final.parts), ...Object.values(mine.card)];
+  // 和尚端湯上塔的成績圖：標題、模式、塔號、湯量／溫度／時間與溫度的說法、邀請文案
+  const monk = d.monkSoupTower;
+  const monkText = [monk.title, ...Object.values(monk.modes), monk.final.seed, monk.final.seconds, ...Object.values(monk.bands), ...Object.values(monk.card), "#℃SABC"];
   return [
     ...officeText,
     ...mineText,
+    ...monkText,
     d.brand,
     game.title,
     game.modes.daily,

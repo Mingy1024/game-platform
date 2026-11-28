@@ -11,6 +11,12 @@ import {
 } from "@/lib/games/precise-stop/leaderboard";
 import { periodOf as officePeriodOf, type Scope as OfficeScope, type TopResponse as OfficeTopResponse } from "@/lib/games/office-escape/leaderboard";
 import { periodOf as minePeriodOf, type Scope as MineScope, type TopResponse as MineTopResponse } from "@/lib/games/mine-descent/leaderboard";
+import {
+  periodOf as monkPeriodOf,
+  type MineResponse as MonkMineResponse,
+  type Scope as MonkScope,
+  type TopResponse as MonkTopResponse,
+} from "@/lib/games/monk-soup-tower/leaderboard";
 
 /**
  * 精準停車的全站排行查詢（設計稿第 14.1、14.3 節）。直接用 D1 的 SQL：
@@ -136,3 +142,60 @@ export async function readMineTop(db: D1Database, scope: MineScope, now: number)
 
 export const readMineMine = (db: D1Database, scope: MineScope, playerId: string, now: number): Promise<MineResponse> =>
   readBoardMine(db, MINE_DESCENT_BOARD, scope, minePeriodOf(scope, now), playerId);
+
+/**
+ * 和尚端湯上塔的前 100 名與自己的名次（T1–T5）。只有固定關卡一張榜。
+ * 排序多一層：分數高的在前、同分時間短的在前、再同先創下的在前（T2），所以不共用上面的查詢。
+ */
+type MonkSqlRow = TopSqlRow & { time_ms: number };
+
+export async function readMonkTop(db: D1Database, scope: MonkScope, _now: number): Promise<MonkTopResponse> {
+  const [rows, count] = await db.batch([
+    db
+      .prepare(
+        `SELECT e.player_id, e.score, e.time_ms, e.achieved_at, p.kind, p.nick_adj, p.nick_noun, p.nick_num, p.nick_custom
+         FROM monk_soup_tower_bests e JOIN players p ON p.id = e.player_id
+         WHERE e.mode = ?
+         ORDER BY e.score DESC, e.time_ms ASC, e.achieved_at ASC, e.player_id ASC LIMIT ${TOP_LIMIT}`,
+      )
+      .bind(scope),
+    db.prepare("SELECT COUNT(*) AS total FROM monk_soup_tower_bests WHERE mode = ?").bind(scope),
+  ]);
+  const total = ((count!.results[0] as { total?: number } | undefined)?.total ?? 0) as number;
+  return {
+    scope,
+    period: monkPeriodOf(scope, _now),
+    total,
+    rows: (rows!.results as MonkSqlRow[]).map((row, index) => ({
+      rank: index + 1,
+      nick: { adj: row.nick_adj, noun: row.nick_noun, num: row.nick_num, custom: row.nick_custom },
+      guest: row.kind === "guest",
+      score: row.score,
+      timeMs: row.time_ms,
+      achievedAt: new Date(row.achieved_at).toISOString(),
+      color: avatarColor(row.player_id),
+    })),
+  };
+}
+
+export async function readMonkMine(db: D1Database, scope: MonkScope, playerId: string, _now: number): Promise<MonkMineResponse> {
+  const row = await db
+    .prepare(
+      `WITH e AS (SELECT player_id, score, time_ms, achieved_at FROM monk_soup_tower_bests WHERE mode = ?),
+            me AS (SELECT score, time_ms, achieved_at FROM e WHERE player_id = ?)
+       SELECT
+         (SELECT score FROM me) AS score,
+         (SELECT time_ms FROM me) AS time_ms,
+         (SELECT COUNT(*) FROM e, me WHERE e.score > me.score
+            OR (e.score = me.score AND (e.time_ms < me.time_ms
+              OR (e.time_ms = me.time_ms AND (e.achieved_at < me.achieved_at OR (e.achieved_at = me.achieved_at AND e.player_id < ?)))))) AS ahead,
+         (SELECT COUNT(*) FROM e) AS total,
+         (SELECT score FROM e ORDER BY score DESC, time_ms ASC, achieved_at ASC, player_id ASC LIMIT 1 OFFSET ${TOP_LIMIT - 1}) AS hundredth`,
+    )
+    .bind(scope, playerId, playerId)
+    .first<{ score: number | null; time_ms: number | null; ahead: number; total: number; hundredth: number | null }>();
+  const total = row?.total ?? 0;
+  if (!row || row.score === null) return { rank: null, score: null, timeMs: null, total, toTop100: null };
+  const rank = row.ahead + 1;
+  return { rank, score: row.score, timeMs: row.time_ms, total, toTop100: pointsToTop(row.score, rank, row.hundredth) };
+}

@@ -2,14 +2,19 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { zhTW } from "../../i18n/dictionaries/zh-TW";
-import { getActiveCategories, getGameBySlug, getPublishedGames } from "../catalog";
+import { getActiveCategories, getFeaturedGame, getGameBySlug, getPublishedGames } from "../catalog";
 
-describe("A1 A2 目錄：精準停車、下班逃離辦公室與礦坑大逃亡", () => {
-  it("三款，slug 是 mine-descent、office-escape、precise-stop，分類都是反應、休閒", () => {
+describe("A1 A2 目錄：精準停車、下班逃離辦公室、礦坑大逃亡與和尚端湯上塔", () => {
+  it("四款；前三款是反應、休閒，和尚端湯上塔是益智、休閒", () => {
     const games = getPublishedGames();
-    expect(games.map((game) => game.slug).sort()).toEqual(["mine-descent", "office-escape", "precise-stop"]);
-    for (const game of games) expect(game.categories).toEqual(["reflex", "casual"]);
-    expect(getActiveCategories().map((category) => category.slug)).toEqual(["reflex", "casual"]);
+    expect(games.map((game) => game.slug).sort()).toEqual(["mine-descent", "monk-soup-tower", "office-escape", "precise-stop"]);
+    for (const game of games) expect(game.categories).toEqual(game.slug === "monk-soup-tower" ? ["puzzle", "casual"] : ["reflex", "casual"]);
+    expect(getActiveCategories().map((category) => category.slug)).toEqual(["puzzle", "reflex", "casual"]);
+  });
+
+  it("A2 首頁主打是和尚端湯上塔，其他遊戲都不是主打", () => {
+    expect(getFeaturedGame()?.slug).toBe("monk-soup-tower");
+    expect(getPublishedGames().filter((game) => game.featured).map((game) => game.slug)).toEqual(["monk-soup-tower"]);
   });
 
   it("舊的三款都不在目錄裡", () => {
@@ -17,7 +22,7 @@ describe("A1 A2 目錄：精準停車、下班逃離辦公室與礦坑大逃亡"
   });
 
   it("封面與主視覺檔案存在且是 WebP", () => {
-    for (const slug of ["precise-stop", "office-escape", "mine-descent"]) {
+    for (const slug of ["precise-stop", "office-escape", "mine-descent", "monk-soup-tower"]) {
       const { cover, hero } = getGameBySlug(slug)!;
       for (const file of [cover, hero]) {
         expect(file).toMatch(/\.webp$/);
@@ -33,5 +38,7 @@ describe("A1 A2 目錄：精準停車、下班逃離辦公室與礦坑大逃亡"
     expect(zhTW.officeEscape.faq.items.length).toBeGreaterThanOrEqual(3);
     expect(zhTW.mineDescent.howTo.steps).toHaveLength(3);
     expect(zhTW.mineDescent.faq.items.length).toBeGreaterThanOrEqual(3);
+    expect(zhTW.monkSoupTower.howTo.steps).toHaveLength(3);
+    expect(zhTW.monkSoupTower.faq.items.length).toBeGreaterThanOrEqual(3);
   });
 });

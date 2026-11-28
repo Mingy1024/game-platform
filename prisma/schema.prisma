@@ -46,6 +46,7 @@ model Player {
   preciseStopSyncBatches PreciseStopSyncBatch[]
   officeEscapeBests OfficeEscapeBest[]
   mineDescentBests MineDescentBest[]
+  monkSoupTowerBests MonkSoupTowerBest[]
 
   /// 每日排程刪掉 90 天沒玩的訪客
   @@index([kind, lastPlayedAt])
@@ -149,6 +150,25 @@ model MineDescentBest {
   /// 排行榜：每一種榜依數值排序
   @@index([mode, score(sort: Desc)])
   @@map("mine_descent_bests")
+}
+
+/// 和尚端湯上塔的最佳紀錄（分數高、同分時間短的才換上；重送不會重複）。不存湯量、溫度、路線
+model MonkSoupTowerBest {
+  playerId   String   @map("player_id")
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  /// fixed（固定關卡）或 random（隨機模式）
+  mode       String
+  /// 得分 0～1000
+  score      Int
+  /// 總時間（毫秒），同分時短的排前面
+  timeMs     Int      @map("time_ms")
+  /// 創下這個最佳的時間（同分同時間時先創下的排前面）
+  achievedAt DateTime @map("achieved_at")
+
+  @@id([playerId, mode])
+  /// 排行榜：分數由高到低、時間由短到長
+  @@index([mode, score(sort: Desc), timeMs])
+  @@map("monk_soup_tower_bests")
 }
 
 /// 各遊戲的累計遊玩次數（所有玩家加總，介紹頁顯示）。只存遊戲代號與總數，不存玩家、IP、時間。

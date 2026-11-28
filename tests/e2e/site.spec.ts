@@ -46,16 +46,18 @@ test("A3 首頁主推區有遊戲預覽圖", async ({ page }) => {
 
 test("I1 首頁的預覽圖、開始鈕、遊戲卡都先進介紹頁，不會直接開始", async ({ page }) => {
   const featured = 'section[aria-labelledby="featured-title"]';
-  const entries = [
-    `${featured} a[aria-hidden="true"]`,
-    `${featured} a[href="${GAME}"]:not([aria-hidden])`,
-    `main a[href="${GAME}"]:not(${featured} a)`,
+  // 首頁主打是和尚端湯上塔（2026-11-28 第 9 題）；遊戲卡用精準停車
+  const FEATURED = "/games/monk-soup-tower";
+  const entries: [string, string][] = [
+    [`${featured} a[aria-hidden="true"]`, FEATURED],
+    [`${featured} a[href="${FEATURED}"]:not([aria-hidden])`, FEATURED],
+    [`main a[href="${GAME}"]:not(${featured} a)`, GAME],
   ];
-  for (const entry of entries) {
+  for (const [entry, target] of entries) {
     await page.goto("/");
     await page.locator(entry).first().click();
     // 開發伺服器在完整套件同時跑遊戲時，第一次編譯介紹頁可能超過預設的 5 秒
-    await expect(page, entry).toHaveURL(GAME, { timeout: 15_000 });
+    await expect(page, entry).toHaveURL(target, { timeout: 15_000 });
     await expect(page.getByTestId("departure-board")).toBeVisible();
     await expect(page.getByTestId("game-stage")).toHaveCount(0);
   }

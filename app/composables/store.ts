@@ -2,6 +2,9 @@ import type { ShallowRef } from "vue";
 import { retryAccountSync as retryMineSync } from "@/lib/games/mine-descent/account-sync";
 import { EMPTY_RECORDS as EMPTY_MINE_RECORDS, readRecords as readMineRecords, subscribeRecords as subscribeMineRecords } from "@/lib/games/mine-descent/records-store";
 import type { Records as MineRecords } from "@/lib/games/mine-descent/records";
+import { retryAccountSync as retryMonkSync } from "@/lib/games/monk-soup-tower/account-sync";
+import { EMPTY_RECORDS as EMPTY_MONK_RECORDS, readRecords as readMonkRecords, subscribeRecords as subscribeMonkRecords } from "@/lib/games/monk-soup-tower/records-store";
+import type { Records as MonkRecords } from "@/lib/games/monk-soup-tower/records";
 import { retryAccountSync as retryEscapeSync } from "@/lib/games/office-escape/account-sync";
 import { EMPTY_RECORDS as EMPTY_ESCAPE_RECORDS, readRecords as readEscapeRecords, subscribeRecords as subscribeEscapeRecords } from "@/lib/games/office-escape/records-store";
 import type { Records as EscapeRecords } from "@/lib/games/office-escape/records";
@@ -80,6 +83,12 @@ export function useEscapeRecords() {
 export function useMineRecords() {
   onMounted(retryMineSync);
   return useExternalStore<MineRecords>(subscribeMineRecords, readMineRecords, EMPTY_MINE_RECORDS);
+}
+
+/** 和尚端湯上塔的本機紀錄（登入時是帳號紀錄＋還沒上傳的部分） */
+export function useMonkRecords() {
+  onMounted(retryMonkSync);
+  return useExternalStore<MonkRecords>(subscribeMonkRecords, readMonkRecords, EMPTY_MONK_RECORDS);
 }
 
 /** 開發版可以用 localStorage 暫時打開版位（正式版一律不看） */

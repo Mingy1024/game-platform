@@ -14,6 +14,7 @@ const text = t.preciseStop.records;
 const records = useRecords();
 const escape = useEscapeRecords();
 const mine = useMineRecords();
+const monk = useMonkRecords();
 const dateKey = useClientValue(taiwanDateKey);
 const daily = computed(() => bestOf(records.value, "daily", dateKey.value));
 const hasAny = computed(
@@ -24,6 +25,11 @@ const mineHasAny = computed(() => mine.value.score !== null || mine.value.depth 
 const mineStats = computed(() => [
   { label: "最深", value: mine.value.depth === null ? "—" : `${formatNumber(mine.value.depth, "zh-TW")} 公尺`, testId: "me-mine-depth" },
   { label: "最高分", value: number(mine.value.score), testId: "me-mine-score" },
+]);
+const monkHasAny = computed(() => monk.value.fixed !== null || monk.value.random !== null);
+const monkStats = computed(() => [
+  { label: "固定關卡", value: number(monk.value.fixed?.score ?? null), testId: "me-monk-fixed" },
+  { label: "隨機模式", value: number(monk.value.random?.score ?? null), testId: "me-monk-random" },
 ]);
 const escapeStats = computed(() => [
   { label: "今日最佳", value: number(todayBest(escape.value)), testId: "me-escape-daily" },
@@ -108,7 +114,27 @@ const stats = computed(() => [
           </div>
         </dl>
       </NuxtLink>
-      <p v-if="!hasAny && !escapeHasAny && !mineHasAny" class="text-muted">還沒有紀錄。完成一局之後，每款遊戲的最佳成績會留在這裡。</p>
+      <NuxtLink
+        v-if="monkHasAny"
+        to="/games/monk-soup-tower"
+        data-testid="me-bests-monk-soup-tower"
+        class="press flex flex-col gap-2.5 rounded-[14px] bg-platform p-3.5 text-ink"
+      >
+        <span class="flex items-center gap-2.5">
+          <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sign text-white">
+            <Icon name="star" :size="22" />
+          </span>
+          <span class="min-w-0 flex-1 text-lg font-black text-sign">{{ t.monkSoupTower.title }}</span>
+          <Icon name="right" :size="18" class="text-muted" />
+        </span>
+        <dl class="grid grid-cols-2 gap-1.5">
+          <div v-for="stat in monkStats" :key="stat.testId" class="min-w-0">
+            <dt class="text-[13px] font-bold text-muted">{{ stat.label }}</dt>
+            <dd :data-testid="stat.testId" class="text-xl font-black tabular-nums">{{ stat.value }}</dd>
+          </div>
+        </dl>
+      </NuxtLink>
+      <p v-if="!hasAny && !escapeHasAny && !mineHasAny && !monkHasAny" class="text-muted">還沒有紀錄。完成一局之後，每款遊戲的最佳成績會留在這裡。</p>
     </section>
   </div>
 </template>

@@ -1,4 +1,5 @@
 import { startAccountSync as startMineSync } from "@/lib/games/mine-descent/account-sync";
+import { startAccountSync as startMonkSync } from "@/lib/games/monk-soup-tower/account-sync";
 import { startAccountSync as startEscapeSync } from "@/lib/games/office-escape/account-sync";
 import { startAccountSync } from "@/lib/games/precise-stop/account-sync";
 
@@ -11,5 +12,6 @@ export default defineNuxtPlugin((nuxtApp) => {
     startAccountSync();
     startEscapeSync();
     startMineSync();
+    startMonkSync();
   });
 });

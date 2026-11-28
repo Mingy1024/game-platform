@@ -20,6 +20,7 @@ app/                      Nuxt 前端
   games/precise-stop/     Phaser 場景（scene.ts）、音效（sound.ts）、標籤（labels.ts）、共用（shared.ts）
   games/office-escape/    three.js 場景（scene.ts）、角色庫（characters.ts，設計稿 F1 移植）、音效（sound.ts）、共用（shared.ts）
   games/mine-descent/     Phaser 4 場景（scene.ts）、程式產生的 SVG 美術（art.ts）、音效（sound.ts）、共用（shared.ts）
+  games/monk-soup-tower/  three.js 場景（scene.ts）、塔與和尚的程式建模（tower-model.ts）、音效（sound.ts）、共用（shared.ts）
   layouts/default.vue     車站主題外框
   middleware/locale-home.global.ts  首頁語言轉址（前端導航）
   pages/                  路由頁面（[locale]/ 是其他語言的前綴版本）
@@ -32,6 +33,7 @@ lib/                      與框架無關的 TypeScript（可直接單元測試�
   games/precise-stop/     物理、計分、路線、自動駕駛、紀錄、排行榜、成績代碼、分享卡
   games/office-escape/    固定路線與隨機、模擬（固定步長）、計分、自動駕駛、紀錄與同步（pending／inbox）、排行榜、成績代碼、分享卡
   games/mine-descent/     岩板產生（保證有路）、模擬（固定步長）、計分、自動駕駛、紀錄與同步（pending／inbox）、排行榜（最深／最高分）、成績代碼、分享卡
+  games/monk-soup-tower/  版型與地面判定、路線平滑、湯面模擬（60 Hz）、計分、鏡頭與投影、找路（寬度檢查與自動駕駛）、紀錄與同步、排行榜（固定關卡）、成績代碼、分享卡
   i18n/                   七種語言（locales.ts）與字典（dictionaries/）
   flags.ts                功能開關（建置時決定）
   routes.ts               網站有哪些網址（404 判斷與預先產生清單共用）
@@ -49,7 +51,7 @@ migrations/               D1 migrations（0001–0005），由 wrangler 套用
 generated/prisma/         Prisma Client（自動產生，不手改）
 scripts/                  check-site-url、db-migration、fetch-share-fonts
 tests/e2e/                Playwright 測試與假的 Google（fake-google.mjs）
-public/games/             遊戲素材（precise-stop/、office-escape/、mine-descent/）
+public/games/             遊戲素材（precise-stop/、office-escape/、mine-descent/、monk-soup-tower/）
 docs/                     文件（acceptance/、dev/、sound/、plans/）
 wrangler.jsonc            Cloudflare 設定（D1、限流、排程、靜態資源）
 ```
@@ -101,6 +103,10 @@ wrangler.jsonc            Cloudflare 設定（D1、限流、排程、靜態資�
 | POST `/api/games/mine-descent/records/sync` | `…/records/sync.post.ts` | Google／訪客／建立訪客 | 合併本機最佳（取高值，重送冪等） |
 | GET `/api/games/mine-descent/leaderboard?scope=score\|depth` | `…/leaderboard/index.get.ts` | 無 | 前 100 名，邊緣快取 60 秒 |
 | GET `/api/games/mine-descent/leaderboard/me` | `…/leaderboard/me.get.ts` | Google／訪客 | 自己的名次 |
+| GET `/api/games/monk-soup-tower/records` | `server/api/games/monk-soup-tower/records/index.get.ts` | Google／訪客 | 讀帳號紀錄（只讀） |
+| POST `/api/games/monk-soup-tower/records/sync` | `…/records/sync.post.ts` | Google／訪客／建立訪客 | 合併本機最佳（分數高、同分時間短；重送冪等） |
+| GET `/api/games/monk-soup-tower/leaderboard?scope=fixed` | `…/leaderboard/index.get.ts` | 無 | 固定關卡前 100 名，邊緣快取 60 秒 |
+| GET `/api/games/monk-soup-tower/leaderboard/me` | `…/leaderboard/me.get.ts` | Google／訪客 | 自己的名次 |
 | GET `/api/play-count/<slug>` | `server/api/play-count/[slug].get.ts` | 無 | 累計遊玩次數 `{ count }`（只讀；`FEATURE_PLAY_COUNT` 關閉時 404） |
 | POST `/api/play-count/<slug>` | `…/[slug].post.ts` | 無（檢查 Origin） | 玩完一局 +1，內容 `{ runId }`；同一個代碼只加一次 |
 
@@ -145,6 +151,9 @@ PK `(player_id, mode, date_key)`；`mode` 為 `daily`／`all`，`date_key` 為�
 
 ### `mine_descent_bests`
 PK `(player_id, mode)`；`mode` 為 `score`（最高分）／`depth`（最深公尺）；`score`（那一種的數值）、`achieved_at`。索引 `(mode, score DESC)`。**沒有日期、累計次數與同步批次表**：只取高值，重送一定冪等（見 `docs/plans/archive/mine-descent.md`）。訪客併進帳號時 `mergeGuest` 一起併這張表。
+
+### `monk_soup_tower_bests`
+PK `(player_id, mode)`；`mode` 為 `fixed`（固定關卡）／`random`（隨機模式）；`score`（0～1000）、`time_ms`（總時間）、`achieved_at`。索引 `(mode, score DESC, time_ms)`。分數高的較好、同分時間短的較好；不存湯量、溫度、路線，最高到達層數只存本機（見 `docs/plans/monk-soup-tower.md`）。訪客併進帳號時 `mergeGuest` 一起併這張表。
 
 ### `play_counts`
 PK `game`（遊戲 slug）、`count`。各遊戲累計遊玩次數（所有玩家加總）。**只存遊戲代號與總數，不存玩家、IP、時間**；程式不直接改，由下面的觸發器加一（見 `docs/plans/play-count.md`）。

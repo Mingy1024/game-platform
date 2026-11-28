@@ -481,3 +481,121 @@ html[data-playing] body > :not([data-game-stage]) {
     animation: none;
   }
 }
+
+/* ---------- 和尚端湯上塔：遊戲畫面 ---------- */
+
+.mst-stage {
+  background: #cfe2dd;
+  color: #fff;
+}
+
+/* 電腦兩側的山霧背景（F11）：程式畫的遠山加模糊，不載入圖片 */
+.mst-backdrop {
+  position: absolute;
+  inset: -40px;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 70%, #7d978c 0 45%, transparent 70%),
+    radial-gradient(ellipse 55% 45% at 85% 75%, #6f8a7f 0 40%, transparent 72%),
+    radial-gradient(ellipse 80% 30% at 50% 100%, #4f7357 0 50%, transparent 75%),
+    linear-gradient(#dbe9e4, #cfe2dd 55%, #a9c2b6);
+  filter: blur(18px);
+}
+
+/* 遊戲框：手機填滿整個畫面；比直式寬的螢幕把直式框放在中間（寬高比上限 1:2） */
+.mst-frame {
+  position: relative;
+  overflow: hidden;
+  container-type: inline-size;
+  width: min(100vw, 50dvh);
+  height: 100dvh;
+  background: #cfe2dd;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.mst-keys {
+  display: none;
+}
+
+@media (min-width: 900px) and (min-height: 560px) {
+  .mst-frame {
+    height: calc(100dvh - 32px);
+    width: calc((100dvh - 32px) * 390 / 844);
+    border-radius: 22px;
+    box-shadow: 0 18px 50px rgb(31 40 38 / 0.35);
+  }
+
+  .mst-keys {
+    position: absolute;
+    right: 28px;
+    bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 18px;
+    border-radius: 16px;
+    background: rgb(35 48 45 / 0.72);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .mst-keys kbd {
+    display: inline-flex;
+    min-width: 2.2em;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: rgb(255 255 255 / 0.18);
+    font-family: inherit;
+  }
+}
+
+.mst-toast {
+  position: absolute;
+  top: calc(124 / 390 * 100cqw);
+  left: 50%;
+  transform: translateX(-50%);
+  /* left: 50% 時可用寬度只剩右半邊，要指定依內容寬度，不然長語言會被擠成兩行（翻譯版面檢查） */
+  width: max-content;
+  max-width: calc(100cqw - 32px);
+  padding: calc(8 / 390 * 100cqw) calc(16 / 390 * 100cqw);
+  border-radius: 999px;
+  background: rgb(244 247 245 / 0.95);
+  color: #23302d;
+  font-size: calc(16 / 390 * 100cqw);
+  font-weight: 900;
+  text-align: center;
+  box-shadow: 0 4px 14px rgb(31 40 38 / 0.25);
+  pointer-events: none;
+}
+
+@keyframes mst-float {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-1.4em);
+  }
+}
+
+.mst-float {
+  animation: mst-float 0.9s ease-out forwards;
+}
+
+@keyframes mst-flash {
+  0%,
+  100% {
+    background: rgb(35 48 45 / 0.72);
+  }
+  30% {
+    background: rgb(168 55 44 / 0.95);
+  }
+}
+
+.mst-flash {
+  animation: mst-flash 0.6s ease-out;
+}
